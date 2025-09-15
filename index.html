@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BookNook — Bookstore</title>
+
+  <!-- Prevent favicon 404 spam -->
+  <link rel="icon" href="data:," />
+
+  <!-- Your stylesheet -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Safe fallback so sections can be hidden even if CSS/JS race -->
+  <style>
+    .hidden { display: none !important; }
+  </style>
+
+  <!-- Backend base URL (adjust port if needed) -->
+  <script>
+    window.API_BASE_URL = "http://127.0.0.1:5000/api";
+  </script>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <div class="brand"><div class="logo"></div> BookNook</div>
+    <button class="navbtn" data-nav="home">Home</button>
+    <button class="navbtn" data-nav="catalog">Catalog</button>
+    <button class="navbtn" data-nav="orders">Orders</button>
+    <button class="navbtn" data-nav="profile">Profile</button>
+    <div class="spacer"></div>
+    <button id="btnReset" class="btn ghost small">Reset Demo</button>
+    <button id="btnAdmin" class="btn ghost small">Admin Login</button>
+    <span id="navAvatar" class="avatar-sm hidden"></span>
+    <span id="navUser" class="tag hidden"></span>
+    <button id="btnLogin" class="btn">Login</button>
+    <button id="btnLogout" class="btn bad hidden">Logout</button>
+    <button id="btnCart" class="btn primary">Cart <span id="cartCount" class="kbd">0</span></button>
+  </div>
+</header>
+
+<main>
+  <!-- Auth -->
+  <!-- Login Section -->
+  <section id="loginSection" class="hidden grid">
+    <div class="panel">
+      <h1>Sign in</h1>
+      <form id="formLogin" class="grid" autocomplete="off">
+        <div><label>Email</label><input type="email" name="email" required /></div>
+        <div><label>Password</label><input type="password" name="password" required /></div>
+        <div class="row">
+          <button class="btn" type="submit">Login</button>
+          <button id="switchToRegister" type="button" class="btn ghost">Create account</button>
+        </div>
+      </form>
+      <p class="small muted">Tip: Create an account if you don't have one.</p>
+    </div>
+  </section>
+
+  <!-- Register Section -->
+  <section id="registerSection" class="hidden grid">
+    <div class="panel">
+      <h1>Create account</h1>
+      <form id="formRegister" class="grid" autocomplete="off">
+        <div class="row">
+          <div><label>Full name</label><input name="name" required /></div>
+          <div><label>Email</label><input type="email" name="email" required /></div>
+        </div>
+        <div class="row">
+          <div><label>Password</label><input type="password" name="password" minlength="6" required /></div>
+          <div><label>Phone</label><input name="phone" /></div>
+        </div>
+        <div><label>About you</label><textarea name="bio" rows="2"></textarea></div>
+        <div class="row">
+          <button class="btn primary" type="submit">Register</button>
+          <button id="switchToLogin" type="button" class="btn ghost">Back to login</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Admin Panel (hidden by default) -->
+  <section id="adminPanel" class="hidden grid two">
+    <div class="panel">
+      <h1>Admin — Dashboard</h1>
+
+      <!-- Admin tabs -->
+      <div class="pillbar" style="margin-bottom:12px">
+        <button id="adminViewOrders" class="btn">Orders</button>
+        <button id="adminViewUsers" class="btn">Users</button>
+        <button id="adminViewBooks" class="btn">Books</button>
+        <button id="adminViewAddBook" class="btn">Add Book</button>
+        <button id="adminViewProfile" class="btn">Profile</button>
+        <button id="adminLogout" class="btn bad">Logout Admin</button>
+      </div>
+
+      <!-- Content rendered by JS -->
+      <div id="adminMain" style="margin-top:12px"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Add / Edit Book</h2>
+      <form id="adminBookForm" class="grid">
+        <div><label>Title</label><input name="title" required /></div>
+        <div><label>Author</label><input name="author" required /></div>
+        <div class="row3">
+          <div><label>Price</label><input name="price" inputmode="decimal" /></div>
+          <div><label>Stock</label><input name="stock" inputmode="numeric" /></div>
+          <div><label>Image URL</label><input name="image_url" /></div>
+        </div>
+        <div><label>Description</label><textarea name="description" rows="4"></textarea></div>
+        <div class="row">
+          <button class="btn primary" type="submit">Save Book</button>
+          <button id="adminBookCancel" type="button" class="btn ghost">Reset</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Home -->
+  <section id="homeSection" class="hidden grid">
+    <div class="panel">
+      <h1>Welcome to BookNook</h1>
+      <p class="muted">Buy to own. Rent (digital). Gift by email (digital). Covers and profile photos included.</p>
+      <div class="pillbar">
+        <span class="tag">Shipping & ETA only for Buy</span>
+        <span class="tag">No address/ship for Rent & Gift</span>
+        <span class="tag">COD + ₹10 (Buy only)</span>
+        <span class="tag">Your Library</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Your Library</h2>
+      <div id="libraryOwned" class="grid"></div>
+      <div class="hr"></div>
+      <h2>Rented</h2>
+      <div id="libraryRented" class="grid"></div>
+      <p class="small muted">Purchased books are always available. Rentals are digital access until their due date.</p>
+    </div>
+
+    <div class="panel">
+      <div class="pillbar" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">All Books</h2>
+        <span class="small muted">Browse and buy directly</span>
+      </div>
+      <div id="homeBookGrid" class="cards"></div>
+    </div>
+  </section>
+
+  <!-- Catalog -->
+  <section id="catalogSection" class="hidden grid">
+    <div class="panel">
+      <div class="searchbar">
+        <input id="searchInput" placeholder="Search by title or author..." />
+        <button id="searchBtn" class="btn">Search</button>
+        <button id="clearSearchBtn" class="btn ghost">Clear</button>
+      </div>
+    </div>
+    <div id="bookGrid" class="cards"></div>
+  </section>
+
+  <!-- Book details modal -->
+  <div id="bookModal" class="modal" role="dialog" aria-modal="true">
+    <div class="content panel">
+      <div id="bmCover" class="cover-lg"></div>
+      <div class="pillbar">
+        <span id="bmAuthor" class="tag small"></span>
+        <span id="bmStock" class="tag small"></span>
+      </div>
+      <h1 id="bmTitle"></h1>
+      <p id="bmDesc" class="muted"></p>
+      <p class="price" id="bmPrice"></p>
+      <div class="row">
+        <button id="bmBuy" class="btn primary">Buy</button>
+        <button id="bmRent" class="btn">Rent</button>
+      </div>
+      <div style="margin-top:8px">
+        <button id="bmGift" class="btn">Gift</button>
+        <button id="bmAddCart" class="btn ghost">Add to Cart</button>
+      </div>
+      <div class="hr"></div>
+      <div class="right">
+        <button id="bmClose" class="btn bad">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout -->
+  <section id="checkoutSection" class="hidden grid two">
+    <div class="panel">
+      <h1>Checkout</h1>
+      <div id="ckItems"></div>
+      <div class="hr"></div>
+
+      <h2>Fulfilment</h2>
+      <div class="row">
+        <div>
+          <label>Mode</label>
+          <select id="ckMode">
+            <option value="buy">Buy</option>
+            <option value="rent">Rent</option>
+            <option value="gift">Gift</option>
+          </select>
+        </div>
+        <div id="rentBlock" class="hidden">
+          <label>Rental period</label>
+          <select id="ckRental">
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+          </select>
+        </div>
+        <div id="giftBlock" class="hidden">
+          <label>Recipient email</label>
+          <input id="ckGiftEmail" type="email" placeholder="friend@example.com" />
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div id="shippingWrap">
+        <h2>Shipping</h2>
+        <div class="row">
+          <div>
+            <label>Saved addresses</label>
+            <select id="ckSavedAddr"></select>
+          </div>
+          <div>
+            <label>Shipping speed</label>
+            <select id="ckSpeed">
+              <option value="standard">Standard (₹30)</option>
+              <option value="express">Express (₹70)</option>
+              <option value="priority">Priority (₹120)</option>
+            </select>
+          </div>
+        </div>
+        <details style="margin-top:8px">
+          <summary class="small">Add new address</summary>
+          <div class="grid" style="margin-top:8px" id="ckNewAddr">
+            <div class="row">
+              <div><label>Label</label><input data-addr="label" placeholder="Home" /></div>
+              <div><label>Recipient</label><input data-addr="recipient" /></div>
+            </div>
+            <div><label>Street</label><input data-addr="street" /></div>
+            <div class="row3">
+              <div><label>City</label><input data-addr="city" /></div>
+              <div><label>State</label><input data-addr="state" /></div>
+              <div><label>PIN</label><input data-addr="zip" /></div>
+            </div>
+            <button class="btn" id="btnSaveNewAddr" type="button">Save address</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Payment</h2>
+      <div class="row">
+        <div>
+          <label>Method</label>
+          <select id="ckPayMethod">
+            <option value="card">Card</option>
+            <option value="cod">Cash on Delivery (+₹10)</option>
+            <option value="upi">UPI</option>
+          </select>
+        </div>
+        <div id="cardSelectWrap">
+          <label>Saved card</label>
+          <select id="ckSavedCard"></select>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div id="ckSummary"></div>
+      <div class="right">
+        <button class="btn primary" id="btnPay">Pay now</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Order notes</h2>
+      <textarea id="ckNotes" rows="6" placeholder="Any special delivery notes?"></textarea>
+      <div class="hr"></div>
+      <h2>Policy</h2>
+      <p class="small muted">Buy = physical delivery with shipping & ETA. Rent and Gift are digital: no address, no shipping, no COD.</p>
+    </div>
+  </section>
+
+  <!-- Orders -->
+  <section id="ordersSection" class="hidden">
+    <div class="panel">
+      <h1>Order history</h1>
+      <div id="ordersList"></div>
+    </div>
+  </section>
+
+  <!-- Profile -->
+  <section id="profileSection" class="hidden grid two">
+    <div class="panel">
+      <h1>Profile</h1>
+      <div id="profileView"></div>
+      <div id="profileEdit" class="hidden">
+        <div class="row">
+          <div><label>Name</label><input id="peName"/></div>
+          <div><label>Phone</label><input id="pePhone"/></div>
+        </div>
+        <div><label>Bio</label><textarea id="peBio" rows="2"></textarea></div>
+
+        <div class="hr"></div>
+        <h2>Change profile picture</h2>
+        <div class="row">
+          <div>
+            <label>Upload image</label>
+            <input type="file" id="pePicFile" accept="image/*" />
+          </div>
+          <div>
+            <label>Or image URL</label>
+            <input type="url" id="pePicUrl" placeholder="https://..." />
+          </div>
+        </div>
+        <div class="mt-8">
+          <div class="avatar-lg" id="pePicPreview"></div>
+        </div>
+
+        <div class="pillbar mt-8">
+          <button id="peSave" class="btn primary">Save</button>
+          <button id="peCancel" class="btn ghost">Cancel</button>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <h2>Change password</h2>
+      <div class="grid">
+        <div class="row">
+          <div><label>Current password</label><input type="password" id="cpCurrent"></div>
+          <div><label>New password</label><input type="password" id="cpNew"></div>
+        </div>
+        <div class="row">
+          <div><label>Confirm new password</label><input type="password" id="cpConfirm"></div>
+          <div class="right"><button id="cpSave" class="btn">Update password</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h1>Addresses & Cards</h1>
+      <h2>Addresses</h2>
+      <div id="addrList" class="grid"></div>
+      <form id="formAddress" class="grid" style="margin-top:8px">
+        <div class="row">
+          <div><label>Label</label><input name="label" placeholder="Home / Office" required /></div>
+          <div><label>Recipient</label><input name="recipient" required /></div>
+        </div>
+        <div><label>Street</label><input name="street" required /></div>
+        <div class="row3">
+          <div><label>City</label><input name="city" required /></div>
+          <div><label>State</label><input name="state" required /></div>
+          <div><label>PIN</label><input name="zip" required /></div>
+        </div>
+        <button class="btn primary" type="submit">Add address</button>
+      </form>
+      <div class="hr"></div>
+      <h2>Payment methods</h2>
+      <div id="cardList" class="grid"></div>
+      <form id="formCard" class="grid" style="margin-top:8px">
+        <div class="row">
+          <div><label>Name on card</label><input name="name" required /></div>
+          <div><label>Card number</label><input name="number" inputmode="numeric" minlength="12" maxlength="19" required /></div>
+        </div>
+        <div class="row3">
+          <div><label>Expiry (MM/YY)</label><input name="expiry" placeholder="08/28" required /></div>
+          <div><label>CVV</label><input name="cvv" inputmode="numeric" minlength="3" maxlength="4" required /></div>
+          <div><label>Default</label><select name="default"><option value="yes">Yes</option><option value="no">No</option></select></div>
+        </div>
+        <button class="btn primary" type="submit">Add card</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<!-- Cart drawer -->
+<div id="cartDrawer" class="drawer" role="dialog" aria-modal="true">
+  <header>
+    <div class="pillbar" style="justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Your Cart</h2>
+      <button id="cartClose" class="btn bad small">Close</button>
+    </div>
+  </header>
+  <div class="body">
+    <div id="cartItems"></div>
+  </div>
+  <div class="foot">
+    <div class="row">
+      <div><span class="muted">Subtotal</span><div id="cartSubtotal" class="price">₹0.00</div></div>
+      <div class="right">
+        <button id="cartToCheckout" class="btn primary">Go to checkout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reader Modal -->
+<div id="readerModal" class="modal" role="dialog" aria-modal="true">
+  <div class="content panel">
+    <h2 id="readerTitle"></h2>
+    <div class="reader-page">
+      <p class="muted">Reader preview: This simulates in-app reading access.</p>
+      <p id="readerBody">Happy reading!</p>
+    </div>
+    <div class="hr"></div>
+    <div class="right"><button id="readerClose" class="btn bad">Close</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Scripts: API first, then your app logic -->
+<script src="api.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
