@@ -12,8 +12,7 @@
     "use strict";
 
     // ---------- Config ----------
-    const API_BASE_URL = window.API_BASE_URL || "http://127.0.0.1:5000/api";
-    const DEFAULT_TIMEOUT_MS = 12000;
+    const API_BASE_URL = "https://project-backend-zt54.onrender.com/api"; const DEFAULT_TIMEOUT_MS = 12000;
     const DEFAULT_RETRIES = 1;
     const isDev = typeof window !== "undefined" && (location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
