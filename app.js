@@ -131,6 +131,37 @@ on('#formLogin', 'submit', async (e) => {
 // Login/Logout header buttons
 const btnLoginEl = $('#btnLogin'); if (btnLoginEl) btnLoginEl.onclick = () => { setActiveNav('login'); showSection('loginSection'); };
 const btnLogoutEl = $('#btnLogout'); if (btnLogoutEl) btnLogoutEl.onclick = () => { saveToken(null); AUTH.user = null; toast('Logged out'); renderNav(); setActiveNav('login'); showSection('loginSection'); };
+// ADD THIS NEW BLOCK FOR GOOGLE SIGN-IN
+const googleSignInButtons = $$('.google-signin-btn');
+googleSignInButtons.forEach(button => {
+  button.addEventListener('click', async () => {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await firebase.auth().signInWithPopup(provider);
+      const firebaseToken = await result.user.getIdToken();
+
+      // Use the Firebase token to log into our own backend
+      const out = await Api.loginWithGoogle(firebaseToken);
+
+      // This is the same success logic from your manual login
+      saveToken(out.token);
+      AUTH.user = out.user;
+      toast('Signed in with Google');
+      await renderNav();
+
+      if (AUTH.user?.is_admin) {
+        setActiveNav('admin');
+        showSection('adminPanel');
+      } else {
+        setActiveNav('home');
+        showSection('homeSection');
+      }
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+      toast(error.message || 'An error occurred during sign-in.');
+    }
+  });
+});
 
 // Nav button handler (admin gets simplified nav)
 onAll('.navbtn', (b) => {

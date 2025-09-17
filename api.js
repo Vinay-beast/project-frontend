@@ -191,6 +191,16 @@
         return { token: data.token, user: mapUser(data.user) };
     }
 
+    // ADD THIS NEW FUNCTION RIGHT AFTER THE LOGIN FUNCTION
+    async function loginWithGoogle(token) {
+        // Sends the Firebase token to a new backend endpoint we will create
+        const data = await POST("/auth/google-login", { token });
+
+        // If successful, it saves our app's own JWT token
+        if (data?.token) setAuthToken(data.token);
+        return { token: data.token, user: mapUser(data.user) };
+    }
+
     // Profile
     async function getProfile(token) {
         const res = await maybeUseFallback(() => GET("/users/profile", { token }));
@@ -356,6 +366,7 @@
         setAuthToken, clearAuthToken,
         health,
         register, login,
+        loginWithGoogle,
         getProfile, updateProfile, changePassword, uploadProfilePic,
         listAddresses, addAddress, deleteAddress,
         listCards, addCard, setDefaultCard, deleteCard,

@@ -41,8 +41,6 @@
 </header>
 
 <main>
-  <!-- Auth -->
-  <!-- Login Section -->
   <section id="loginSection" class="hidden grid">
     <div class="panel">
       <h1>Sign in</h1>
@@ -53,12 +51,13 @@
           <button class="btn" type="submit">Login</button>
           <button id="switchToRegister" type="button" class="btn ghost">Create account</button>
         </div>
-      </form>
+      </form> <div class="divider">OR</div>
+      <button type="button" class="google-signin-btn">Sign in with Google</button>
+      
       <p class="small muted">Tip: Create an account if you don't have one.</p>
     </div>
   </section>
 
-  <!-- Register Section -->
   <section id="registerSection" class="hidden grid">
     <div class="panel">
       <h1>Create account</h1>
@@ -76,7 +75,9 @@
           <button class="btn primary" type="submit">Register</button>
           <button id="switchToLogin" type="button" class="btn ghost">Back to login</button>
         </div>
-      </form>
+      </form> <div class="divider">OR</div>
+      <button type="button" class="google-signin-btn">Sign in with Google</button>
+      
     </div>
   </section>
 
@@ -411,6 +412,23 @@
 
 <div id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+<script>
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCvMzzv81adkAQwBwDXYPUUO1yu3QrKy34",
+    authDomain: "booknook-3c7c4.firebaseapp.com",
+    projectId: "booknook-3c7c4",
+    storageBucket: "booknook-3c7c4.appspot.com",
+    messagingSenderId: "877893321467",
+    appId: "1:877893321467:web:c5c631d70a7b980850665e",
+    measurementId: "G-8NFBLJNF8P"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
 <!-- Scripts: API first, then your app logic -->
 <script src="api.js"></script>
 <script src="app.js"></script>
