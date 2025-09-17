@@ -250,7 +250,7 @@ on('#formAddress', 'submit', async (e) => {
     await Api.addAddress(AUTH.token, data);
     e.target.reset();
     toast('Address saved');
-    renderProfile(); // Re-render the profile to show the new address
+    renderProfile();
   } catch (err) {
     console.error('addAddress', err);
     toast(err?.message || 'Address save failed');
@@ -265,11 +265,50 @@ on('#formCard', 'submit', async (e) => {
     await Api.addCard(AUTH.token, payload);
     e.target.reset();
     toast('Card saved');
-    renderProfile(); // Re-render the profile to show the new card
+    renderProfile();
   } catch (err) {
     console.error('addCard', err);
     toast(err?.message || 'Card save failed');
   }
+});
+
+onAll('#addrList [data-del-addr]', (b) => {
+  b.onclick = async () => {
+    try {
+      await Api.deleteAddress(AUTH.token, b.dataset.delAddr);
+      toast('Address deleted');
+      renderProfile();
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || 'Delete failed');
+    }
+  };
+});
+
+onAll('#cardList [data-del-card]', (b) => {
+  b.onclick = async () => {
+    try {
+      await Api.deleteCard(AUTH.token, b.dataset.delCard);
+      toast('Deleted');
+      renderProfile();
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || 'Delete failed');
+    }
+  };
+});
+
+onAll('#cardList [data-make-default]', (b) => {
+  b.onclick = async () => {
+    try {
+      await Api.setDefaultCard(AUTH.token, b.dataset.makeDefault, true);
+      toast('Default updated');
+      renderProfile();
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || 'Update failed');
+    }
+  };
 });
 
 // ---------- Admin quick-login + logout ----------
