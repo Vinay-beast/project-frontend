@@ -242,6 +242,36 @@ renderNav();
 const sToReg = $('#switchToRegister'); if (sToReg) sToReg.addEventListener('click', () => { showSection('registerSection'); });
 const sToLog = $('#switchToLogin'); if (sToLog) sToLog.addEventListener('click', () => { showSection('loginSection'); });
 
+// ADD YOUR NEW CODE RIGHT AFTER THE BLOCK ABOVE
+on('#formAddress', 'submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  try {
+    await Api.addAddress(AUTH.token, data);
+    e.target.reset();
+    toast('Address saved');
+    renderProfile(); // Re-render the profile to show the new address
+  } catch (err) {
+    console.error('addAddress', err);
+    toast(err?.message || 'Address save failed');
+  }
+});
+
+on('#formCard', 'submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' };
+  try {
+    await Api.addCard(AUTH.token, payload);
+    e.target.reset();
+    toast('Card saved');
+    renderProfile(); // Re-render the profile to show the new card
+  } catch (err) {
+    console.error('addCard', err);
+    toast(err?.message || 'Card save failed');
+  }
+});
+
 // ---------- Admin quick-login + logout ----------
 const btnAdmin = $('#btnAdmin');
 if (btnAdmin) btnAdmin.addEventListener('click', async () => {
