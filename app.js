@@ -7,7 +7,6 @@
    - Per-user sequential numbering (1..n) for user orders UI
    - Header/nav behavior tightened: login hidden when signed in; header hidden for admin dashboard
    - Addresses/cards hidden on admin profile
-   - Duplication bug fixed: single delegated handlers for profile forms/lists
 */
 
 // ---------- Shortcuts & utilities ----------
@@ -243,85 +242,73 @@ renderNav();
 const sToReg = $('#switchToRegister'); if (sToReg) sToReg.addEventListener('click', () => { showSection('registerSection'); });
 const sToLog = $('#switchToLogin'); if (sToLog) sToLog.addEventListener('click', () => { showSection('loginSection'); });
 
-// --------- Single delegated handlers for profile forms & lists (prevents duplicate bindings) ----------
-document.addEventListener('submit', async (e) => {
-  // Add Address
-  if (e.target.matches('#formAddress')) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    try {
-      await Api.addAddress(AUTH.token, data);
-      e.target.reset();
-      toast('Address saved');
-      await renderProfile();
-    } catch (err) {
-      console.error('addAddress', err);
-      toast(err?.message || 'Address save failed');
-    }
-    return;
-  }
-
-  // Add Card
-  if (e.target.matches('#formCard')) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' };
-    try {
-      await Api.addCard(AUTH.token, payload);
-      e.target.reset();
-      toast('Card saved');
-      await renderProfile();
-    } catch (err) {
-      console.error('addCard', err);
-      toast(err?.message || 'Card save failed');
-    }
-    return;
+// ADD YOUR NEW CODE RIGHT AFTER THE BLOCK ABOVE
+on('#formAddress', 'submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  try {
+    await Api.addAddress(AUTH.token, data);
+    e.target.reset();
+    toast('Address saved');
+    renderProfile();
+  } catch (err) {
+    console.error('addAddress', err);
+    toast(err?.message || 'Address save failed');
   }
 });
 
-// Click delegation for buttons inside profile lists
-document.addEventListener('click', async (e) => {
-  // Delete address
-  if (e.target.matches('[data-del-addr]')) {
-    const id = e.target.dataset.delAddr;
+on('#formCard', 'submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' };
+  try {
+    await Api.addCard(AUTH.token, payload);
+    e.target.reset();
+    toast('Card saved');
+    renderProfile();
+  } catch (err) {
+    console.error('addCard', err);
+    toast(err?.message || 'Card save failed');
+  }
+});
+
+onAll('#addrList [data-del-addr]', (b) => {
+  b.onclick = async () => {
     try {
-      await Api.deleteAddress(AUTH.token, id);
+      await Api.deleteAddress(AUTH.token, b.dataset.delAddr);
       toast('Address deleted');
-      await renderProfile();
+      renderProfile();
     } catch (err) {
-      console.error('deleteAddress', err);
+      console.error(err);
       toast(err?.message || 'Delete failed');
     }
-    return;
-  }
+  };
+});
 
-  // Delete card
-  if (e.target.matches('[data-del-card]')) {
-    const id = e.target.dataset.delCard;
+onAll('#cardList [data-del-card]', (b) => {
+  b.onclick = async () => {
     try {
-      await Api.deleteCard(AUTH.token, id);
+      await Api.deleteCard(AUTH.token, b.dataset.delCard);
       toast('Deleted');
-      await renderProfile();
+      renderProfile();
     } catch (err) {
-      console.error('deleteCard', err);
+      console.error(err);
       toast(err?.message || 'Delete failed');
     }
-    return;
-  }
+  };
+});
 
-  // Make default card
-  if (e.target.matches('[data-make-default]')) {
-    const id = e.target.dataset.makeDefault;
+onAll('#cardList [data-make-default]', (b) => {
+  b.onclick = async () => {
     try {
-      await Api.setDefaultCard(AUTH.token, id, true);
+      await Api.setDefaultCard(AUTH.token, b.dataset.makeDefault, true);
       toast('Default updated');
-      await renderProfile();
+      renderProfile();
     } catch (err) {
-      console.error('setDefaultCard', err);
+      console.error(err);
       toast(err?.message || 'Update failed');
     }
-    return;
-  }
+  };
 });
 
 // ---------- Admin quick-login + logout ----------
@@ -775,8 +762,9 @@ async function renderProfile() {
             <button class="btn bad small" data-del-addr="${a.id}">Delete</button>
           </div>
         `).join('') || '<p class="small muted">No addresses yet</p>';
-        // note: deletion handler uses delegated listeners defined globally
+        onAll('#addrList [data-del-addr]', (b) => { b.onclick = async () => { try { await Api.deleteAddress(AUTH.token, b.dataset.delAddr); toast('Address deleted'); renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Delete failed'); } }; });
       }
+      on('#formAddress', 'submit', async (e) => { e.preventDefault(); const data = Object.fromEntries(new FormData(e.target).entries()); try { await Api.addAddress(AUTH.token, data); e.target.reset(); toast('Address saved'); renderProfile(); } catch (err) { console.error('addAddress', err); toast(err?.message || 'Address save failed'); } });
 
       const cards = await Api.listCards(AUTH.token).catch(() => []);
       const cardList = $('#cardList');
@@ -795,8 +783,10 @@ async function renderProfile() {
             </div>
           </div>
         `).join('') || '<p class="small muted">No cards yet</p>';
-        // note: make-default & delete use delegated listeners defined globally
+        onAll('#cardList [data-del-card]', (b) => { b.onclick = async () => { try { await Api.deleteCard(AUTH.token, b.dataset.delCard); toast('Deleted'); renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Delete failed'); } }; });
+        onAll('#cardList [data-make-default]', (b) => { b.onclick = async () => { try { await Api.setDefaultCard(AUTH.token, b.dataset.makeDefault, true); toast('Default updated'); renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Update failed'); } }; });
       }
+      on('#formCard', 'submit', async (e) => { e.preventDefault(); const data = Object.fromEntries(new FormData(e.target).entries()); const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' }; try { await Api.addCard(AUTH.token, payload); e.target.reset(); toast('Card saved'); renderProfile(); } catch (err) { console.error('addCard', err); toast(err?.message || 'Card save failed'); } });
     } else {
       // admin: show placeholder
       const addrList = $('#addrList'); if (addrList) addrList.innerHTML = '<p class="small muted">Admin — addresses hidden</p>';
