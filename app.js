@@ -1,18 +1,18 @@
 /* app.js — integrated with backend via Api (defensive + admin edit/delete)
-   Updated:
-   - Grand total shown in orders (user + admin)
-   - Shipping fee & COD fee shown in order details
-   - Payment method visible in admin orders
-   - Estimated delivery shown where available (admin + user)
-   - Per-user sequential numbering (1..n) for user orders UI
-   - Header/nav behavior tightened: login hidden when signed in; header hidden for admin dashboard
-   - Addresses/cards hidden on admin profile
+   Fixes:
+   - Prevent duplicated form/button handlers via delegation
+   - Guarded renderProfile to coalesce repeated calls
+   - Defensive dedupe of addresses/cards before rendering
+   - Debug logs for script load & profile renders
 */
+
+// Debug: detect duplicate script execution
+console.log('LOADED app.js', Date.now());
 
 // ---------- Shortcuts & utilities ----------
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
-const toast = (msg) => { const t = $('#toast'); if (!t) return; t.textContent = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2200); };
+const toast = (msg) => { const t = $('#toast'); if (!t) { console.log('TOAST:', msg); return; } t.textContent = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2200); };
 const money = (n) => '₹' + Number(n || 0).toFixed(2);
 const todayLocalDate = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const addDaysISO = (isoDate, days) => { const d = new Date(isoDate); d.setDate(d.getDate() + days); return d.toISOString(); };
@@ -23,21 +23,17 @@ function onAll(selector, handler) { const nodes = document.querySelectorAll(sele
 
 // ---------- Header / nav helper ----------
 function setHeaderMode(mode) {
-  // mode: "full" (normal user), "login" (show only admin button), "hidden" (hide header entirely)
   const header = document.querySelector('header');
   if (!header) return;
   if (mode === 'hidden') { header.style.display = 'none'; return; }
   header.style.display = '';
 
   const allButtons = ['.navbtn', '#btnReset', '#btnLogin', '#btnLogout', '#btnCart', '#navAvatar', '#navUser', '#cartCount', '#btnAdmin'];
-  // first hide all
   allButtons.forEach(sel => $$(sel).forEach(el => el.classList.add('hidden')));
 
   if (mode === 'login') {
-    // only admin login visible
     $$('#btnAdmin').forEach(el => el.classList.remove('hidden'));
-  } else { // full
-    // show standard header elements
+  } else {
     $$('.navbtn').forEach(el => el.classList.remove('hidden'));
     $$('#btnReset').forEach(el => el.classList.remove('hidden'));
     $$('#btnCart').forEach(el => el.classList.remove('hidden'));
@@ -46,7 +42,6 @@ function setHeaderMode(mode) {
     $$('#navAvatar').forEach(el => el.classList.remove('hidden'));
     $$('#navUser').forEach(el => el.classList.remove('hidden'));
     $$('#btnAdmin').forEach(el => el.classList.remove('hidden'));
-    // cart count stays visible as child element if present
     $$('#cartCount').forEach(el => el.classList.remove('hidden'));
   }
 }
@@ -77,7 +72,7 @@ function removeFromCart(bookId) { CART = CART.filter(c => String(c.bookId) !== S
 function updateCartQty(bookId, qty) { const it = CART.find(c => String(c.bookId) === String(bookId)); if (!it) return; it.qty = Math.max(1, Number(qty || 1)); renderCartIcon(); }
 
 // ---------- Admin edit state ----------
-let ADMIN_EDIT_BOOK_ID = null; // when set, adminBookForm will update that book
+let ADMIN_EDIT_BOOK_ID = null;
 
 // ---------- Navigation & sections ----------
 function setActiveNav(key) { $$('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.nav === key)); }
@@ -88,10 +83,6 @@ async function showSection(id) {
     const target = document.getElementById(id);
     if (target) target.classList.remove('hidden');
 
-    // header behaviour:
-    // login/register => only admin login visible
-    // admin logged in => hide header entirely for admin dashboard
-    // normal user => full header
     if (id === 'loginSection' || id === 'registerSection') {
       setHeaderMode('login');
     } else {
@@ -131,7 +122,8 @@ on('#formLogin', 'submit', async (e) => {
 // Login/Logout header buttons
 const btnLoginEl = $('#btnLogin'); if (btnLoginEl) btnLoginEl.onclick = () => { setActiveNav('login'); showSection('loginSection'); };
 const btnLogoutEl = $('#btnLogout'); if (btnLogoutEl) btnLogoutEl.onclick = () => { saveToken(null); AUTH.user = null; toast('Logged out'); renderNav(); setActiveNav('login'); showSection('loginSection'); };
-// ADD THIS NEW BLOCK FOR GOOGLE SIGN-IN
+
+// Google sign-in (if used)
 const googleSignInButtons = $$('.google-signin-btn');
 googleSignInButtons.forEach(button => {
   button.addEventListener('click', async () => {
@@ -139,23 +131,12 @@ googleSignInButtons.forEach(button => {
       const provider = new firebase.auth.GoogleAuthProvider();
       const result = await firebase.auth().signInWithPopup(provider);
       const firebaseToken = await result.user.getIdToken();
-
-      // Use the Firebase token to log into our own backend
       const out = await Api.loginWithGoogle(firebaseToken);
-
-      // This is the same success logic from your manual login
       saveToken(out.token);
       AUTH.user = out.user;
       toast('Signed in with Google');
       await renderNav();
-
-      if (AUTH.user?.is_admin) {
-        setActiveNav('admin');
-        showSection('adminPanel');
-      } else {
-        setActiveNav('home');
-        showSection('homeSection');
-      }
+      if (AUTH.user?.is_admin) { setActiveNav('admin'); showSection('adminPanel'); } else { setActiveNav('home'); showSection('homeSection'); }
     } catch (error) {
       console.error("Error during Google sign-in:", error);
       toast(error.message || 'An error occurred during sign-in.');
@@ -163,13 +144,12 @@ googleSignInButtons.forEach(button => {
   });
 });
 
-// Nav button handler (admin gets simplified nav)
+// Nav button handler
 onAll('.navbtn', (b) => {
   b.onclick = async () => {
     const key = b.dataset.nav;
     if (!AUTH.token && key !== 'login') { toast('Please login first'); setActiveNav('login'); showSection('loginSection'); return; }
     if (AUTH.user?.is_admin) {
-      // admin allowed navs: catalog + admin
       const allowed = ['catalog', 'admin'];
       if (!allowed.includes(key)) { toast('Admin: use Admin panel or Catalog'); setActiveNav('admin'); showSection('adminPanel'); return; }
     }
@@ -186,7 +166,6 @@ onAll('.navbtn', (b) => {
 async function renderNav() {
   try {
     if (AUTH.token && !AUTH.user) {
-      // try fetch profile; if it fails clear token
       try { AUTH.user = await Api.getProfile(AUTH.token); } catch (e) { console.warn('renderNav: profile fetch failed', e); saveToken(null); AUTH.user = null; }
     }
   } catch (e) {
@@ -201,7 +180,6 @@ async function renderNav() {
   const navCatalogBtn = $$('[data-nav="catalog"]')?.[0] || null;
 
   if (AUTH.user) {
-    // hide login button when signed in
     if (btnLogin) btnLogin.classList.add('hidden');
     if (btnLogout) btnLogout.classList.remove('hidden');
 
@@ -211,14 +189,12 @@ async function renderNav() {
     }
 
     if (AUTH.user.is_admin) {
-      // admin: hide normal nav links and hide header entirely
       if (navHomeBtn) navHomeBtn.classList.add('hidden');
       if (navOrdersBtn) navOrdersBtn.classList.add('hidden');
       if (navProfileBtn) navProfileBtn.classList.add('hidden');
       if (navCatalogBtn) navCatalogBtn?.classList.remove('hidden');
       setHeaderMode('hidden');
     } else {
-      // normal user
       if (navHomeBtn) navHomeBtn.classList.remove('hidden');
       if (navOrdersBtn) navOrdersBtn.classList.remove('hidden');
       if (navProfileBtn) navProfileBtn.classList.remove('hidden');
@@ -226,7 +202,6 @@ async function renderNav() {
       setHeaderMode('full');
     }
   } else {
-    // not logged in => minimal header
     if (btnLogin) btnLogin.classList.remove('hidden');
     if (btnLogout) btnLogout.classList.add('hidden');
     if (navUser) navUser.classList.add('hidden');
@@ -242,73 +217,89 @@ renderNav();
 const sToReg = $('#switchToRegister'); if (sToReg) sToReg.addEventListener('click', () => { showSection('registerSection'); });
 const sToLog = $('#switchToLogin'); if (sToLog) sToLog.addEventListener('click', () => { showSection('loginSection'); });
 
-// ADD YOUR NEW CODE RIGHT AFTER THE BLOCK ABOVE
-on('#formAddress', 'submit', async (e) => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  try {
-    await Api.addAddress(AUTH.token, data);
-    e.target.reset();
-    toast('Address saved');
-    renderProfile();
-  } catch (err) {
-    console.error('addAddress', err);
-    toast(err?.message || 'Address save failed');
-  }
-});
-
-on('#formCard', 'submit', async (e) => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' };
-  try {
-    await Api.addCard(AUTH.token, payload);
-    e.target.reset();
-    toast('Card saved');
-    renderProfile();
-  } catch (err) {
-    console.error('addCard', err);
-    toast(err?.message || 'Card save failed');
-  }
-});
-
-onAll('#addrList [data-del-addr]', (b) => {
-  b.onclick = async () => {
+// --------- Single delegated handlers for profile forms & lists (prevents duplicate bindings) ----------
+document.addEventListener('submit', async (e) => {
+  // Add Address
+  if (e.target.matches('#formAddress')) {
+    e.preventDefault();
+    console.log('DEBUG: delegated formAddress submit', Date.now());
+    const data = Object.fromEntries(new FormData(e.target).entries());
     try {
-      await Api.deleteAddress(AUTH.token, b.dataset.delAddr);
+      await Api.addAddress(AUTH.token, data);
+      e.target.reset();
+      toast('Address saved');
+      await renderProfile();
+    } catch (err) {
+      console.error('addAddress', err);
+      toast(err?.message || 'Address save failed');
+    }
+    return;
+  }
+
+  // Add Card
+  if (e.target.matches('#formCard')) {
+    e.preventDefault();
+    console.log('DEBUG: delegated formCard submit', Date.now());
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' };
+    try {
+      await Api.addCard(AUTH.token, payload);
+      e.target.reset();
+      toast('Card saved');
+      await renderProfile();
+    } catch (err) {
+      console.error('addCard', err);
+      toast(err?.message || 'Card save failed');
+    }
+    return;
+  }
+});
+
+document.addEventListener('click', async (e) => {
+  // Delete address
+  if (e.target.matches('[data-del-addr]')) {
+    const id = e.target.dataset.delAddr;
+    console.log('DEBUG: delegated delete address click', id, Date.now());
+    try {
+      await Api.deleteAddress(AUTH.token, id);
       toast('Address deleted');
-      renderProfile();
+      await renderProfile();
     } catch (err) {
-      console.error(err);
+      console.error('deleteAddress', err);
       toast(err?.message || 'Delete failed');
     }
-  };
-});
+    return;
+  }
 
-onAll('#cardList [data-del-card]', (b) => {
-  b.onclick = async () => {
+  // Delete card
+  if (e.target.matches('[data-del-card]')) {
+    const id = e.target.dataset.delCard;
+    console.log('DEBUG: delegated delete card click', id, Date.now());
     try {
-      await Api.deleteCard(AUTH.token, b.dataset.delCard);
+      await Api.deleteCard(AUTH.token, id);
       toast('Deleted');
-      renderProfile();
+      await renderProfile();
     } catch (err) {
-      console.error(err);
+      console.error('deleteCard', err);
       toast(err?.message || 'Delete failed');
     }
-  };
-});
+    return;
+  }
 
-onAll('#cardList [data-make-default]', (b) => {
-  b.onclick = async () => {
+  // Make default card
+  if (e.target.matches('[data-make-default]')) {
+    const id = e.target.dataset.makeDefault;
+    console.log('DEBUG: delegated make-default click', id, Date.now());
     try {
-      await Api.setDefaultCard(AUTH.token, b.dataset.makeDefault, true);
+      await Api.setDefaultCard(AUTH.token, id, true);
       toast('Default updated');
-      renderProfile();
+      await renderProfile();
     } catch (err) {
-      console.error(err);
+      console.error('setDefaultCard', err);
       toast(err?.message || 'Update failed');
     }
-  };
+    return;
+  }
 });
 
 // ---------- Admin quick-login + logout ----------
@@ -320,7 +311,6 @@ if (btnAdmin) btnAdmin.addEventListener('click', async () => {
     const out = await Api.login({ email, password });
     if (!out.user || !out.user.is_admin) { toast('Not an admin account'); Api.clearAuthToken(); return; }
     saveToken(out.token); AUTH.user = out.user; toast('Admin signed in'); await renderNav();
-    // hide header for admin dashboard
     setHeaderMode('hidden');
     setActiveNav('admin');
     showSection('adminPanel');
@@ -554,7 +544,6 @@ async function renderCheckout(presetMode = null) {
 
     let lastSummary = computeSummary(); refreshBlocks();
 
-    // safe Pay button handler - prevents duplicate submits
     const btnPay = $('#btnPay');
     if (btnPay) {
       btnPay.onclick = async () => {
@@ -591,18 +580,14 @@ async function renderOrders() {
     let orders = [];
     try { orders = await Api.getOrders(AUTH.token); } catch (err) { console.error(err); $('#ordersList') && ($('#ordersList').innerHTML = '<p class="muted">Failed to load orders.</p>'); return; }
 
-    // normalize to array and dedupe
     orders = Array.isArray(orders) ? orders : (orders.orders || []);
     orders = dedupeOrders(orders);
 
     if (!orders.length) { $('#ordersList') && ($('#ordersList').innerHTML = '<p class="muted">No orders yet.</p>'); return; }
 
-    // Shipping fee map (fallback if backend doesn't provide shipping_fee)
     const shipMap = { standard: 30, express: 70, priority: 120 };
 
-    // Show per-user sequence numbers 1..n
     const out = orders.map((o, idx) => {
-      // compute shipping fee display (prefer server-provided fields if present)
       const shipFee = (o.shipping_fee != null) ? Number(o.shipping_fee) : (o.shipping_speed ? (shipMap[o.shipping_speed] || 0) : 0);
       const codFee = (o.cod_fee != null) ? Number(o.cod_fee) : ((o.payment_method === 'cod') ? 10 : 0);
       const items = (o.items || []);
@@ -610,9 +595,8 @@ async function renderOrders() {
       const itemsTotal = items.reduce((s, it) => s + ((Number(it.price || 0)) * (Number(it.quantity || 0))), 0);
       const grandTotal = itemsTotal + shipFee + codFee;
 
-      const userSeq = idx + 1; // per-user numbering
+      const userSeq = idx + 1;
 
-      // determine ETA: prefer o.delivery_eta, then compute from shipping_speed + created_at
       let etaText = '-';
       if (o.delivery_eta) etaText = new Date(o.delivery_eta).toLocaleDateString();
       else if (o.shipping_speed && o.created_at) {
@@ -694,8 +678,20 @@ async function renderLibrary() {
 function openReader(title) { $('#readerTitle') && ($('#readerTitle').textContent = title); $('#readerBody') && ($('#readerBody').textContent = 'This is a sample reader.'); $('#readerModal')?.classList.add('show'); }
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
 
-// ---------- Profile ----------
+// ---------- Profile (guarded) ----------
+let __renderProfileLock = false;
+let __renderProfileQueued = false;
+
 async function renderProfile() {
+  console.log('DEBUG: renderProfile called', Date.now());
+
+  if (__renderProfileLock) {
+    __renderProfileQueued = true;
+    console.log('DEBUG: renderProfile queued because lock is active');
+    return;
+  }
+
+  __renderProfileLock = true;
   try {
     if (!AUTH.token) { setActiveNav('login'); showSection('loginSection'); return; }
     const u = await Api.getProfile(AUTH.token).catch(() => null);
@@ -746,9 +742,13 @@ async function renderProfile() {
       try { await Api.changePassword(AUTH.token, { current: cur, next: nxt }); toast('Password updated'); $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpConfirm').value = ''; } catch (e) { console.error('changePassword', e); toast(e?.message || 'Password update failed'); }
     };
 
-    // Addresses & Cards: only for normal users (admin profile hides these)
     if (!AUTH.user?.is_admin) {
-      const addrs = await Api.listAddresses(AUTH.token).catch(() => []);
+      let addrs = await Api.listAddresses(AUTH.token).catch(() => []);
+      let cards = await Api.listCards(AUTH.token).catch(() => []);
+      const dedupeById = (arr) => { const m = new Map(); (arr || []).forEach(a => { if (a && a.id != null && !m.has(String(a.id))) m.set(String(a.id), a); }); return Array.from(m.values()); };
+      addrs = dedupeById(addrs);
+      cards = dedupeById(cards);
+
       const addrList = $('#addrList');
       if (addrList) {
         addrList.innerHTML = (addrs || []).map(a => `
@@ -762,11 +762,8 @@ async function renderProfile() {
             <button class="btn bad small" data-del-addr="${a.id}">Delete</button>
           </div>
         `).join('') || '<p class="small muted">No addresses yet</p>';
-        onAll('#addrList [data-del-addr]', (b) => { b.onclick = async () => { try { await Api.deleteAddress(AUTH.token, b.dataset.delAddr); toast('Address deleted'); renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Delete failed'); } }; });
       }
-      on('#formAddress', 'submit', async (e) => { e.preventDefault(); const data = Object.fromEntries(new FormData(e.target).entries()); try { await Api.addAddress(AUTH.token, data); e.target.reset(); toast('Address saved'); renderProfile(); } catch (err) { console.error('addAddress', err); toast(err?.message || 'Address save failed'); } });
 
-      const cards = await Api.listCards(AUTH.token).catch(() => []);
       const cardList = $('#cardList');
       if (cardList) {
         cardList.innerHTML = (cards || []).map(c => `
@@ -783,17 +780,21 @@ async function renderProfile() {
             </div>
           </div>
         `).join('') || '<p class="small muted">No cards yet</p>';
-        onAll('#cardList [data-del-card]', (b) => { b.onclick = async () => { try { await Api.deleteCard(AUTH.token, b.dataset.delCard); toast('Deleted'); renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Delete failed'); } }; });
-        onAll('#cardList [data-make-default]', (b) => { b.onclick = async () => { try { await Api.setDefaultCard(AUTH.token, b.dataset.makeDefault, true); toast('Default updated'); renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Update failed'); } }; });
       }
-      on('#formCard', 'submit', async (e) => { e.preventDefault(); const data = Object.fromEntries(new FormData(e.target).entries()); const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' }; try { await Api.addCard(AUTH.token, payload); e.target.reset(); toast('Card saved'); renderProfile(); } catch (err) { console.error('addCard', err); toast(err?.message || 'Card save failed'); } });
     } else {
-      // admin: show placeholder
       const addrList = $('#addrList'); if (addrList) addrList.innerHTML = '<p class="small muted">Admin — addresses hidden</p>';
       const cardList = $('#cardList'); if (cardList) cardList.innerHTML = '<p class="small muted">Admin — cards hidden</p>';
     }
 
   } catch (e) { console.error('renderProfile overall error', e); toast('Failed to render profile'); }
+  finally {
+    __renderProfileLock = false;
+    if (__renderProfileQueued) {
+      __renderProfileQueued = false;
+      console.log('DEBUG: running queued renderProfile');
+      setTimeout(() => renderProfile(), 10);
+    }
+  }
 }
 
 // ---------- Admin panel renderer ----------
@@ -806,7 +807,6 @@ async function renderAdminPanel(view = 'orders') {
     const main = document.getElementById('adminMain'); if (!main) return;
     main.innerHTML = '<p class="muted">Loading...</p>';
 
-    // top tab visibility wiring (defensive)
     const tabOrders = $('#adminViewOrders'), tabUsers = $('#adminViewUsers'), tabBooks = $('#adminViewBooks');
     if (tabOrders) tabOrders.classList.toggle('active', view === 'orders');
     if (tabUsers) tabUsers.classList.toggle('active', view === 'users');
@@ -816,14 +816,12 @@ async function renderAdminPanel(view = 'orders') {
       const raw = await Api.getAdminOrders(AUTH.token).catch(() => []);
       const orders = dedupeOrders(Array.isArray(raw) ? raw : (raw.orders || []));
       if (!orders.length) { main.innerHTML = '<p class="muted">No orders found.</p>'; return; }
-      // Admin view: full server ID, payment method, shipping & cod fees, grand total, ETA
       main.innerHTML = orders.map(o => {
         const items = (o.items || []).map(i => `<li>${i.title || i.book_id} — ${i.quantity} × ${money(i.price || 0)}</li>`).join('');
         const itemsTotal = (o.items || []).reduce((s, it) => s + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
         const shipFee = (o.shipping_fee != null) ? Number(o.shipping_fee) : (o.shipping_speed ? ({ standard: 30, express: 70, priority: 120 }[o.shipping_speed] || 0) : 0);
         const codFee = (o.cod_fee != null) ? Number(o.cod_fee) : ((o.payment_method === 'cod') ? 10 : 0);
         const grandTotal = itemsTotal + shipFee + codFee;
-        // ETA handling
         let etaText = o.delivery_eta ? new Date(o.delivery_eta).toLocaleDateString() : (o.shipping_speed && o.created_at ? new Date(addDaysISO(o.created_at, ({ standard: 5, express: 3, priority: 1 }[o.shipping_speed] || 5))).toLocaleDateString() : (o.shipping_speed ? 'Depends on ' + o.shipping_speed : '-'));
         return `<div class="card">
           <div class="pillbar">
@@ -854,7 +852,6 @@ async function renderAdminPanel(view = 'orders') {
         </div>
       `).join('') : '<p class="muted">No users</p>';
     } else if (view === 'books') {
-      // list books with edit/delete and stock quick-edit
       const booksResp = await Api.getBooks(1, 1000).catch(() => ({ books: [] }));
       const books = (booksResp.books || booksResp || []);
       const list = books.map(b => `
@@ -875,7 +872,6 @@ async function renderAdminPanel(view = 'orders') {
       `).join('');
       main.innerHTML = list || '<p class="muted">No books</p>';
 
-      // attach handlers
       onAll('.admin-book-card [data-edit-book]', (el) => {
         el.onclick = async () => {
           const id = el.dataset.editBook;
@@ -904,7 +900,6 @@ async function renderAdminPanel(view = 'orders') {
 
       onAll('.admin-book-card [data-view-catalog]', (el) => { el.onclick = () => { const id = el.dataset.viewCatalog; setActiveNav('catalog'); showSection('catalogSection'); renderCatalog().then(() => { openBookModal(id); }).catch(() => { }); }; });
 
-      // inline stock updates
       onAll('.admin-stock-input', (inp) => {
         inp.onchange = async () => {
           const id = inp.dataset.bookId; const newStock = Number(inp.value || 0);
@@ -964,3 +959,5 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
     }, 60000);
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
+
+
