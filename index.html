@@ -248,6 +248,13 @@
               <div><label>State</label><input data-addr="state" /></div>
               <div><label>PIN</label><input data-addr="zip" /></div>
             </div>
+
+            <!-- PHONE for new address in checkout -->
+            <div><label>Phone</label><input data-addr="phone" placeholder="+91 9876543210" /></div>
+            <div style="margin-top:8px">
+              <label><input type="checkbox" id="ckSavePhoneOnNewAddr" /> Save this phone with the address</label>
+            </div>
+
             <button class="btn" id="btnSaveNewAddr" type="button">Save address</button>
           </div>
         </details>
@@ -268,6 +275,14 @@
           <label>Saved card</label>
           <select id="ckSavedCard"></select>
         </div>
+      </div>
+
+      <!-- Phone field (always present; prefilled from address/profile) -->
+      <div class="hr"></div>
+      <div id="ckPhoneWrap" style="margin-bottom:8px">
+        <label for="ckPhone">Phone</label>
+        <input id="ckPhone" type="tel" placeholder="+91 9876543210" />
+        <div style="margin-top:6px"><label><input id="ckSavePhone" type="checkbox" /> Save this phone to selected address</label></div>
       </div>
 
       <div class="hr"></div>
@@ -355,6 +370,7 @@
           <div><label>State</label><input name="state" required /></div>
           <div><label>PIN</label><input name="zip" required /></div>
         </div>
+        <div><label>Phone</label><input name="phone" placeholder="+91 9876543210" /></div>
         <button class="btn primary" type="submit">Add address</button>
       </form>
       <div class="hr"></div>

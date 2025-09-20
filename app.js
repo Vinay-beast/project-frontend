@@ -1,15 +1,8 @@
-/* app.js — integrated with backend via Api (defensive + admin edit/delete)
-   Fixes:
-   - Prevent duplicated form/button handlers via delegation
-   - Guarded renderProfile to coalesce repeated calls
-   - Defensive dedupe of addresses/cards before rendering
-   - Debug logs for script load & profile renders
+/* app.js — integrated with backend via Api
+   Changes: checkout phone handling, save phone to address, show phone in orders
 */
 
-// Debug: detect duplicate script execution
-console.log('LOADED app.js', Date.now());
-
-// ---------- Shortcuts & utilities ----------
+/* ---------- Shortcuts & utilities ---------- */
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const toast = (msg) => { const t = $('#toast'); if (!t) { console.log('TOAST:', msg); return; } t.textContent = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2200); };
@@ -17,11 +10,11 @@ const money = (n) => '₹' + Number(n || 0).toFixed(2);
 const todayLocalDate = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const addDaysISO = (isoDate, days) => { const d = new Date(isoDate); d.setDate(d.getDate() + days); return d.toISOString(); };
 
-// Safe event helpers
+/* Safe event helpers */
 function on(selector, event, handler) { const el = document.querySelector(selector); if (!el) return false; el.addEventListener(event, handler); return true; }
 function onAll(selector, handler) { const nodes = document.querySelectorAll(selector); if (!nodes || !nodes.length) return false; nodes.forEach(n => handler(n)); return true; }
 
-// ---------- Header / nav helper ----------
+/* ---------- Header / nav helper ---------- */
 function setHeaderMode(mode) {
   const header = document.querySelector('header');
   if (!header) return;
@@ -46,7 +39,7 @@ function setHeaderMode(mode) {
   }
 }
 
-// ---------- Auth token handling ----------
+/* ---------- Auth token handling ---------- */
 let AUTH = { token: localStorage.getItem('token') || null, user: null };
 try { if (AUTH.token) Api.setAuthToken(AUTH.token); else Api.clearAuthToken(); } catch (e) { console.warn('Api not ready', e); }
 
@@ -56,14 +49,14 @@ function saveToken(t) {
   else { localStorage.removeItem('token'); Api.clearAuthToken(); }
 }
 
-// ---------- Quick helpers ----------
+/* ---------- Quick helpers ---------- */
 function dedupeOrders(arr) {
   const seen = new Map();
   (arr || []).forEach(o => { if (o && o.id != null && !seen.has(o.id)) seen.set(o.id, o); });
   return Array.from(seen.values());
 }
 
-// ---------- Cart ----------
+/* ---------- Cart ---------- */
 let CART = [];
 function cartCount() { return CART.reduce((s, i) => s + (i.qty || 0), 0); }
 function renderCartIcon() { const el = $('#cartCount'); if (el) el.textContent = cartCount(); }
@@ -71,10 +64,10 @@ function addToCart(bookId, qty = 1) { const it = CART.find(c => String(c.bookId)
 function removeFromCart(bookId) { CART = CART.filter(c => String(c.bookId) !== String(bookId)); renderCartIcon(); }
 function updateCartQty(bookId, qty) { const it = CART.find(c => String(c.bookId) === String(bookId)); if (!it) return; it.qty = Math.max(1, Number(qty || 1)); renderCartIcon(); }
 
-// ---------- Admin edit state ----------
+/* ---------- Admin edit state ---------- */
 let ADMIN_EDIT_BOOK_ID = null;
 
-// ---------- Navigation & sections ----------
+/* ---------- Navigation & sections ---------- */
 function setActiveNav(key) { $$('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.nav === key)); }
 async function showSection(id) {
   try {
@@ -98,7 +91,7 @@ async function showSection(id) {
   } catch (err) { console.error('showSection error:', err); toast('UI error — see console'); }
 }
 
-// ---------- Auth flows ----------
+/* ---------- Auth flows (login/register) ---------- */
 on('#formRegister', 'submit', async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());
@@ -119,11 +112,11 @@ on('#formLogin', 'submit', async (e) => {
   } catch (err) { console.error(err); toast(err?.message || 'Login failed'); }
 });
 
-// Login/Logout header buttons
+/* Login/Logout header buttons */
 const btnLoginEl = $('#btnLogin'); if (btnLoginEl) btnLoginEl.onclick = () => { setActiveNav('login'); showSection('loginSection'); };
 const btnLogoutEl = $('#btnLogout'); if (btnLogoutEl) btnLogoutEl.onclick = () => { saveToken(null); AUTH.user = null; toast('Logged out'); renderNav(); setActiveNav('login'); showSection('loginSection'); };
 
-// Google sign-in (if used)
+/* Google sign-in buttons (if present) */
 const googleSignInButtons = $$('.google-signin-btn');
 googleSignInButtons.forEach(button => {
   button.addEventListener('click', async () => {
@@ -144,7 +137,7 @@ googleSignInButtons.forEach(button => {
   });
 });
 
-// Nav button handler
+/* nav button handler */
 onAll('.navbtn', (b) => {
   b.onclick = async () => {
     const key = b.dataset.nav;
@@ -162,7 +155,7 @@ onAll('.navbtn', (b) => {
   };
 });
 
-// ---------- Nav rendering ----------
+/* ---------- Nav rendering ---------- */
 async function renderNav() {
   try {
     if (AUTH.token && !AUTH.user) {
@@ -213,33 +206,26 @@ async function renderNav() {
 }
 renderNav();
 
-// Switch between login and register
+/* Switch login/register */
 const sToReg = $('#switchToRegister'); if (sToReg) sToReg.addEventListener('click', () => { showSection('registerSection'); });
 const sToLog = $('#switchToLogin'); if (sToLog) sToLog.addEventListener('click', () => { showSection('loginSection'); });
 
-// --------- Single delegated handlers for profile forms & lists (prevents duplicate bindings) ----------
+/* Delegated profile/address/card handlers (prevents duplicates) */
 document.addEventListener('submit', async (e) => {
-  // Add Address
   if (e.target.matches('#formAddress')) {
     e.preventDefault();
-    console.log('DEBUG: delegated formAddress submit', Date.now());
     const data = Object.fromEntries(new FormData(e.target).entries());
     try {
       await Api.addAddress(AUTH.token, data);
       e.target.reset();
       toast('Address saved');
       await renderProfile();
-    } catch (err) {
-      console.error('addAddress', err);
-      toast(err?.message || 'Address save failed');
-    }
+    } catch (err) { console.error('addAddress', err); toast(err?.message || 'Address save failed'); }
     return;
   }
 
-  // Add Card
   if (e.target.matches('#formCard')) {
     e.preventDefault();
-    console.log('DEBUG: delegated formCard submit', Date.now());
     const data = Object.fromEntries(new FormData(e.target).entries());
     const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' };
     try {
@@ -247,62 +233,31 @@ document.addEventListener('submit', async (e) => {
       e.target.reset();
       toast('Card saved');
       await renderProfile();
-    } catch (err) {
-      console.error('addCard', err);
-      toast(err?.message || 'Card save failed');
-    }
+    } catch (err) { console.error('addCard', err); toast(err?.message || 'Card save failed'); }
     return;
   }
 });
 
+/* Delegated clicks for address/card actions */
 document.addEventListener('click', async (e) => {
-  // Delete address
   if (e.target.matches('[data-del-addr]')) {
     const id = e.target.dataset.delAddr;
-    console.log('DEBUG: delegated delete address click', id, Date.now());
-    try {
-      await Api.deleteAddress(AUTH.token, id);
-      toast('Address deleted');
-      await renderProfile();
-    } catch (err) {
-      console.error('deleteAddress', err);
-      toast(err?.message || 'Delete failed');
-    }
+    try { await Api.deleteAddress(AUTH.token, id); toast('Address deleted'); await renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Delete failed'); }
     return;
   }
-
-  // Delete card
   if (e.target.matches('[data-del-card]')) {
     const id = e.target.dataset.delCard;
-    console.log('DEBUG: delegated delete card click', id, Date.now());
-    try {
-      await Api.deleteCard(AUTH.token, id);
-      toast('Deleted');
-      await renderProfile();
-    } catch (err) {
-      console.error('deleteCard', err);
-      toast(err?.message || 'Delete failed');
-    }
+    try { await Api.deleteCard(AUTH.token, id); toast('Deleted'); await renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Delete failed'); }
     return;
   }
-
-  // Make default card
   if (e.target.matches('[data-make-default]')) {
     const id = e.target.dataset.makeDefault;
-    console.log('DEBUG: delegated make-default click', id, Date.now());
-    try {
-      await Api.setDefaultCard(AUTH.token, id, true);
-      toast('Default updated');
-      await renderProfile();
-    } catch (err) {
-      console.error('setDefaultCard', err);
-      toast(err?.message || 'Update failed');
-    }
+    try { await Api.setDefaultCard(AUTH.token, id, true); toast('Default updated'); await renderProfile(); } catch (err) { console.error(err); toast(err?.message || 'Update failed'); }
     return;
   }
 });
 
-// ---------- Admin quick-login + logout ----------
+/* Admin quick-login + logout */
 const btnAdmin = $('#btnAdmin');
 if (btnAdmin) btnAdmin.addEventListener('click', async () => {
   const email = prompt('Admin email:'); if (!email) return;
@@ -318,10 +273,10 @@ if (btnAdmin) btnAdmin.addEventListener('click', async () => {
 });
 const adminLogoutBtn = $('#adminLogout'); if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => { saveToken(null); AUTH.user = null; Api.clearAuthToken(); toast('Admin logged out'); renderNav(); showSection('loginSection'); });
 
-// ---------- Health check ----------
+/* Health check */
 (async () => { try { if (Api && Api.health) await Api.health(); } catch (e) { /* ignore */ } })();
 
-// ---------- Books (Home grid + Catalog + Modal) ----------
+/* ---------- Books (Home grid + Catalog + Modal) ---------- */
 let BOOK_CACHE = new Map();
 async function fetchBooks(page = 1, limit = 50) { const res = await Api.getBooks(page, limit); (res.books || []).forEach(b => BOOK_CACHE.set(String(b.id), b)); return res.books || []; }
 async function fetchBookById(id) { if (BOOK_CACHE.has(String(id))) return BOOK_CACHE.get(String(id)); const b = await Api.getBookById(id); BOOK_CACHE.set(String(b.id), b); return b; }
@@ -410,7 +365,7 @@ on('#bmBuy', 'click', () => { if (currentModalBook) { startCheckout([{ bookId: c
 on('#bmRent', 'click', () => { if (currentModalBook) { startCheckout([{ bookId: currentModalBook.id, qty: 1 }], 'rent'); $('#bookModal')?.classList.remove('show'); } });
 on('#bmGift', 'click', () => { if (currentModalBook) { startCheckout([{ bookId: currentModalBook.id, qty: 1 }], 'gift'); $('#bookModal')?.classList.remove('show'); } });
 
-// ---------- Cart drawer ----------
+/* ---------- Cart drawer ---------- */
 const drawer = $('#cartDrawer');
 if (drawer) {
   const btnCart = $('#btnCart'); if (btnCart) btnCart.onclick = async () => { await renderCartDrawer(); drawer.classList.add('open'); };
@@ -454,7 +409,7 @@ async function renderCartDrawer() {
   } catch (e) { console.error('renderCartDrawer', e); toast('Failed to render cart'); }
 }
 
-// ---------- Checkout ----------
+/* ---------- Checkout ---------- */
 function startCheckout(items, mode) { CART = items.slice(); renderCartIcon(); setActiveNav('checkout'); showSection('checkoutSection'); renderCheckout(mode); }
 
 async function renderCheckout(presetMode = null) {
@@ -492,20 +447,50 @@ async function renderCheckout(presetMode = null) {
     };
     ckMode.onchange = refreshBlocks;
 
+    // Load addresses (for checkout) and fill select
     const addrSel = $('#ckSavedAddr'); let addresses = [];
     try { addresses = await Api.listAddresses(AUTH.token); } catch { addresses = []; }
     if (addrSel) {
-      if (addresses.length) addrSel.innerHTML = addresses.filter(a => a.id).map(a => `<option value="${a.id}">${a.label} — ${a.city} (${a.zip})</option>`).join('');
-      else { addrSel.innerHTML = '<option value="">No saved addresses</option>'; addrSel.value = ''; }
+      if (addresses.length) {
+        addrSel.innerHTML = addresses.filter(a => a.id).map(a => `<option value="${a.id}">${a.label} — ${a.city} (${a.zip})${a.phone ? ' • ' + a.phone : ''}</option>`).join('');
+      } else { addrSel.innerHTML = '<option value="">No saved addresses</option>'; addrSel.value = ''; }
     }
 
+    // Prefill phone logic
+    async function prefillPhoneForSelectedAddress() {
+      const phoneInput = $('#ckPhone');
+      if (!phoneInput) return;
+      // Try selected address first
+      const selId = $('#ckSavedAddr')?.value;
+      if (selId) {
+        const found = (addresses || []).find(x => String(x.id) === String(selId));
+        if (found && found.phone) { phoneInput.value = found.phone; return; }
+      }
+      // Fallback to profile phone
+      phoneInput.value = AUTH.user?.phone || '';
+    }
+    if ($('#ckSavedAddr')) {
+      $('#ckSavedAddr').onchange = () => prefillPhoneForSelectedAddress();
+    }
+    prefillPhoneForSelectedAddress();
+
+    // Save new address button (now includes phone)
     const btnSaveNewAddr = $('#btnSaveNewAddr'); if (btnSaveNewAddr) btnSaveNewAddr.onclick = async () => {
       const inputs = $$('#ckNewAddr [data-addr]'); const data = {}; inputs.forEach(i => data[i.dataset.addr] = i.value.trim());
       if (!data.label || !data.recipient || !data.street || !data.city || !data.state || !data.zip) { toast('Fill all address fields'); return; }
-      try { await Api.addAddress(AUTH.token, data); toast('Address saved'); inputs.forEach(i => (i.value = '')); await renderCheckout($('#ckMode')?.value); }
+      try {
+        // include phone if provided
+        if ($('#ckNewAddr [data-addr="phone"]')) data.phone = ($('#ckNewAddr [data-addr="phone"]').value || '').trim();
+        await Api.addAddress(AUTH.token, data);
+        toast('Address saved');
+        inputs.forEach(i => (i.value = ''));
+        // refresh checkout UI (addresses will include phone)
+        await renderCheckout($('#ckMode')?.value);
+      }
       catch (err) { console.error('save addr', err); toast(err?.message || 'Address save failed'); }
     };
 
+    // Cards
     const cardSel = $('#ckSavedCard'); const cards = await Api.listCards(AUTH.token).catch(() => []);
     if (cardSel) cardSel.innerHTML = (cards || []).map(c => `<option value="${c.id}">${c.card_name || c.name} •••• ${String(c.card_number || '').slice(-4)}</option>`).join('') || '<option value="">No saved cards</option>';
 
@@ -544,6 +529,7 @@ async function renderCheckout(presetMode = null) {
 
     let lastSummary = computeSummary(); refreshBlocks();
 
+    // Pay button logic
     const btnPay = $('#btnPay');
     if (btnPay) {
       btnPay.onclick = async () => {
@@ -553,15 +539,48 @@ async function renderCheckout(presetMode = null) {
         let shipping_address_id = null, shipping_speed = null;
         if (lastSummary2.needsShipping) { shipping_address_id = $('#ckSavedAddr')?.value || null; if (!shipping_address_id) { toast('Select or add an address'); return; } shipping_speed = lastSummary2.shipKey; }
         let saved_card_id = null; if (lastSummary2.payMethod === 'card') { saved_card_id = $('#ckSavedCard')?.value || null; if (!saved_card_id) { toast('Add a card in Profile or choose another method'); return; } }
-        const orderData = { mode, items: CART.map(ci => ({ book_id: ci.bookId, quantity: ci.qty })), shipping_address_id, shipping_speed, payment_method: lastSummary2.payMethod, saved_card_id, notes: $('#ckNotes')?.value || null, rental_duration: mode === 'rent' ? lastSummary2.rentalDays : null, gift_email: mode === 'gift' ? ($('#ckGiftEmail')?.value || '').trim() : null, shipping_fee: lastSummary2.shipFee, cod_fee: lastSummary2.codFee, delivery_eta: lastSummary2.deliveryEtaISO || null };
+
+        // Phone handling
+        const phone = ($('#ckPhone')?.value || '').trim();
+        if (!phone) { toast('Enter a phone number for the order'); return; }
+        const savePhoneToAddr = !!($('#ckSavePhone')?.checked);
+        // If user just saved a "new address", the ckNewAddr save button should be used instead — otherwise if the address exists we can update it when savePhoneToAddr=true.
+
+        const orderData = {
+          mode,
+          items: CART.map(ci => ({ book_id: ci.bookId, quantity: ci.qty })),
+          shipping_address_id,
+          shipping_speed,
+          payment_method: lastSummary2.payMethod,
+          saved_card_id,
+          notes: $('#ckNotes')?.value || null,
+          rental_duration: mode === 'rent' ? lastSummary2.rentalDays : null,
+          gift_email: mode === 'gift' ? ($('#ckGiftEmail')?.value || '').trim() : null,
+          shipping_fee: lastSummary2.shipFee,
+          cod_fee: lastSummary2.codFee,
+          delivery_eta: lastSummary2.deliveryEtaISO || null,
+          phone, // snapshot phone
+          save_phone_to_address: savePhoneToAddr // optional request to save phone to address
+        };
 
         if (btnPay.disabled) return;
         btnPay.disabled = true;
         try {
-          await Api.placeOrder(AUTH.token, orderData);
+          // Place order on server (server is authoritative about totals)
+          const resp = await Api.placeOrder(AUTH.token, orderData);
+          // If server returns the created order object, prefer that for display
+          const createdOrder = resp && (resp.order || resp.data || null);
           toast('Order placed');
+
           CART = []; renderCartIcon();
-          setActiveNav('orders'); showSection('ordersSection'); await renderOrders();
+          setActiveNav('orders'); showSection('ordersSection');
+
+          // Refresh orders to show server data
+          await renderOrders();
+
+          // if server returns a fresh profile (e.g. updated address with phone) refresh nav/profile
+          await renderNav();
+
         } catch (err) {
           console.error('placeOrder', err);
           toast(err?.message || 'Order failed');
@@ -570,16 +589,18 @@ async function renderCheckout(presetMode = null) {
         }
       };
     }
+
   } catch (e) { console.error('renderCheckout', e); toast('Checkout failed (see console)'); }
 }
 
-// ---------- Orders ----------
+/* ---------- Orders ---------- */
 async function renderOrders() {
   try {
     if (!AUTH.token) { setActiveNav('login'); showSection('loginSection'); return; }
     let orders = [];
-    try { orders = await Api.getOrders(AUTH.token); } catch (err) { console.error(err); $('#ordersList') && ($('#ordersList').innerHTML = '<p class="muted">Failed to load orders.</p>'); return; }
+    try { const out = await Api.getOrders(AUTH.token); orders = out || []; } catch (err) { console.error(err); $('#ordersList') && ($('#ordersList').innerHTML = '<p class="muted">Failed to load orders.</p>'); return; }
 
+    // normalize to array and dedupe
     orders = Array.isArray(orders) ? orders : (orders.orders || []);
     orders = dedupeOrders(orders);
 
@@ -596,7 +617,6 @@ async function renderOrders() {
       const grandTotal = itemsTotal + shipFee + codFee;
 
       const userSeq = idx + 1;
-
       let etaText = '-';
       if (o.delivery_eta) etaText = new Date(o.delivery_eta).toLocaleDateString();
       else if (o.shipping_speed && o.created_at) {
@@ -631,6 +651,7 @@ async function renderOrders() {
           </table>
           ${(shipFee > 0 || o.shipping_speed) ? `<p class="small muted">Estimated delivery: ${etaText}</p>` : ''}
           <p class="small muted">Payment: ${o.payment_method || 'unknown'}</p>
+          <p class="small muted">Phone: ${o.phone || (o.shipping_address && o.shipping_address.phone) || '-'}</p>
         </div>
       `;
     }).join('');
@@ -638,7 +659,7 @@ async function renderOrders() {
   } catch (e) { console.error('renderOrders', e); toast('Failed to render orders'); }
 }
 
-// ---------- Library ----------
+/* ---------- Library ---------- */
 async function renderLibrary() {
   try {
     if (!AUTH.token) { setActiveNav('login'); showSection('loginSection'); return; }
@@ -678,20 +699,8 @@ async function renderLibrary() {
 function openReader(title) { $('#readerTitle') && ($('#readerTitle').textContent = title); $('#readerBody') && ($('#readerBody').textContent = 'This is a sample reader.'); $('#readerModal')?.classList.add('show'); }
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
 
-// ---------- Profile (guarded) ----------
-let __renderProfileLock = false;
-let __renderProfileQueued = false;
-
+/* ---------- Profile ---------- */
 async function renderProfile() {
-  console.log('DEBUG: renderProfile called', Date.now());
-
-  if (__renderProfileLock) {
-    __renderProfileQueued = true;
-    console.log('DEBUG: renderProfile queued because lock is active');
-    return;
-  }
-
-  __renderProfileLock = true;
   try {
     if (!AUTH.token) { setActiveNav('login'); showSection('loginSection'); return; }
     const u = await Api.getProfile(AUTH.token).catch(() => null);
@@ -742,13 +751,9 @@ async function renderProfile() {
       try { await Api.changePassword(AUTH.token, { current: cur, next: nxt }); toast('Password updated'); $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpConfirm').value = ''; } catch (e) { console.error('changePassword', e); toast(e?.message || 'Password update failed'); }
     };
 
+    // Addresses & Cards: only for normal users (admin profile hides these)
     if (!AUTH.user?.is_admin) {
-      let addrs = await Api.listAddresses(AUTH.token).catch(() => []);
-      let cards = await Api.listCards(AUTH.token).catch(() => []);
-      const dedupeById = (arr) => { const m = new Map(); (arr || []).forEach(a => { if (a && a.id != null && !m.has(String(a.id))) m.set(String(a.id), a); }); return Array.from(m.values()); };
-      addrs = dedupeById(addrs);
-      cards = dedupeById(cards);
-
+      const addrs = await Api.listAddresses(AUTH.token).catch(() => []);
       const addrList = $('#addrList');
       if (addrList) {
         addrList.innerHTML = (addrs || []).map(a => `
@@ -759,11 +764,13 @@ async function renderProfile() {
               <span class="tag small">PIN ${a.zip}</span>
             </div>
             <p>${a.recipient} — ${a.street}</p>
+            <p class="small muted">Phone: ${a.phone || '-'}</p>
             <button class="btn bad small" data-del-addr="${a.id}">Delete</button>
           </div>
         `).join('') || '<p class="small muted">No addresses yet</p>';
       }
 
+      const cards = await Api.listCards(AUTH.token).catch(() => []);
       const cardList = $('#cardList');
       if (cardList) {
         cardList.innerHTML = (cards || []).map(c => `
@@ -787,17 +794,9 @@ async function renderProfile() {
     }
 
   } catch (e) { console.error('renderProfile overall error', e); toast('Failed to render profile'); }
-  finally {
-    __renderProfileLock = false;
-    if (__renderProfileQueued) {
-      __renderProfileQueued = false;
-      console.log('DEBUG: running queued renderProfile');
-      setTimeout(() => renderProfile(), 10);
-    }
-  }
 }
 
-// ---------- Admin panel renderer ----------
+/* ---------- Admin panel renderer (unchanged) ---------- */
 async function renderAdminPanel(view = 'orders') {
   try {
     if (!AUTH.token) { toast('Login as admin'); setActiveNav('login'); showSection('loginSection'); return; }
@@ -832,6 +831,7 @@ async function renderAdminPanel(view = 'orders') {
             ${o.status ? `<span class="tag small">${o.status}</span>` : ''}
           </div>
           <h3>Order #${o.id} — ${o.user_name || o.user_email || ''}</h3>
+          <p class="small muted">Phone: ${o.phone || (o.shipping_address && o.shipping_address.phone) || '-'}</p>
           <p class="small muted">Items:</p><ul>${items}</ul>
           <div class="hr"></div>
           <p class="small muted">Items total: ${money(itemsTotal)}</p>
@@ -913,7 +913,7 @@ on('#adminViewOrders', 'click', () => renderAdminPanel('orders'));
 on('#adminViewUsers', 'click', () => renderAdminPanel('users'));
 on('#adminViewBooks', 'click', () => renderAdminPanel('books'));
 
-// Admin Add/Edit Book handler
+/* Admin Add/Edit Book handler */
 on('#adminBookForm', 'submit', async (e) => {
   e.preventDefault();
   if (!AUTH.token || !AUTH.user?.is_admin) { toast('Admin only'); return; }
@@ -940,10 +940,10 @@ on('#adminBookForm', 'submit', async (e) => {
 });
 on('#adminBookCancel', (ev) => { ev.preventDefault(); ADMIN_EDIT_BOOK_ID = null; $('#adminBookForm')?.reset(); toast('Canceled edit'); });
 
-// ---------- Reset demo ----------
+/* ---------- Reset demo ---------- */
 on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { toast('Client reset. You are still logged in.'); } else { setActiveNav('login'); showSection('loginSection'); toast('Client reset.'); } });
 
-// ---------- Init ----------
+/* ---------- Init ---------- */
 (async function init() {
   try {
     if (AUTH.token) {
@@ -959,5 +959,3 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
     }, 60000);
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
-
-
