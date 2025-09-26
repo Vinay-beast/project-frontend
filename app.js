@@ -452,29 +452,11 @@ async function renderCheckout(presetMode = null) {
     try { addresses = await Api.listAddresses(AUTH.token); } catch { addresses = []; }
     if (addrSel) {
       if (addresses.length) {
-        addrSel.innerHTML = addresses.filter(a => a.id).map(a => `<option value="${a.id}">${a.label} — ${a.city} (${a.zip})${a.phone ? ' • ' + a.phone : ''}</option>`).join('');
+        addrSel.innerHTML = addresses.filter(a => a.id).map(a => `<option value="${a.id}">${a.label} — ${a.city} (${a.zip})</option>`).join('');
       } else { addrSel.innerHTML = '<option value="">No saved addresses</option>'; addrSel.value = ''; }
     }
 
-    // Prefill phone logic
-    async function prefillPhoneForSelectedAddress() {
-      const phoneInput = $('#ckPhone');
-      if (!phoneInput) return;
-      // Try selected address first
-      const selId = $('#ckSavedAddr')?.value;
-      if (selId) {
-        const found = (addresses || []).find(x => String(x.id) === String(selId));
-        if (found && found.phone) { phoneInput.value = found.phone; return; }
-      }
-      // Fallback to profile phone
-      phoneInput.value = AUTH.user?.phone || '';
-    }
-    if ($('#ckSavedAddr')) {
-      $('#ckSavedAddr').onchange = () => prefillPhoneForSelectedAddress();
-    }
-    prefillPhoneForSelectedAddress();
-
-    // Save new address button (now includes phone)
+    // Save new address button
     const btnSaveNewAddr = $('#btnSaveNewAddr'); if (btnSaveNewAddr) btnSaveNewAddr.onclick = async () => {
       const inputs = $$('#ckNewAddr [data-addr]'); const data = {}; inputs.forEach(i => data[i.dataset.addr] = i.value.trim());
       if (!data.label || !data.recipient || !data.street || !data.city || !data.state || !data.zip) { toast('Fill all address fields'); return; }
