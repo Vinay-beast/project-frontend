@@ -1,7 +1,11 @@
 /* ========================================================================
-   api.js — BookNook API Client (robust edition) — PHONE-FIXED
-   - Ensures address phone is sent on create and returned on list/profile
-   - Keeps the same robust request helpers and shape mappers you had
+   api.js — BookNook API Client (robust edition)
+   - Centralizes all HTTP calls
+   - Timeouts, retries, error normalization
+   - JWT token handling (set/clear), header helpers
+   - Pagination helpers, search helpers
+   - Optional local fallback (for offline dev)
+   - Response mappers to keep frontend shape stable
    ======================================================================== */
 
 (function attachApi() {
@@ -89,7 +93,7 @@
     // Multipart upload helper
     async function apiUpload(endpoint, formData, { token = null, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
-        const headers = { ...authHeader(token) }; // no Content-Type so browser sets boundary
+        const headers = { ...authHeader(token) }; // no Content-Type
         try {
             const res = await fetchWithTimeout(url, { method: "POST", headers, body: formData }, timeoutMs);
             let data = null;
@@ -129,25 +133,8 @@
         const total = raw?.total ?? books.length;
         return { books, page, total };
     }
-
-    // Address mapper — IMPORTANT: includes `phone`
-    function mapAddress(raw) {
-        if (!raw) return null;
-        return {
-            id: raw.id ?? raw.address_id ?? raw.addr_id ?? raw.uuid ?? null,
-            label: raw.label ?? raw.tag ?? raw.title ?? "Address",
-            recipient: raw.recipient ?? raw.name ?? raw.contact_name ?? "",
-            street: raw.street ?? raw.line1 ?? raw.address1 ?? "",
-            city: raw.city ?? "",
-            state: raw.state ?? raw.region ?? "",
-            zip: raw.zip ?? raw.postal_code ?? raw.pincode ?? raw.pin ?? "",
-            phone: raw.phone ?? raw.contact ?? raw.mobile ?? null
-        };
-    }
-
     function mapUser(raw) {
         if (!raw) return null;
-        const addrsRaw = Array.isArray(raw.addresses) ? raw.addresses : [];
         return {
             id: raw.id,
             name: raw.name,
@@ -155,7 +142,7 @@
             phone: raw.phone || "",
             bio: raw.bio || "",
             profile_pic: raw.profile_pic || "",
-            addresses: addrsRaw.map(mapAddress),
+            addresses: Array.isArray(raw.addresses) ? raw.addresses : [],
             cards: Array.isArray(raw.cards) ? raw.cards : [],
             is_admin: !!raw.is_admin
         };
@@ -164,9 +151,9 @@
     // ---------- Local Fallback (dev only) ----------
     const localFallback = {
         catalog: [
-            { id: 'b1', title: 'The Pragmatic Programmer', author: 'Andrew Hunt', price: 599, stock: 8, description: 'Timeless tips for pragmatic software development.', image_url: '' },
-            { id: 'b2', title: 'Clean Code', author: 'Robert C. Martin', price: 549, stock: 12, description: 'Principles of writing clean, maintainable software.', image_url: '' },
-            { id: 'b3', title: 'Atomic Habits', author: 'James Clear', price: 399, stock: 20, description: 'A framework for improving every day.', image_url: '' }
+            { id: 'b1', title: 'The Pragmatic Programmer', author: 'Andrew Hunt', price: 599, stock: 8, description: 'Timeless tips for pragmatic software development.', image_url: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=640&auto=format&fit=crop' },
+            { id: 'b2', title: 'Clean Code', author: 'Robert C. Martin', price: 549, stock: 12, description: 'Principles of writing clean, maintainable software.', image_url: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=640&auto=format&fit=crop' },
+            { id: 'b3', title: 'Atomic Habits', author: 'James Clear', price: 399, stock: 20, description: 'A framework for improving every day.', image_url: 'https://images.unsplash.com/photo-1544937950-fa07a98d237f?q=80&w=640&auto=format&fit=crop' }
         ],
         user: null,
         token: null,
@@ -204,9 +191,12 @@
         return { token: data.token, user: mapUser(data.user) };
     }
 
-    // Google login helper
+    // ADD THIS NEW FUNCTION RIGHT AFTER THE LOGIN FUNCTION
     async function loginWithGoogle(token) {
+        // Sends the Firebase token to a new backend endpoint we will create
         const data = await POST("/auth/google-login", { token });
+
+        // If successful, it saves our app's own JWT token
         if (data?.token) setAuthToken(data.token);
         return { token: data.token, user: mapUser(data.user) };
     }
@@ -219,7 +209,7 @@
                 localFallback.user = {
                     id: "u1", name: "Demo User", email: "demo@example.com",
                     phone: "", bio: "", profile_pic: "",
-                    addresses: localFallback.addresses.map(mapAddress), cards: localFallback.cards
+                    addresses: localFallback.addresses, cards: localFallback.cards
                 };
             }
             return localFallback.user;
@@ -238,7 +228,7 @@
         return { message: data?.message || "password_updated" };
     }
 
-    // Upload profile picture
+    // ✅ Unified uploadProfilePic (tries /picture then /pic)
     async function uploadProfilePic(token, file) {
         const fd = new FormData();
         fd.append("avatar", file);
@@ -258,36 +248,23 @@
 
     // Addresses
     async function listAddresses(token) {
-        // Endpoint expected to return an array of addresses or { addresses: [...] }
-        const res = await maybeUseFallback(() => GET("/users/addresses", { token }));
-        if (res === "__FALLBACK__") return localFallback.addresses.map(mapAddress);
+        const res = await GET("/users/addresses", { token });
         const arr = Array.isArray(res) ? res : (Array.isArray(res?.addresses) ? res.addresses : []);
-        return arr.map(mapAddress).filter(a => a && a.id);
+        return arr.map(a => ({
+            id: a.id ?? a.address_id ?? a.addr_id ?? a.uuid ?? a._id ?? null,
+            label: a.label ?? a.tag ?? a.title ?? "Address",
+            recipient: a.recipient ?? a.name ?? a.contact_name ?? "",
+            street: a.street ?? a.line1 ?? a.address1 ?? "",
+            city: a.city ?? "", state: a.state ?? a.region ?? "",
+            zip: a.zip ?? a.postal_code ?? a.pincode ?? a.pin ?? ""
+        })).filter(a => a.id);
     }
-
     async function addAddress(token, addr) {
-        // Build a clean body and explicitly include phone
-        const body = {
-            label: addr.label || "Address",
-            recipient: addr.recipient || "",
-            street: addr.street || "",
-            city: addr.city || "",
-            state: addr.state || "",
-            zip: addr.zip || "",
-            phone: addr.phone || null
-        };
+        const body = { label: addr.label, recipient: addr.recipient, street: addr.street, city: addr.city, state: addr.state, zip: addr.zip };
         const data = await POST("/users/addresses", body, { token });
-        // Many backends return { address: {...} } or the created row directly
         const a = data?.address || data || {};
-        // map and return normalized object
-        const mapped = mapAddress(a);
-        // if backend only returned id, produce small object
-        if (!mapped || !mapped.id) {
-            return { id: a.id ?? a.address_id ?? a.addr_id ?? data?.id ?? null };
-        }
-        return mapped;
+        return { id: a.id ?? a.address_id ?? a.addr_id ?? data?.id ?? null };
     }
-
     async function deleteAddress(token, id) {
         const data = await DEL(`/users/addresses/${id}`, { token });
         return { message: data?.message || "deleted" };
