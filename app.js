@@ -461,8 +461,6 @@ async function renderCheckout(presetMode = null) {
       const inputs = $$('#ckNewAddr [data-addr]'); const data = {}; inputs.forEach(i => data[i.dataset.addr] = i.value.trim());
       if (!data.label || !data.recipient || !data.street || !data.city || !data.state || !data.zip) { toast('Fill all address fields'); return; }
       try {
-        // include phone if provided
-        if ($('#ckNewAddr [data-addr="phone"]')) data.phone = ($('#ckNewAddr [data-addr="phone"]').value || '').trim();
         await Api.addAddress(AUTH.token, data);
         toast('Address saved');
         inputs.forEach(i => (i.value = ''));
@@ -522,12 +520,6 @@ async function renderCheckout(presetMode = null) {
         if (lastSummary2.needsShipping) { shipping_address_id = $('#ckSavedAddr')?.value || null; if (!shipping_address_id) { toast('Select or add an address'); return; } shipping_speed = lastSummary2.shipKey; }
         let saved_card_id = null; if (lastSummary2.payMethod === 'card') { saved_card_id = $('#ckSavedCard')?.value || null; if (!saved_card_id) { toast('Add a card in Profile or choose another method'); return; } }
 
-        // Phone handling
-        const phone = ($('#ckPhone')?.value || '').trim();
-        if (!phone) { toast('Enter a phone number for the order'); return; }
-        const savePhoneToAddr = !!($('#ckSavePhone')?.checked);
-        // If user just saved a "new address", the ckNewAddr save button should be used instead — otherwise if the address exists we can update it when savePhoneToAddr=true.
-
         const orderData = {
           mode,
           items: CART.map(ci => ({ book_id: ci.bookId, quantity: ci.qty })),
@@ -540,9 +532,7 @@ async function renderCheckout(presetMode = null) {
           gift_email: mode === 'gift' ? ($('#ckGiftEmail')?.value || '').trim() : null,
           shipping_fee: lastSummary2.shipFee,
           cod_fee: lastSummary2.codFee,
-          delivery_eta: lastSummary2.deliveryEtaISO || null,
-          phone, // snapshot phone
-          save_phone_to_address: savePhoneToAddr // optional request to save phone to address
+          delivery_eta: lastSummary2.deliveryEtaISO || null
         };
 
         if (btnPay.disabled) return;
