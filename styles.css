@@ -22,43 +22,9 @@ body {
     margin: 0;
     height: 100%;
     color: var(--text);
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Roboto', Arial, sans-serif;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     background: var(--bg);
-    scroll-behavior: smooth;
-    overflow-x: hidden;
-}
-
-/* Add page load animation */
-body {
-    animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Section transitions */
-section {
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-section.hidden {
-    opacity: 0;
-    transform: translateY(30px) scale(0.98);
-    pointer-events: none;
-}
-
-section:not(.hidden) {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    /* keep body solid to avoid gradient tiling while scrolling */
 }
 
 /* FIX: single gradient overlay that does NOT repeat while scrolling */
@@ -69,47 +35,15 @@ html::before {
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(1200px 800px at 10% 20%, rgba(34, 211, 238, .12), transparent 65%),
-        radial-gradient(1000px 600px at 90% 10%, rgba(167, 139, 250, .15), transparent 70%),
-        radial-gradient(800px 400px at 60% 80%, rgba(34, 197, 94, .08), transparent 60%),
+        radial-gradient(1200px 600px at 200px -100px, rgba(34, 211, 238, .15), transparent 70%),
+        radial-gradient(1200px 600px at 100% 0, rgba(167, 139, 250, .15), transparent 70%),
         var(--bg);
-    background-attachment: fixed, fixed, fixed, fixed;
-    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
-    background-size: auto, auto, auto, auto;
-    box-shadow: inset 0 0 200px rgba(0, 0, 0, .4);
-}
-
-/* Add floating particles effect */
-html::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image:
-        radial-gradient(2px 2px at 20px 30px, rgba(34, 211, 238, .3), transparent),
-        radial-gradient(2px 2px at 40px 70px, rgba(167, 139, 250, .2), transparent),
-        radial-gradient(1px 1px at 90px 40px, rgba(34, 211, 238, .4), transparent),
-        radial-gradient(1px 1px at 130px 80px, rgba(167, 139, 250, .3), transparent),
-        radial-gradient(2px 2px at 160px 30px, rgba(34, 197, 94, .2), transparent);
-    background-repeat: repeat;
-    background-size: 200px 100px;
-    animation: sparkle 20s linear infinite;
-    opacity: 0.6;
-}
-
-@keyframes sparkle {
-
-    0%,
-    100% {
-        transform: translateY(0px) rotate(0deg);
-        opacity: 0.6;
-    }
-
-    50% {
-        transform: translateY(-10px) rotate(180deg);
-        opacity: 0.8;
-    }
+    /* lock the layers to the viewport so they don't repeat while scrolling */
+    background-attachment: fixed, fixed, fixed;
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-size: auto, auto, auto;
+    /* slight vignette for depth */
+    box-shadow: inset 0 0 120px rgba(0, 0, 0, .35);
 }
 
 a {
@@ -177,74 +111,33 @@ header {
 
 /* ---------- Buttons ---------- */
 .btn {
-    padding: 12px 20px;
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: linear-gradient(145deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .04));
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
     color: var(--text);
-    border-radius: 12px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-weight: 500;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(4px);
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, .2),
-        inset 0 1px 0 rgba(255, 255, 255, .1);
-}
-
-.btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .2), transparent);
-    transition: left 0.5s;
-}
-
-.btn:hover::before {
-    left: 100%;
+    transition: .15s ease;
 }
 
 .btn:hover {
-    transform: translateY(-2px) scale(1.02);
-    border-color: rgba(255, 255, 255, .3);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, .3),
-        0 4px 16px rgba(34, 211, 238, .2),
-        inset 0 1px 0 rgba(255, 255, 255, .15);
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, .2);
 }
 
 .btn:active {
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
 }
 
 .btn.primary {
-    background: linear-gradient(145deg,
-            rgba(34, 211, 238, .3),
-            rgba(167, 139, 250, .25));
-    border-color: rgba(34, 211, 238, .5);
-    box-shadow:
-        0 8px 32px rgba(34, 211, 238, .25),
-        inset 0 1px 0 rgba(255, 255, 255, .2);
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .3);
-}
-
-.btn.primary:hover {
-    box-shadow:
-        0 12px 48px rgba(34, 211, 238, .35),
-        0 4px 16px rgba(167, 139, 250, .3),
-        inset 0 1px 0 rgba(255, 255, 255, .3);
+    background: linear-gradient(180deg, rgba(34, 211, 238, .22), rgba(167, 139, 250, .18));
+    border-color: rgba(34, 211, 238, .35);
+    box-shadow: 0 8px 24px rgba(34, 211, 238, .15);
 }
 
 .btn.bad {
-    background: linear-gradient(145deg,
-            rgba(248, 113, 113, .3),
-            rgba(248, 113, 113, .15));
-    border-color: rgba(248, 113, 113, .5);
+    background: linear-gradient(180deg, rgba(248, 113, 113, .25), rgba(248, 113, 113, .1));
+    border-color: rgba(248, 113, 113, .35);
 }
 
 .btn.ghost {
@@ -481,71 +374,36 @@ header {
 /* ---------- Layout ---------- */
 main {
     max-width: 1200px;
-    margin: 32px auto;
-    padding: 0 24px 120px;
-    position: relative;
+    margin: 18px auto;
+    padding: 0 16px 100px;
 }
 
 .grid {
     display: grid;
-    gap: 24px;
+    gap: 16px;
 }
 
 .two {
     grid-template-columns: 1.1fr .9fr;
-    gap: 32px;
 }
 
 .three {
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 24px;
 }
 
 .cards {
     display: grid;
-    gap: 20px;
+    gap: 14px;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
 .panel,
 .card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
-    border: 1px solid rgba(255, 255, 255, .12);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow:
-        0 20px 60px rgba(2, 6, 23, .35),
-        0 4px 16px rgba(34, 211, 238, .08),
-        inset 0 1px 0 rgba(255, 255, 255, .1);
-    backdrop-filter: blur(8px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, .3), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow:
-        0 32px 80px rgba(2, 6, 23, .45),
-        0 8px 32px rgba(34, 211, 238, .15),
-        inset 0 1px 0 rgba(255, 255, 255, .15);
-    border-color: rgba(34, 211, 238, .2);
-}
-
-.card:hover::before {
-    opacity: 1;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 12px 40px rgba(2, 6, 23, .25);
 }
 
 /* Admin extras */
@@ -587,31 +445,13 @@ main {
 
 
 h1 {
-    font-size: 32px;
-    margin: 16px 0 12px;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--text), rgba(34, 211, 238, .8));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
-    text-shadow: 0 4px 16px rgba(34, 211, 238, .2);
+    font-size: 26px;
+    margin: 10px 0 6px;
 }
 
 h2 {
-    font-size: 24px;
-    margin: 14px 0 10px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.3px;
-}
-
-h3 {
-    font-size: 20px;
-    margin: 12px 0 8px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.2px;
+    font-size: 18px;
+    margin: 10px 0 8px;
 }
 
 label {
@@ -624,55 +464,25 @@ input,
 select,
 textarea {
     width: 100%;
-    padding: 14px 16px;
+    padding: 10px 12px;
     color: var(--text);
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: linear-gradient(145deg,
-            rgba(255, 255, 255, .08),
-            rgba(255, 255, 255, .04));
-    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .04);
+    border-radius: 10px;
     outline: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
     -webkit-appearance: none;
     appearance: none;
-    backdrop-filter: blur(4px);
-    box-shadow:
-        inset 0 2px 4px rgba(0, 0, 0, .1),
-        0 1px 3px rgba(0, 0, 0, .1);
-    font-size: 14px;
-    font-weight: 400;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-    border-color: rgba(34, 211, 238, .6);
-    background: linear-gradient(145deg,
-            rgba(34, 211, 238, .1),
-            rgba(255, 255, 255, .06));
-    box-shadow:
-        0 0 0 3px rgba(34, 211, 238, .1),
-        inset 0 2px 4px rgba(0, 0, 0, .05),
-        0 4px 16px rgba(34, 211, 238, .15);
-    transform: scale(1.01);
-}
-
-input:hover,
-select:hover,
-textarea:hover {
-    border-color: rgba(255, 255, 255, .25);
-    background: linear-gradient(145deg,
-            rgba(255, 255, 255, .1),
-            rgba(255, 255, 255, .06));
+    /* ensure dark theming sticks */
 }
 
 /* FIX: dark themed dropdowns with custom arrow (Shipping Speed, Payment Method, etc.) */
 select {
     background:
-        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .04)),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2322d3ee'><path d='M4 6l4 4 4-4'/></svg>") no-repeat right 16px center;
-    padding-right: 44px;
-    cursor: pointer;
+        linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02)),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e5e7eb'><path d='M4 6l4 4 4-4'/></svg>") no-repeat right 10px center;
+    padding-right: 34px;
+    /* room for arrow */
 }
 
 select:hover {
