@@ -139,7 +139,7 @@ on('#formLogin', 'submit', async (e) => {
 
 // Login/Logout header buttons
 const btnLoginEl = $('#btnLogin'); if (btnLoginEl) btnLoginEl.onclick = () => { setActiveNav('login'); showSection('loginSection'); };
-const btnLogoutEl = $('#btnLogout'); if (btnLogoutEl) btnLogoutEl.onclick = () => { saveToken(null); AUTH.user = null; toast('Logged out'); renderNav(); setActiveNav('login'); showSection('loginSection'); };
+const btnLogoutEl = $('#btnLogout'); if (btnLogoutEl) btnLogoutEl.onclick = () => { saveToken(null); AUTH.user = null; localStorage.removeItem('isAdminMode'); toast('Logged out'); renderNav(); setActiveNav('login'); showSection('loginSection'); };
 
 // Google sign-in (if used)
 const googleSignInButtons = $$('.google-signin-btn');
@@ -395,6 +395,10 @@ if (formAdminLogin) formAdminLogin.addEventListener('submit', async (e) => {
 
     saveToken(out.token);
     AUTH.user = out.user;
+
+    // Store admin state in localStorage
+    localStorage.setItem('isAdminMode', 'true');
+
     toast('Admin signed in successfully!');
     await renderNav();
 
@@ -414,7 +418,7 @@ if (formAdminLogin) formAdminLogin.addEventListener('submit', async (e) => {
     toast(err?.message || 'Admin login failed');
   }
 });
-const adminLogoutBtn = $('#adminLogout'); if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => { saveToken(null); AUTH.user = null; Api.clearAuthToken(); toast('Admin logged out'); renderNav(); showSection('loginSection'); });
+const adminLogoutBtn = $('#adminLogout'); if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => { saveToken(null); AUTH.user = null; Api.clearAuthToken(); localStorage.removeItem('isAdminMode'); toast('Admin logged out'); renderNav(); showSection('loginSection'); });
 
 // ---------- Health check ----------
 (async () => { try { if (Api && Api.health) await Api.health(); } catch (e) { /* ignore */ } })();
@@ -1791,17 +1795,50 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
 // ---------- Init ----------
 (async function init() {
   try {
+    // Check if we were in admin mode before refresh
+    const wasAdminMode = localStorage.getItem('isAdminMode') === 'true';
+
     if (AUTH.token) {
       try {
         AUTH.user = await Api.getProfile(AUTH.token);
-        await renderNav(); // Call renderNav after setting AUTH.user
-        setActiveNav(AUTH.user?.is_admin ? 'admin' : 'home');
-        showSection(AUTH.user?.is_admin ? 'adminPanel' : 'homeSection');
+
+        // Double-check admin status and localStorage consistency
+        const isActualAdmin = AUTH.user?.is_admin;
+
+        if (isActualAdmin && wasAdminMode) {
+          // Valid admin session, restore admin view
+          localStorage.setItem('isAdminMode', 'true');
+          setHeaderMode('hidden');
+          setActiveNav('admin');
+          showSection('adminPanel');
+        } else if (isActualAdmin && !wasAdminMode) {
+          // Admin user but wasn't in admin mode, show normal view
+          localStorage.removeItem('isAdminMode');
+          setHeaderMode('full');
+          setActiveNav('home');
+          showSection('homeSection');
+        } else {
+          // Not admin or invalid session
+          localStorage.removeItem('isAdminMode');
+          setHeaderMode('full');
+          setActiveNav('home');
+          showSection('homeSection');
+        }
+
+        await renderNav(); // Call renderNav after everything is set up
       }
-      catch (e) { console.warn('init profile failed', e); saveToken(null); setActiveNav('login'); showSection('loginSection'); }
+      catch (e) {
+        console.warn('init profile failed', e);
+        saveToken(null);
+        localStorage.removeItem('isAdminMode');
+        setActiveNav('login');
+        showSection('loginSection');
+      }
     } else {
-      await renderNav(); // Call renderNav for logged out state too
-      setActiveNav('login'); showSection('loginSection');
+      localStorage.removeItem('isAdminMode');
+      await renderNav();
+      setActiveNav('login');
+      showSection('loginSection');
     }
 
     // Notification button event listeners
