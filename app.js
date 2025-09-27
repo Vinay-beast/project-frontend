@@ -1036,9 +1036,25 @@ async function renderProfile() {
       }
     }
 
-    if (!AUTH.token) { setActiveNav('login'); showSection('loginSection'); return; }
-    const u = await Api.getProfile(AUTH.token).catch(() => null);
-    if (!u) { const pv = $('#profileView'); if (pv) pv.innerHTML = '<p class="muted">Failed to load profile</p>'; return; }
+    if (!AUTH.token) {
+      console.log('DEBUG: No AUTH token, redirecting to login');
+      setActiveNav('login'); showSection('loginSection'); return;
+    }
+
+    console.log('DEBUG: Calling Api.getProfile with token');
+    const u = await Api.getProfile(AUTH.token).catch((error) => {
+      console.error('DEBUG: Api.getProfile failed:', error);
+      return null;
+    });
+
+    if (!u) {
+      console.log('DEBUG: No user data received from API');
+      const pv = $('#profileView');
+      if (pv) pv.innerHTML = '<p class="muted">Failed to load profile</p>';
+      return;
+    }
+
+    console.log('DEBUG: Successfully received user data from API');
     AUTH.user = u;
 
     // Debug: Check what we're receiving from the backend

@@ -251,6 +251,7 @@ header {
     color: var(--sub);
     font-size: 12px;
     font-weight: 500;
+    overflow: hidden;
 }
 
 .divider::before {
@@ -270,6 +271,7 @@ header {
     background: var(--panel);
     padding: 0 15px;
     z-index: 2;
+    display: inline-block;
 }
 
 /* Enhanced Toast Notifications */
