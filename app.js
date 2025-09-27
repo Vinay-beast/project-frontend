@@ -800,7 +800,7 @@ async function updateNavNotifications() {
     if (notificationBtn) {
       // Always show notification button when logged in
       notificationBtn.style.display = 'inline-flex';
-      
+
       if (notificationBadge) {
         if (unclaimedGifts.length > 0) {
           notificationBadge.textContent = unclaimedGifts.length;
