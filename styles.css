@@ -27,7 +27,7 @@ body {
     /* keep body solid to avoid gradient tiling while scrolling */
 }
 
-/* FIX: single gradient overlay that does NOT repeat while scrolling */
+/* FIX: Optimized single gradient overlay */
 html::before {
     content: "";
     position: fixed;
@@ -35,15 +35,13 @@ html::before {
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(1200px 600px at 200px -100px, rgba(34, 211, 238, .15), transparent 70%),
-        radial-gradient(1200px 600px at 100% 0, rgba(167, 139, 250, .15), transparent 70%),
+        radial-gradient(800px 400px at 200px -100px, rgba(34, 211, 238, .12), transparent 60%),
+        radial-gradient(800px 400px at 100% 0, rgba(167, 139, 250, .12), transparent 60%),
         var(--bg);
-    /* lock the layers to the viewport so they don't repeat while scrolling */
     background-attachment: fixed, fixed, fixed;
-    background-repeat: no-repeat, no-repeat, no-repeat;
-    background-size: auto, auto, auto;
-    /* slight vignette for depth */
-    box-shadow: inset 0 0 120px rgba(0, 0, 0, .35);
+    background-repeat: no-repeat;
+    will-change: transform;
+    /* Optimize for GPU */
 }
 
 a {
@@ -56,9 +54,12 @@ header {
     position: sticky;
     top: 0;
     z-index: 50;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(6px);
+    /* Reduced blur for performance */
     background: linear-gradient(to right, rgba(15, 23, 42, .85), rgba(17, 24, 39, .7));
     border-bottom: 1px solid rgba(255, 255, 255, .06);
+    will-change: transform;
+    /* GPU optimization */
 }
 
 .nav {
