@@ -55,7 +55,9 @@
           <button id="switchToRegister" type="button" class="btn ghost">Create account</button>
         </div>
       </form> <div class="divider">OR</div>
-      <button type="button" class="google-signin-btn">Sign in with Google</button>
+      <button type="button" class="google-signin-btn">
+        Continue with Google
+      </button>
       
       <p class="small muted">Tip: Create an account if you don't have one.</p>
     </div>
@@ -79,7 +81,9 @@
           <button id="switchToLogin" type="button" class="btn ghost">Back to login</button>
         </div>
       </form> <div class="divider">OR</div>
-      <button type="button" class="google-signin-btn">Sign in with Google</button>
+      <button type="button" class="google-signin-btn">
+        Continue with Google
+      </button>
       
     </div>
   </section>
@@ -346,17 +350,17 @@
   <!-- Profile -->
   <section id="profileSection" class="hidden grid two">
     <div class="panel">
-      <h1>Profile</h1>
+      <h1>My Profile</h1>
       <div id="profileView"></div>
       <div id="profileEdit" class="hidden">
         <div class="row">
           <div><label>Name</label><input id="peName"/></div>
           <div><label>Phone</label><input id="pePhone"/></div>
         </div>
-        <div><label>Bio</label><textarea id="peBio" rows="2"></textarea></div>
+        <div><label>Bio</label><textarea id="peBio" rows="2" placeholder="Tell us about yourself..."></textarea></div>
 
         <div class="hr"></div>
-        <h2>Change profile picture</h2>
+        <h2>📷 Profile Picture</h2>
         <div class="row">
           <div>
             <label>Upload image</label>
@@ -372,25 +376,19 @@
         </div>
 
         <div class="pillbar mt-8">
-          <button id="peSave" class="btn primary">Save</button>
-          <button id="peCancel" class="btn ghost">Cancel</button>
+          <button id="peSave" class="btn primary">💾 Save Changes</button>
+          <button id="peCancel" class="btn ghost">❌ Cancel</button>
         </div>
       </div>
+      
       <div class="hr"></div>
-      <h2>Change password</h2>
-      <div class="grid">
-        <div class="row">
-          <div><label>Current password</label><input type="password" id="cpCurrent"></div>
-          <div><label>New password</label><input type="password" id="cpNew"></div>
-        </div>
-        <div class="row">
-          <div><label>Confirm new password</label><input type="password" id="cpConfirm"></div>
-          <div class="right"><button id="cpSave" class="btn">Update password</button></div>
-        </div>
+      <h2>📊 Account Statistics</h2>
+      <div id="userStats" class="user-stats-grid">
+        <!-- Stats will be populated by JavaScript -->
       </div>
     </div>
     <div class="panel">
-      <h1>Addresses & Cards</h1>
+      <h1>📍 Addresses & 💳 Cards</h1>
       <h2>Addresses</h2>
       <div id="addrList" class="grid"></div>
       <form id="formAddress" class="grid" style="margin-top:8px">

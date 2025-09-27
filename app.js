@@ -105,11 +105,26 @@ async function showSection(id) {
 // ---------- Auth flows ----------
 on('#formRegister', 'submit', async (e) => {
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+
   try {
+    // Show loading state
+    submitBtn.textContent = 'Creating account...';
+    submitBtn.disabled = true;
+
+    const data = Object.fromEntries(new FormData(e.target).entries());
     const out = await Api.register({ name: data.name, email: data.email, password: data.password, phone: data.phone || '', bio: data.bio || '' });
-    saveToken(out.token); AUTH.user = out.user; toast('Registered & signed in');
+
+    // Success animation
+    submitBtn.classList.add('success');
+    submitBtn.textContent = '✅ Account created!';
+
+    saveToken(out.token);
+    AUTH.user = out.user;
+    toast('🎉 Account created and signed in successfully!');
     await renderNav();
+
     if (AUTH.user?.is_admin) {
       setActiveNav('admin');
       showSection('adminPanel');
@@ -117,16 +132,38 @@ on('#formRegister', 'submit', async (e) => {
       setActiveNav('home');
       showSection('homeSection');
     }
-  } catch (err) { console.error(err); toast(err?.message || 'Register failed'); }
+  } catch (err) {
+    console.error(err);
+    toast(err?.message || 'Registration failed');
+    // Reset button
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+    submitBtn.classList.remove('success');
+  }
 });
 
 on('#formLogin', 'submit', async (e) => {
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+
   try {
+    // Show loading state
+    submitBtn.textContent = 'Signing in...';
+    submitBtn.disabled = true;
+
+    const data = Object.fromEntries(new FormData(e.target).entries());
     const out = await Api.login({ email: data.email, password: data.password });
-    saveToken(out.token); AUTH.user = out.user; toast('Logged in');
+
+    // Success animation
+    submitBtn.classList.add('success');
+    submitBtn.textContent = '✅ Signed in!';
+
+    saveToken(out.token);
+    AUTH.user = out.user;
+    toast('🎉 Welcome back!');
     await renderNav();
+
     if (AUTH.user?.is_admin) {
       setActiveNav('admin');
       showSection('adminPanel');
@@ -134,7 +171,31 @@ on('#formLogin', 'submit', async (e) => {
       setActiveNav('home');
       showSection('homeSection');
     }
-  } catch (err) { console.error(err); toast(err?.message || 'Login failed'); }
+  } catch (err) {
+    console.error(err);
+    toast(err?.message || 'Login failed');
+    // Reset button
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+    submitBtn.classList.remove('success');
+  }
+});
+await renderNav();
+if (AUTH.user?.is_admin) {
+  setActiveNav('admin');
+  showSection('adminPanel');
+} else {
+  setActiveNav('home');
+  showSection('homeSection');
+}
+  } catch (err) {
+  console.error(err);
+  toast(err?.message || 'Login failed');
+  // Reset button
+  submitBtn.textContent = originalText;
+  submitBtn.disabled = false;
+  submitBtn.classList.remove('success');
+}
 });
 
 // Login/Logout header buttons
@@ -146,18 +207,28 @@ const googleSignInButtons = $$('.google-signin-btn');
 googleSignInButtons.forEach(button => {
   button.addEventListener('click', async () => {
     try {
+      // Add loading state
+      button.classList.add('loading');
+      button.textContent = 'Signing in...';
+      button.disabled = true;
+
       const provider = new firebase.auth.GoogleAuthProvider();
       const result = await firebase.auth().signInWithPopup(provider);
       const firebaseToken = await result.user.getIdToken();
       const out = await Api.loginWithGoogle(firebaseToken);
       saveToken(out.token);
       AUTH.user = out.user;
-      toast('Signed in with Google');
+      toast('🎉 Signed in with Google successfully!');
       await renderNav();
       if (AUTH.user?.is_admin) { setActiveNav('admin'); showSection('adminPanel'); } else { setActiveNav('home'); showSection('homeSection'); }
     } catch (error) {
       console.error("Error during Google sign-in:", error);
       toast(error.message || 'An error occurred during sign-in.');
+    } finally {
+      // Remove loading state
+      button.classList.remove('loading');
+      button.textContent = 'Continue with Google';
+      button.disabled = false;
     }
   });
 });
@@ -1018,18 +1089,78 @@ async function renderProfile() {
 
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
+
+    // Get user statistics
+    let totalOrders = 0, totalSpent = 0, favoriteGenre = 'Books', totalBooks = 0;
+    try {
+      const orders = await Api.listOrders(AUTH.token).catch(() => []);
+      totalOrders = orders.length;
+      totalSpent = orders.reduce((sum, order) => sum + (parseFloat(order.total_amount) || 0), 0);
+
+      // Calculate favorite genre and total books from orders
+      const genres = {};
+      orders.forEach(order => {
+        if (order.books && Array.isArray(order.books)) {
+          order.books.forEach(book => {
+            totalBooks++;
+            const genre = book.genre || 'Fiction';
+            genres[genre] = (genres[genre] || 0) + 1;
+          });
+        }
+      });
+
+      if (Object.keys(genres).length > 0) {
+        favoriteGenre = Object.entries(genres).sort(([, a], [, b]) => b - a)[0][0];
+      }
+    } catch (e) {
+      console.warn('Error fetching user stats:', e);
+    }
+
+    const memberSince = new Date(u.created_at || Date.now()).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
+    });
+
     profileView.innerHTML = `
       <div class="profile-head">
         <div class="avatar-lg" id="pfAvatar" style="${pfUrl ? `background-image:url('${pfUrl}')` : ''}"></div>
         <div class="profile-meta">
           <div><span class="muted">Name</span><div>${u.name || ''}</div></div>
-          <div><span class="muted">Email</span><div>${u.email || ''}</div></div>
+          <div><span class="muted">Email</span><div>${u.email || ''} ${u.is_admin ? '<span class="achievement-badge">ADMIN</span>' : ''}</div></div>
           <div><span class="muted">Phone</span><div>${u.phone || '-'}</div></div>
-          <div><span class="muted">Bio</span><div>${u.bio || '-'}</div></div>
+          <div><span class="muted">Member Since</span><div>${memberSince}</div></div>
         </div>
       </div>
-      <div class="pillbar" style="margin-top:8px"><button id="peStart" class="btn">Edit profile</button></div>
+      ${u.bio ? `<div style="margin: 16px 0; padding: 16px; background: var(--soft); border-radius: 8px; border-left: 4px solid var(--brand);"><strong>About:</strong> ${u.bio}</div>` : ''}
+      <button id="peStart" class="edit-profile-btn">✏️ Edit Profile</button>
     `;
+
+    // Populate user statistics
+    const userStats = $('#userStats');
+    if (userStats) {
+      userStats.innerHTML = `
+        <div class="stat-card" style="animation-delay: 0.1s;">
+          <span class="stat-icon">📚</span>
+          <span class="stat-value">${totalOrders}</span>
+          <span class="stat-label">Orders Placed</span>
+        </div>
+        <div class="stat-card" style="animation-delay: 0.2s;">
+          <span class="stat-icon">💰</span>
+          <span class="stat-value">₹${totalSpent.toFixed(0)}</span>
+          <span class="stat-label">Total Spent</span>
+        </div>
+        <div class="stat-card" style="animation-delay: 0.3s;">
+          <span class="stat-icon">📖</span>
+          <span class="stat-value">${totalBooks}</span>
+          <span class="stat-label">Books Ordered</span>
+        </div>
+        <div class="stat-card" style="animation-delay: 0.4s;">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-value">${favoriteGenre}</span>
+          <span class="stat-label">Favorite Genre</span>
+        </div>
+      `;
+    }
     on('#peStart', 'click', () => {
       $('#profileView')?.classList.add('hidden'); $('#profileEdit')?.classList.remove('hidden');
       $('#peName') && ($('#peName').value = u.name || ''); $('#pePhone') && ($('#pePhone').value = u.phone || ''); $('#peBio') && ($('#peBio').value = u.bio || '');
@@ -1052,14 +1183,6 @@ async function renderProfile() {
     });
 
     on('#peCancel', 'click', () => { $('#profileEdit')?.classList.add('hidden'); $('#profileView')?.classList.remove('hidden'); });
-
-    const cpBtn = document.getElementById('cpSave'); if (cpBtn) cpBtn.onclick = async () => {
-      const cur = ($('#cpCurrent')?.value || '').trim(), nxt = ($('#cpNew')?.value || '').trim(), cfm = ($('#cpConfirm')?.value || '').trim();
-      if (!cur || !nxt || !cfm) { toast('Fill all password fields'); return; }
-      if (nxt !== cfm) { toast('New passwords do not match'); return; }
-      if (nxt.length < 6) { toast('New password must be at least 6 chars'); return; }
-      try { await Api.changePassword(AUTH.token, { current: cur, next: nxt }); toast('Password updated'); $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpConfirm').value = ''; } catch (e) { console.error('changePassword', e); toast(e?.message || 'Password update failed'); }
-    };
 
     if (!AUTH.user?.is_admin) {
       let addrs = await Api.listAddresses(AUTH.token).catch(() => []);
