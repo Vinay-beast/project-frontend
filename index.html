@@ -30,6 +30,9 @@
     <button class="navbtn" data-nav="orders">Orders</button>
     <button class="navbtn" data-nav="profile">Profile</button>
     <div class="spacer"></div>
+    <button id="btnNotifications" class="btn ghost small hidden" title="Gift Notifications">
+      🔔 <span id="navNotificationBadge" class="notification-count hidden">0</span>
+    </button>
     <button id="btnReset" class="btn ghost small">Reset Demo</button>
     <button id="btnAdmin" class="btn ghost small">Admin Login</button>
     <span id="navAvatar" class="avatar-sm hidden"></span>
@@ -301,13 +304,6 @@
   <section id="profileSection" class="hidden grid two">
     <div class="panel">
       <h1>Profile</h1>
-      
-      <!-- Notifications Section -->
-      <div id="notificationsSection" class="mb-16">
-        <h2>Notifications <span id="profileNotificationBadge" class="badge hidden">•</span></h2>
-        <div id="giftNotifications" class="grid small-gap"></div>
-      </div>
-      
       <div id="profileView"></div>
       <div id="profileEdit" class="hidden">
         <div class="row">
@@ -417,6 +413,19 @@
     </div>
     <div class="hr"></div>
     <div class="right"><button id="readerClose" class="btn bad">Close</button></div>
+  </div>
+</div>
+
+<!-- Notification Dropdown Modal -->
+<div id="notificationModal" class="modal">
+  <div class="modal-content notification-dropdown">
+    <div class="modal-header">
+      <h3>Gift Notifications</h3>
+      <button id="notificationClose" class="btn ghost small">×</button>
+    </div>
+    <div id="notificationList" class="notification-list">
+      <p class="muted">Loading notifications...</p>
+    </div>
   </div>
 </div>
 

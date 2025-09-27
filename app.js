@@ -28,21 +28,22 @@ function setHeaderMode(mode) {
   if (mode === 'hidden') { header.style.display = 'none'; return; }
   header.style.display = '';
 
-  const allButtons = ['.navbtn', '#btnReset', '#btnLogin', '#btnLogout', '#btnCart', '#navAvatar', '#navUser', '#cartCount', '#btnAdmin'];
+  const allButtons = ['.navbtn', '#btnReset', '#btnLogin', '#btnLogout', '#btnCart', '#navAvatar', '#navUser', '#cartCount', '#btnAdmin', '#btnNotifications'];
   allButtons.forEach(sel => $$(sel).forEach(el => el.classList.add('hidden')));
 
   if (mode === 'login') {
+    // On login page: only show admin button
     $$('#btnAdmin').forEach(el => el.classList.remove('hidden'));
   } else {
+    // After login: show main navigation without login/admin/reset buttons
     $$('.navbtn').forEach(el => el.classList.remove('hidden'));
-    $$('#btnReset').forEach(el => el.classList.remove('hidden'));
     $$('#btnCart').forEach(el => el.classList.remove('hidden'));
-    $$('#btnLogin').forEach(el => el.classList.remove('hidden'));
     $$('#btnLogout').forEach(el => el.classList.remove('hidden'));
     $$('#navAvatar').forEach(el => el.classList.remove('hidden'));
     $$('#navUser').forEach(el => el.classList.remove('hidden'));
-    $$('#btnAdmin').forEach(el => el.classList.remove('hidden'));
+    $$('#btnNotifications').forEach(el => el.classList.remove('hidden'));
     $$('#cartCount').forEach(el => el.classList.remove('hidden'));
+    // Hide: login, admin, reset buttons when logged in
   }
 }
 
@@ -200,6 +201,9 @@ async function renderNav() {
       if (navProfileBtn) navProfileBtn.classList.remove('hidden');
       if (navCatalogBtn) navCatalogBtn.classList.remove('hidden');
       setHeaderMode('full');
+
+      // Update notifications when logged in
+      updateNavNotifications().catch(e => console.error('Failed to update notifications:', e));
     }
   } else {
     if (btnLogin) btnLogin.classList.remove('hidden');
@@ -647,7 +651,12 @@ async function renderLibrary() {
     if (!lib) {
       const orders = await Api.getOrders(AUTH.token).catch(() => []);
       const owned = [], rented = [];
-      for (const o of orders) { if (o.mode === 'buy') (o.items || []).forEach(i => owned.push(i.book_id)); if (o.mode === 'rent') (o.items || []).forEach(i => rented.push({ id: i.book_id, rental_end: o.rental_end })); }
+      // Only include buy orders in owned, exclude gift orders
+      for (const o of orders) {
+        if (o.mode === 'buy') (o.items || []).forEach(i => owned.push(i.book_id));
+        if (o.mode === 'rent') (o.items || []).forEach(i => rented.push({ id: i.book_id, rental_end: o.rental_end }));
+        // Gift orders are handled separately and should NOT appear in owned section
+      }
       lib = { owned: [...new Set(owned)].map(id => ({ book: { id }, purchased_at: null })), rented: rented.map(r => ({ book: { id: r.id }, rental_end: r.rental_end })) };
     }
 
@@ -802,7 +811,7 @@ async function renderGiftNotifications() {
     });
 
   } catch (e) {
-    console.error('renderGiftNotifications', e);
+    console.error('renderNotificationModal', e);
   }
 }
 
@@ -826,8 +835,8 @@ async function renderProfile() {
     if (!u) { const pv = $('#profileView'); if (pv) pv.innerHTML = '<p class="muted">Failed to load profile</p>'; return; }
     AUTH.user = u;
 
-    // Render gift notifications
-    await renderGiftNotifications();
+    // Update navigation notifications
+    await updateNavNotifications();
 
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
@@ -1084,6 +1093,23 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
     } else {
       setActiveNav('login'); showSection('loginSection');
     }
+
+    // Notification button event listeners
+    on('#btnNotifications', 'click', async () => {
+      await renderNotificationModal();
+      $('#notificationModal')?.classList.add('show');
+    });
+
+    on('#notificationClose', 'click', () => {
+      $('#notificationModal')?.classList.remove('show');
+    });
+
+    // Close notification modal when clicking outside
+    on('#notificationModal', 'click', (e) => {
+      if (e.target === $('#notificationModal')) {
+        $('#notificationModal')?.classList.remove('show');
+      }
+    });
 
     setInterval(() => {
       const ordersSection = document.getElementById('ordersSection');
