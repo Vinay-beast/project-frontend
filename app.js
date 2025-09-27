@@ -850,15 +850,21 @@ async function renderLibrary() {
     onAll('#libraryGifts [data-claim-gift]', (btn) => {
       btn.onclick = async () => {
         try {
-          const result = await Api.claimGifts(AUTH.token);
-          toast(`Claimed ${result.claimed || 0} gift${result.claimed === 1 ? '' : 's'}!`);
-
-          // Immediately update notifications and library
-          await updateNavNotifications();
-          await renderLibrary(); // Refresh to show updated status
+          const giftId = btn.dataset.claimGift;
+          const result = await Api.claimSpecificGift(AUTH.token, giftId);
+          
+          if (result.claimed > 0) {
+            toast('Gift claimed successfully!', 'success');
+            
+            // Immediately update notifications and library
+            await updateNavNotifications();
+            await renderLibrary(); // Refresh to show updated status
+          } else {
+            toast('Gift was already claimed or not found', 'warn');
+          }
         } catch (e) {
-          console.error('Claim gifts failed:', e);
-          toast(e?.message || 'Failed to claim gifts');
+          console.error('Claim gift failed:', e);
+          toast(e?.message || 'Failed to claim gift', 'error');
         }
       };
     });
@@ -888,8 +894,10 @@ async function updateNavNotifications() {
     });
     console.log('DEBUG: Gifts received:', gifts);
 
+    // Count unread AND unclaimed gifts for notifications (not just unclaimed)
+    const unreadGifts = gifts.filter(g => !g.read_at);
     const unclaimedGifts = gifts.filter(g => !g.claimed_at);
-    console.log('DEBUG: Unclaimed gifts:', unclaimedGifts.length);
+    console.log('DEBUG: Unread gifts:', unreadGifts.length, 'Unclaimed gifts:', unclaimedGifts.length);
 
     const notificationBtn = $('#btnNotifications');
     const notificationBadge = $('#navNotificationBadge');
@@ -904,12 +912,12 @@ async function updateNavNotifications() {
       notificationBtn.style.display = 'inline-flex';
 
       if (notificationBadge) {
-        if (unclaimedGifts.length > 0) {
-          notificationBadge.textContent = unclaimedGifts.length;
+        if (unreadGifts.length > 0) {
+          notificationBadge.textContent = unreadGifts.length;
           notificationBadge.classList.remove('hidden');
           notificationBadge.style.display = 'inline-block';
-          notificationBtn.title = `${unclaimedGifts.length} unclaimed gift${unclaimedGifts.length === 1 ? '' : 's'}`;
-          console.log('DEBUG: Notification badge updated to:', unclaimedGifts.length);
+          notificationBtn.title = `${unreadGifts.length} unread notification${unreadGifts.length === 1 ? '' : 's'}`;
+          console.log('DEBUG: Notification badge updated to:', unreadGifts.length);
 
           // Make the notification button more visible with red glow
           notificationBtn.style.background = 'rgba(239, 68, 68, 0.1)';
@@ -919,7 +927,7 @@ async function updateNavNotifications() {
           notificationBadge.classList.add('hidden');
           notificationBadge.style.display = 'none';
           notificationBtn.title = 'Gift Notifications (No new notifications)';
-          console.log('DEBUG: Notification badge hidden (no unclaimed gifts)');
+          console.log('DEBUG: Notification badge hidden (no unread gifts)');
 
           // Reset button appearance
           notificationBtn.style.background = 'transparent';
@@ -968,40 +976,97 @@ async function renderNotificationModal() {
     const notificationItems = await Promise.all(gifts.map(async g => {
       const b = g.title ? g : await fetchBookById(g.book_id).catch(() => ({ title: 'Unknown Book', author: 'Unknown' }));
       const isClaimed = !!g.claimed_at;
+      const isRead = !!g.read_at;
       const timeAgo = new Date(g.created_at).toLocaleDateString();
 
       // Get sender info from the backend data
       const senderEmail = g.sender_email || 'Unknown sender';
       const senderName = g.sender_name || senderEmail;
 
+      // Different styling based on read/unread status
+      const itemClass = isRead ? 'read' : 'unread';
+      const unreadIndicator = isRead ? '' : '<span class="tag tiny" style="background: var(--brand); color: white;">●</span>';
+
       return `
-        <div class="notification-item ${isClaimed ? '' : 'unread'}" data-gift-id="${g.id}" data-claimed="${isClaimed}">
-          <h4>${b.title || g.title}</h4>
-          <p>From: ${senderName} (${senderEmail})</p>
-          <p>Received: ${timeAgo}</p>
-          <div style="margin-top: 8px;">
-            <span class="tag tiny ${isClaimed ? 'good' : 'warn'}">${isClaimed ? '✓ Claimed' : '🎁 Click to Claim'}</span>
+        <div class="notification-item ${itemClass}" data-gift-id="${g.id}" data-claimed="${isClaimed}" data-read="${isRead}">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <h4 style="margin: 0; flex: 1;">${b.title || g.title}</h4>
+            ${unreadIndicator}
+          </div>
+          <p style="margin: 4px 0;">From: ${senderName} (${senderEmail})</p>
+          <p style="margin: 4px 0;">Received: ${timeAgo}</p>
+          <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+            <span class="tag tiny ${isClaimed ? 'good' : 'warn'}">${isClaimed ? '✓ Claimed' : '🎁 Unclaimed'}</span>
+            ${!isClaimed ? `<button class="btn small primary" data-claim-single="${g.id}">Claim This Gift</button>` : ''}
+            ${!isRead ? `<button class="btn small ghost" data-mark-read="${g.id}">Mark as Read</button>` : ''}
           </div>
         </div>
       `;
     }));
 
-    notificationList.innerHTML = notificationItems.join('');
+    notificationList.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <h3 style="margin: 0;">Gift Notifications</h3>
+        <button class="btn small ghost" id="markAllRead">Mark All as Read</button>
+      </div>
+      ${notificationItems.join('')}
+    `;
 
-    // Handle notification clicks (claim gifts)
-    onAll('.notification-item[data-claimed="false"]', (item) => {
-      item.onclick = async () => {
+    // Mark all as read
+    on('#markAllRead', 'click', async () => {
+      try {
+        await Api.markAllGiftsAsRead(AUTH.token);
+        toast('All notifications marked as read', 'success');
+        await updateNavNotifications();
+        await renderNotificationModal(); // Refresh the modal
+      } catch (e) {
+        console.error('Mark all as read failed:', e);
+        toast(e?.message || 'Failed to mark as read', 'error');
+      }
+    });
+
+    // Handle individual gift claiming
+    onAll('[data-claim-single]', (btn) => {
+      btn.onclick = async () => {
         try {
-          const result = await Api.claimGifts(AUTH.token);
-          toast(`Claimed ${result.claimed || 0} gift${result.claimed === 1 ? '' : 's'}!`);
-
-          // Update UI
-          await updateNavNotifications();
-          await renderLibrary();
-          $('#notificationModal')?.classList.remove('show');
+          const giftId = btn.dataset.claimSingle;
+          const result = await Api.claimSpecificGift(AUTH.token, giftId);
+          
+          if (result.claimed > 0) {
+            toast('Gift claimed successfully!', 'success');
+            
+            // Update UI
+            await updateNavNotifications();
+            await renderLibrary();
+            await renderNotificationModal(); // Refresh the modal to show updated status
+          } else {
+            toast('Gift was already claimed or not found', 'warn');
+          }
         } catch (e) {
-          console.error('Claim gift failed:', e);
-          toast(e?.message || 'Failed to claim gift');
+          console.error('Claim single gift failed:', e);
+          toast(e?.message || 'Failed to claim gift', 'error');
+        }
+      };
+    });
+
+    // Handle individual read marking
+    onAll('[data-mark-read]', (btn) => {
+      btn.onclick = async () => {
+        try {
+          const giftId = btn.dataset.markRead;
+          await Api.markGiftAsRead(AUTH.token, giftId);
+          
+          // Update UI immediately
+          const notificationItem = btn.closest('.notification-item');
+          notificationItem.classList.remove('unread');
+          notificationItem.classList.add('read');
+          btn.remove(); // Remove the "Mark as Read" button
+          
+          // Update notification count
+          await updateNavNotifications();
+        } catch (e) {
+          console.error('Mark gift as read failed:', e);
+          toast(e?.message || 'Failed to mark as read', 'error');
         }
       };
     });

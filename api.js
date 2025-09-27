@@ -362,6 +362,21 @@
         return res || { claimed: 0 };
     }
 
+    async function claimSpecificGift(token, giftId) {
+        const res = await POST(`/gifts/claim/${giftId}`, {}, { token });
+        return res || { claimed: 0 };
+    }
+
+    async function markGiftAsRead(token, giftId) {
+        const res = await POST(`/gifts/read/${giftId}`, {}, { token });
+        return res || { marked_read: 0 };
+    }
+
+    async function markAllGiftsAsRead(token) {
+        const res = await POST("/gifts/read-all", {}, { token });
+        return res || { marked_read: 0 };
+    }
+
     // Pagination helper
     async function* iterateBooks({ pageStart = 1, pageSize = 50, maxPages = 10, query = null } = {}) {
         let page = pageStart;
@@ -388,7 +403,7 @@
         getBooks, searchBooks, getBookById,
         placeOrder, getOrders, getOrderById,
         getLibrary,
-        getMyGifts, claimGifts,
+        getMyGifts, claimGifts, claimSpecificGift, markGiftAsRead, markAllGiftsAsRead,
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };

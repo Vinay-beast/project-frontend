@@ -1442,3 +1442,47 @@ details[open] summary {
 *::-webkit-scrollbar-track {
     background: transparent;
 }
+
+/* ---------- Notification Modal Styling ---------- */
+.notification-item {
+    background: var(--soft);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+.notification-item.unread {
+    border-left: 4px solid var(--brand);
+    background: linear-gradient(135deg, var(--soft), rgba(34, 211, 238, 0.05));
+    box-shadow: 0 2px 8px rgba(34, 211, 238, 0.1);
+}
+
+.notification-item.read {
+    opacity: 0.7;
+    border-left: 4px solid var(--muted);
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.notification-item h4 {
+    color: var(--text);
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.notification-item p {
+    color: var(--sub);
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.notification-item .btn.small {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: auto;
+}
