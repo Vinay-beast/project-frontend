@@ -138,7 +138,10 @@
       <div class="hr"></div>
       <h2>Rented</h2>
       <div id="libraryRented" class="grid"></div>
-      <p class="small muted">Purchased books are always available. Rentals are digital access until their due date.</p>
+      <div class="hr"></div>
+      <h2>Gifts <span id="giftNotificationBadge" class="badge hidden">•</span></h2>
+      <div id="libraryGifts" class="grid"></div>
+      <p class="small muted">Purchased books are always available. Rentals are digital access until their due date. Gifts are books received from others.</p>
     </div>
 
     <div class="panel">
@@ -298,6 +301,13 @@
   <section id="profileSection" class="hidden grid two">
     <div class="panel">
       <h1>Profile</h1>
+      
+      <!-- Notifications Section -->
+      <div id="notificationsSection" class="mb-16">
+        <h2>Notifications <span id="profileNotificationBadge" class="badge hidden">•</span></h2>
+        <div id="giftNotifications" class="grid small-gap"></div>
+      </div>
+      
       <div id="profileView"></div>
       <div id="profileEdit" class="hidden">
         <div class="row">

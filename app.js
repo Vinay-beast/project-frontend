@@ -651,6 +651,10 @@ async function renderLibrary() {
       lib = { owned: [...new Set(owned)].map(id => ({ book: { id }, purchased_at: null })), rented: rented.map(r => ({ book: { id: r.id }, rental_end: r.rental_end })) };
     }
 
+    // Get user's gifts
+    let gifts = [];
+    try { gifts = await Api.getMyGifts(AUTH.token); } catch { }
+
     const ownedCards = await Promise.all((lib.owned || []).map(async ob => {
       const b = await fetchBookById(ob.book.id); return `
       <div class="card">
@@ -669,14 +673,138 @@ async function renderLibrary() {
         <button class="btn ${active ? '' : 'ghost'}" data-read="${active ? b.id : ''}" data-title="${b.title}" ${active ? '' : 'disabled'}>Read</button>
       </div>`;
     }));
-    const libraryOwnedEl = $('#libraryOwned'), libraryRentedEl = $('#libraryRented');
+
+    // Create gift cards
+    const giftCards = await Promise.all((gifts || []).map(async g => {
+      const b = g.title ? g : await fetchBookById(g.book_id);
+      const isClaimed = !!g.claimed_at;
+      const claimStatus = isClaimed ? 'Claimed' : 'Unclaimed';
+      const claimColor = isClaimed ? 'good' : 'warn';
+      return `
+      <div class="card">
+        <div class="pillbar">
+          <span class="tag small" style="background: rgba(var(--${claimColor}), .2); border-color: var(--${claimColor}); color: var(--${claimColor})">${claimStatus}</span>
+          <span class="tag small">${(b.author || g.author || '')}</span>
+        </div>
+        <h3>${b.title || g.title}</h3>
+        <p class="small muted">Received: ${g.created_at ? new Date(g.created_at).toLocaleDateString() : '-'}</p>
+        ${isClaimed ?
+          `<button class="btn" data-read="${b.id || g.book_id}" data-title="${b.title || g.title}">Read</button>` :
+          `<button class="btn primary" data-claim-gift="${g.id}">Claim Gift</button>`
+        }
+      </div>`;
+    }));
+
+    // Count unclaimed gifts for notification badge
+    const unclaimedGifts = gifts.filter(g => !g.claimed_at).length;
+    const giftBadge = $('#giftNotificationBadge');
+    if (giftBadge) {
+      if (unclaimedGifts > 0) {
+        giftBadge.classList.remove('hidden');
+        giftBadge.title = `${unclaimedGifts} unclaimed gift${unclaimedGifts === 1 ? '' : 's'}`;
+      } else {
+        giftBadge.classList.add('hidden');
+      }
+    }
+
+    const libraryOwnedEl = $('#libraryOwned'), libraryRentedEl = $('#libraryRented'), libraryGiftsEl = $('#libraryGifts');
     if (libraryOwnedEl) libraryOwnedEl.innerHTML = ownedCards.join('') || '<p class="muted">No purchased books yet.</p>';
     if (libraryRentedEl) libraryRentedEl.innerHTML = rentedCards.join('') || '<p class="muted">No rentals yet.</p>';
-    onAll('#libraryOwned [data-read], #libraryRented [data-read]', (btn) => { if (!btn.hasAttribute('disabled')) btn.onclick = () => openReader(btn.dataset.title); });
+    if (libraryGiftsEl) libraryGiftsEl.innerHTML = giftCards.join('') || '<p class="muted">No gifts received yet.</p>';
+
+    onAll('#libraryOwned [data-read], #libraryRented [data-read], #libraryGifts [data-read]', (btn) => { if (!btn.hasAttribute('disabled')) btn.onclick = () => openReader(btn.dataset.title); });
+
+    // Handle gift claiming
+    onAll('#libraryGifts [data-claim-gift]', (btn) => {
+      btn.onclick = async () => {
+        try {
+          const result = await Api.claimGifts(AUTH.token);
+          toast(`Claimed ${result.claimed || 0} gift${result.claimed === 1 ? '' : 's'}!`);
+          renderLibrary(); // Refresh to show updated status
+        } catch (e) {
+          console.error('Claim gifts failed:', e);
+          toast(e?.message || 'Failed to claim gifts');
+        }
+      };
+    });
   } catch (e) { console.error('renderLibrary', e); toast('Failed to render library'); }
 }
 function openReader(title) { $('#readerTitle') && ($('#readerTitle').textContent = title); $('#readerBody') && ($('#readerBody').textContent = 'This is a sample reader.'); $('#readerModal')?.classList.add('show'); }
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
+
+// ---------- Gift Notifications ----------
+async function renderGiftNotifications() {
+  try {
+    if (!AUTH.token) return;
+
+    const gifts = await Api.getMyGifts(AUTH.token).catch(() => []);
+    const recentGifts = gifts.filter(g => {
+      // Show gifts from last 30 days or unclaimed gifts
+      const giftDate = new Date(g.created_at);
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      return !g.claimed_at || giftDate > thirtyDaysAgo;
+    });
+
+    const unclaimedCount = gifts.filter(g => !g.claimed_at).length;
+    const notificationBadge = $('#profileNotificationBadge');
+    const notificationsEl = $('#giftNotifications');
+
+    if (!notificationsEl) return;
+
+    // Update notification badge
+    if (notificationBadge) {
+      if (unclaimedCount > 0) {
+        notificationBadge.classList.remove('hidden');
+        notificationBadge.title = `${unclaimedCount} unclaimed gift${unclaimedCount === 1 ? '' : 's'}`;
+      } else {
+        notificationBadge.classList.add('hidden');
+      }
+    }
+
+    if (recentGifts.length === 0) {
+      notificationsEl.innerHTML = '<p class="small muted">No recent gift notifications</p>';
+      return;
+    }
+
+    const notificationCards = await Promise.all(recentGifts.map(async g => {
+      const b = g.title ? g : await fetchBookById(g.book_id).catch(() => ({ title: 'Unknown Book', author: 'Unknown' }));
+      const isClaimed = !!g.claimed_at;
+      const timeAgo = new Date(g.created_at).toLocaleDateString();
+
+      return `
+        <div class="card small">
+          <div class="pillbar">
+            <span class="tag tiny ${isClaimed ? 'good' : 'warn'}">${isClaimed ? '✓ Claimed' : '🎁 New Gift'}</span>
+            <span class="tag tiny">${timeAgo}</span>
+          </div>
+          <h4 style="margin: 4px 0;">${b.title || g.title}</h4>
+          <p class="small muted" style="margin: 0;">From: ${g.recipient_email}</p>
+          ${!isClaimed ? `<button class="btn tiny primary" data-claim-single-gift="${g.id}">Claim</button>` : ''}
+        </div>
+      `;
+    }));
+
+    notificationsEl.innerHTML = notificationCards.join('');
+
+    // Handle single gift claiming
+    onAll('[data-claim-single-gift]', (btn) => {
+      btn.onclick = async () => {
+        try {
+          const result = await Api.claimGifts(AUTH.token);
+          toast(`Claimed ${result.claimed || 0} gift${result.claimed === 1 ? '' : 's'}!`);
+          await renderGiftNotifications(); // Refresh notifications
+          await renderLibrary(); // Refresh library to show new gifts
+        } catch (e) {
+          console.error('Claim gift failed:', e);
+          toast(e?.message || 'Failed to claim gift');
+        }
+      };
+    });
+
+  } catch (e) {
+    console.error('renderGiftNotifications', e);
+  }
+}
 
 // ---------- Profile (guarded) ----------
 let __renderProfileLock = false;
@@ -697,6 +825,10 @@ async function renderProfile() {
     const u = await Api.getProfile(AUTH.token).catch(() => null);
     if (!u) { const pv = $('#profileView'); if (pv) pv.innerHTML = '<p class="muted">Failed to load profile</p>'; return; }
     AUTH.user = u;
+
+    // Render gift notifications
+    await renderGiftNotifications();
+
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
     profileView.innerHTML = `

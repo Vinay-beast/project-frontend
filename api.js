@@ -347,6 +347,21 @@
         return res || { owned: [], rented: [] };
     }
 
+    // Gifts
+    async function getMyGifts(token) {
+        const res = await maybeUseFallback(() => GET("/gifts/mine", { token }));
+        if (res === "__FALLBACK__") {
+            // Fallback: simulate some gifts for demo
+            return [];
+        }
+        return Array.isArray(res) ? res : [];
+    }
+
+    async function claimGifts(token) {
+        const res = await POST("/gifts/claim", {}, { token });
+        return res || { claimed: 0 };
+    }
+
     // Pagination helper
     async function* iterateBooks({ pageStart = 1, pageSize = 50, maxPages = 10, query = null } = {}) {
         let page = pageStart;
@@ -373,6 +388,7 @@
         getBooks, searchBooks, getBookById,
         placeOrder, getOrders, getOrderById,
         getLibrary,
+        getMyGifts, claimGifts,
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };

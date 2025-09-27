@@ -346,6 +346,65 @@ input[type=number] {
     color: var(--text);
 }
 
+.badge {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--good);
+    margin-left: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ---------- Small Components ---------- */
+.small-gap {
+    gap: 8px;
+}
+
+.mb-16 {
+    margin-bottom: 16px;
+}
+
+.card.small {
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.tag.tiny {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+.tag.good {
+    background: rgba(52, 211, 153, .2);
+    border-color: rgba(52, 211, 153, .5);
+    color: var(--good);
+}
+
+.tag.warn {
+    background: rgba(251, 191, 36, .2);
+    border-color: rgba(251, 191, 36, .5);
+    color: var(--warn);
+}
+
+.btn.tiny {
+    font-size: 11px;
+    padding: 4px 8px;
+    margin-top: 4px;
+}
+
 .price {
     font-weight: 700;
     color: var(--brand);
