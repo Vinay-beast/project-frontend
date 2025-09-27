@@ -12,7 +12,32 @@ console.log('LOADED app.js', Date.now());
 // ---------- Shortcuts & utilities ----------
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
-const toast = (msg) => { const t = $('#toast'); if (!t) { console.log('TOAST:', msg); return; } t.textContent = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2200); };
+const toast = (msg, type = 'info') => {
+  const t = $('#toast');
+  if (!t) { console.log('TOAST:', msg); return; }
+
+  // Add type-based styling
+  t.className = 'show';
+  if (type === 'success') {
+    t.style.background = 'linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(52, 211, 153, 0.1))';
+    t.style.borderColor = 'rgba(52, 211, 153, 0.3)';
+  } else if (type === 'error') {
+    t.style.background = 'linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(248, 113, 113, 0.1))';
+    t.style.borderColor = 'rgba(248, 113, 113, 0.3)';
+  } else {
+    t.style.background = 'linear-gradient(135deg, var(--panel), var(--soft))';
+    t.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+  }
+
+  t.textContent = msg;
+  t.style.display = 'block';
+
+  // Auto hide after animation
+  setTimeout(() => {
+    t.style.display = 'none';
+    t.className = '';
+  }, 2500);
+};
 const money = (n) => '₹' + Number(n || 0).toFixed(2);
 const todayLocalDate = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const addDaysISO = (isoDate, days) => { const d = new Date(isoDate); d.setDate(d.getDate() + days); return d.toISOString(); };
@@ -105,26 +130,11 @@ async function showSection(id) {
 // ---------- Auth flows ----------
 on('#formRegister', 'submit', async (e) => {
   e.preventDefault();
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const originalText = submitBtn.textContent;
-
+  const data = Object.fromEntries(new FormData(e.target).entries());
   try {
-    // Show loading state
-    submitBtn.textContent = 'Creating account...';
-    submitBtn.disabled = true;
-
-    const data = Object.fromEntries(new FormData(e.target).entries());
     const out = await Api.register({ name: data.name, email: data.email, password: data.password, phone: data.phone || '', bio: data.bio || '' });
-
-    // Success animation
-    submitBtn.classList.add('success');
-    submitBtn.textContent = '✅ Account created!';
-
-    saveToken(out.token);
-    AUTH.user = out.user;
-    toast('🎉 Account created and signed in successfully!');
+    saveToken(out.token); AUTH.user = out.user; toast('Registered & signed in');
     await renderNav();
-
     if (AUTH.user?.is_admin) {
       setActiveNav('admin');
       showSection('adminPanel');
@@ -132,38 +142,16 @@ on('#formRegister', 'submit', async (e) => {
       setActiveNav('home');
       showSection('homeSection');
     }
-  } catch (err) {
-    console.error(err);
-    toast(err?.message || 'Registration failed');
-    // Reset button
-    submitBtn.textContent = originalText;
-    submitBtn.disabled = false;
-    submitBtn.classList.remove('success');
-  }
+  } catch (err) { console.error(err); toast(err?.message || 'Register failed'); }
 });
 
 on('#formLogin', 'submit', async (e) => {
   e.preventDefault();
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const originalText = submitBtn.textContent;
-
+  const data = Object.fromEntries(new FormData(e.target).entries());
   try {
-    // Show loading state
-    submitBtn.textContent = 'Signing in...';
-    submitBtn.disabled = true;
-
-    const data = Object.fromEntries(new FormData(e.target).entries());
     const out = await Api.login({ email: data.email, password: data.password });
-
-    // Success animation
-    submitBtn.classList.add('success');
-    submitBtn.textContent = '✅ Signed in!';
-
-    saveToken(out.token);
-    AUTH.user = out.user;
-    toast('🎉 Welcome back!');
+    saveToken(out.token); AUTH.user = out.user; toast('Logged in');
     await renderNav();
-
     if (AUTH.user?.is_admin) {
       setActiveNav('admin');
       showSection('adminPanel');
@@ -171,31 +159,7 @@ on('#formLogin', 'submit', async (e) => {
       setActiveNav('home');
       showSection('homeSection');
     }
-  } catch (err) {
-    console.error(err);
-    toast(err?.message || 'Login failed');
-    // Reset button
-    submitBtn.textContent = originalText;
-    submitBtn.disabled = false;
-    submitBtn.classList.remove('success');
-  }
-});
-await renderNav();
-if (AUTH.user?.is_admin) {
-  setActiveNav('admin');
-  showSection('adminPanel');
-} else {
-  setActiveNav('home');
-  showSection('homeSection');
-}
-  } catch (err) {
-  console.error(err);
-  toast(err?.message || 'Login failed');
-  // Reset button
-  submitBtn.textContent = originalText;
-  submitBtn.disabled = false;
-  submitBtn.classList.remove('success');
-}
+  } catch (err) { console.error(err); toast(err?.message || 'Login failed'); }
 });
 
 // Login/Logout header buttons
@@ -207,28 +171,18 @@ const googleSignInButtons = $$('.google-signin-btn');
 googleSignInButtons.forEach(button => {
   button.addEventListener('click', async () => {
     try {
-      // Add loading state
-      button.classList.add('loading');
-      button.textContent = 'Signing in...';
-      button.disabled = true;
-
       const provider = new firebase.auth.GoogleAuthProvider();
       const result = await firebase.auth().signInWithPopup(provider);
       const firebaseToken = await result.user.getIdToken();
       const out = await Api.loginWithGoogle(firebaseToken);
       saveToken(out.token);
       AUTH.user = out.user;
-      toast('🎉 Signed in with Google successfully!');
+      toast('Signed in with Google');
       await renderNav();
       if (AUTH.user?.is_admin) { setActiveNav('admin'); showSection('adminPanel'); } else { setActiveNav('home'); showSection('homeSection'); }
     } catch (error) {
       console.error("Error during Google sign-in:", error);
       toast(error.message || 'An error occurred during sign-in.');
-    } finally {
-      // Remove loading state
-      button.classList.remove('loading');
-      button.textContent = 'Continue with Google';
-      button.disabled = false;
     }
   });
 });
@@ -1090,77 +1044,22 @@ async function renderProfile() {
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
 
-    // Get user statistics
-    let totalOrders = 0, totalSpent = 0, favoriteGenre = 'Books', totalBooks = 0;
-    try {
-      const orders = await Api.listOrders(AUTH.token).catch(() => []);
-      totalOrders = orders.length;
-      totalSpent = orders.reduce((sum, order) => sum + (parseFloat(order.total_amount) || 0), 0);
-
-      // Calculate favorite genre and total books from orders
-      const genres = {};
-      orders.forEach(order => {
-        if (order.books && Array.isArray(order.books)) {
-          order.books.forEach(book => {
-            totalBooks++;
-            const genre = book.genre || 'Fiction';
-            genres[genre] = (genres[genre] || 0) + 1;
-          });
-        }
-      });
-
-      if (Object.keys(genres).length > 0) {
-        favoriteGenre = Object.entries(genres).sort(([, a], [, b]) => b - a)[0][0];
-      }
-    } catch (e) {
-      console.warn('Error fetching user stats:', e);
-    }
-
-    const memberSince = new Date(u.created_at || Date.now()).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short'
-    });
+    // Check if user signed up with Google (they would have a google_id field or no password)
+    const isGoogleUser = u.google_id || u.auth_provider === 'google' || u.provider === 'google';
 
     profileView.innerHTML = `
       <div class="profile-head">
         <div class="avatar-lg" id="pfAvatar" style="${pfUrl ? `background-image:url('${pfUrl}')` : ''}"></div>
         <div class="profile-meta">
           <div><span class="muted">Name</span><div>${u.name || ''}</div></div>
-          <div><span class="muted">Email</span><div>${u.email || ''} ${u.is_admin ? '<span class="achievement-badge">ADMIN</span>' : ''}</div></div>
+          <div><span class="muted">Email</span><div>${u.email || ''}</div></div>
           <div><span class="muted">Phone</span><div>${u.phone || '-'}</div></div>
-          <div><span class="muted">Member Since</span><div>${memberSince}</div></div>
+          <div><span class="muted">Bio</span><div>${u.bio || '-'}</div></div>
+          ${isGoogleUser ? '<div><span class="muted">Account Type</span><div>🔗 Google Account</div></div>' : '<div><span class="muted">Account Type</span><div>📧 Email Account</div></div>'}
         </div>
       </div>
-      ${u.bio ? `<div style="margin: 16px 0; padding: 16px; background: var(--soft); border-radius: 8px; border-left: 4px solid var(--brand);"><strong>About:</strong> ${u.bio}</div>` : ''}
-      <button id="peStart" class="edit-profile-btn">✏️ Edit Profile</button>
+      <div class="pillbar" style="margin-top:8px"><button id="peStart" class="btn">Edit profile</button></div>
     `;
-
-    // Populate user statistics
-    const userStats = $('#userStats');
-    if (userStats) {
-      userStats.innerHTML = `
-        <div class="stat-card" style="animation-delay: 0.1s;">
-          <span class="stat-icon">📚</span>
-          <span class="stat-value">${totalOrders}</span>
-          <span class="stat-label">Orders Placed</span>
-        </div>
-        <div class="stat-card" style="animation-delay: 0.2s;">
-          <span class="stat-icon">💰</span>
-          <span class="stat-value">₹${totalSpent.toFixed(0)}</span>
-          <span class="stat-label">Total Spent</span>
-        </div>
-        <div class="stat-card" style="animation-delay: 0.3s;">
-          <span class="stat-icon">📖</span>
-          <span class="stat-value">${totalBooks}</span>
-          <span class="stat-label">Books Ordered</span>
-        </div>
-        <div class="stat-card" style="animation-delay: 0.4s;">
-          <span class="stat-icon">⭐</span>
-          <span class="stat-value">${favoriteGenre}</span>
-          <span class="stat-label">Favorite Genre</span>
-        </div>
-      `;
-    }
     on('#peStart', 'click', () => {
       $('#profileView')?.classList.add('hidden'); $('#profileEdit')?.classList.remove('hidden');
       $('#peName') && ($('#peName').value = u.name || ''); $('#pePhone') && ($('#pePhone').value = u.phone || ''); $('#peBio') && ($('#peBio').value = u.bio || '');
@@ -1179,10 +1078,26 @@ async function renderProfile() {
         try { const up = await Api.uploadProfilePic(AUTH.token, picFile); profilePicUrl = up?.url || profilePicUrl; } catch (e) { console.error('uploadProfilePic', e); toast(e?.message || 'Image upload failed'); return; }
       } else { const urlInputVal = ($('#pePicUrl')?.value || '').trim(); if (urlInputVal) profilePicUrl = urlInputVal; }
       const body = { name, phone: $('#pePhone')?.value.trim(), bio: $('#peBio')?.value.trim(), profile_pic: profilePicUrl };
-      try { await Api.updateProfile(AUTH.token, body); toast('Profile updated'); $('#profileEdit')?.classList.add('hidden'); $('#profileView')?.classList.remove('hidden'); await renderNav(); renderProfile(); } catch (err) { console.error('updateProfile', err); toast(err?.message || 'Update failed'); }
+      try { await Api.updateProfile(AUTH.token, body); toast('Profile updated', 'success'); $('#profileEdit')?.classList.add('hidden'); $('#profileView')?.classList.remove('hidden'); await renderNav(); renderProfile(); } catch (err) { console.error('updateProfile', err); toast(err?.message || 'Update failed', 'error'); }
     });
 
     on('#peCancel', 'click', () => { $('#profileEdit')?.classList.add('hidden'); $('#profileView')?.classList.remove('hidden'); });
+
+    // Hide password section for Google users
+    const passwordSection = document.querySelector('#profileSection .password-section');
+    if (isGoogleUser && passwordSection) {
+      passwordSection.style.display = 'none';
+    } else if (passwordSection) {
+      passwordSection.style.display = 'block';
+    }
+
+    const cpBtn = document.getElementById('cpSave'); if (cpBtn && !isGoogleUser) cpBtn.onclick = async () => {
+      const cur = ($('#cpCurrent')?.value || '').trim(), nxt = ($('#cpNew')?.value || '').trim(), cfm = ($('#cpConfirm')?.value || '').trim();
+      if (!cur || !nxt || !cfm) { toast('Fill all password fields'); return; }
+      if (nxt !== cfm) { toast('New passwords do not match'); return; }
+      if (nxt.length < 6) { toast('New password must be at least 6 chars'); return; }
+      try { await Api.changePassword(AUTH.token, { current: cur, next: nxt }); toast('Password updated', 'success'); $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpConfirm').value = ''; } catch (e) { console.error('changePassword', e); toast(e?.message || 'Password update failed', 'error'); }
+    };
 
     if (!AUTH.user?.is_admin) {
       let addrs = await Api.listAddresses(AUTH.token).catch(() => []);
