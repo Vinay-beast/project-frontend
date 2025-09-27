@@ -163,6 +163,8 @@ header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
+    margin: 0 auto;
+    width: fit-content;
 }
 
 .google-signin-btn::before {
@@ -248,6 +250,8 @@ header {
     margin: 20px 0;
     color: var(--sub);
     font-size: 12px;
+    background: var(--panel);
+    z-index: 2;
 }
 
 .divider::before {
@@ -259,14 +263,6 @@ header {
     height: 1px;
     background: rgba(255, 255, 255, 0.1);
     z-index: 1;
-}
-
-.divider::after {
-    content: attr(data-text);
-    background: var(--panel);
-    padding: 0 15px;
-    position: relative;
-    z-index: 2;
 }
 
 /* Enhanced Toast Notifications */
@@ -356,6 +352,10 @@ header {
     to {
         transform: rotate(360deg);
     }
+}
+
+.small {
+    font-size: 12px;
 }
 
 .muted {
@@ -1365,24 +1365,24 @@ input[type=number] {
 .password-section {
     padding: 16px;
     border-radius: 8px;
-    background: rgba(248, 113, 113, 0.03);
-    border: 1px solid rgba(248, 113, 113, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: 16px;
 }
 
 .password-section h2 {
-    color: rgba(248, 113, 113, 0.8);
+    color: var(--text);
     margin-bottom: 16px;
 }
 
 .password-section input {
-    background: rgba(248, 113, 113, 0.05) !important;
-    border-color: rgba(248, 113, 113, 0.2) !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .password-section input:focus {
-    border-color: rgba(248, 113, 113, 0.4) !important;
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1) !important;
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1) !important;
 }
 
 @media (max-width:700px) {
