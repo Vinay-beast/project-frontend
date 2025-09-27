@@ -1114,7 +1114,7 @@ async function renderProfile() {
 }
 
 // ---------- Admin panel renderer ----------
-async function renderAdminPanel(view = 'orders') {
+async function renderAdminPanel(view = 'dashboard') {
   try {
     if (!AUTH.token) { toast('Login as admin'); setActiveNav('login'); showSection('loginSection'); return; }
     if (!AUTH.user) { try { AUTH.user = await Api.getProfile(AUTH.token); } catch { saveToken(null); AUTH.user = null; toast('Admin session invalid'); setActiveNav('login'); showSection('loginSection'); return; } }
@@ -1123,12 +1123,348 @@ async function renderAdminPanel(view = 'orders') {
     const main = document.getElementById('adminMain'); if (!main) return;
     main.innerHTML = '<p class="muted">Loading...</p>';
 
-    const tabOrders = $('#adminViewOrders'), tabUsers = $('#adminViewUsers'), tabBooks = $('#adminViewBooks');
-    if (tabOrders) tabOrders.classList.toggle('active', view === 'orders');
-    if (tabUsers) tabUsers.classList.toggle('active', view === 'users');
-    if (tabBooks) tabBooks.classList.toggle('active', view === 'books');
+    // Update welcome message
+    const welcomeName = $('#adminWelcomeName');
+    if (welcomeName && AUTH.user.name) {
+      welcomeName.textContent = `Welcome, ${AUTH.user.name}`;
+    }
 
-    if (view === 'orders') {
+    // Update active tabs
+    const tabDashboard = $('#adminViewDashboard'), tabOrders = $('#adminViewOrders'), tabUsers = $('#adminViewUsers'), tabBooks = $('#adminViewBooks'), tabAnalytics = $('#adminViewAnalytics');
+    [tabDashboard, tabOrders, tabUsers, tabBooks, tabAnalytics].forEach(tab => tab?.classList.remove('primary'));
+    
+    if (view === 'dashboard' && tabDashboard) tabDashboard.classList.add('primary');
+    else if (view === 'orders' && tabOrders) tabOrders.classList.add('primary');
+    else if (view === 'users' && tabUsers) tabUsers.classList.add('primary');
+    else if (view === 'books' && tabBooks) tabBooks.classList.add('primary');
+    else if (view === 'analytics' && tabAnalytics) tabAnalytics.classList.add('primary');
+
+    // Show/hide search bar based on view
+    const searchBar = $('#adminSearchBar');
+    if (searchBar) {
+      if (view === 'dashboard' || view === 'analytics') {
+        searchBar.classList.add('hidden');
+      } else {
+        searchBar.classList.remove('hidden');
+      }
+    }
+
+    if (view === 'dashboard') {
+      await renderAdminDashboard(main);
+    } else if (view === 'analytics') {
+      await renderAdminAnalytics(main);
+    } else if (view === 'orders') {
+      await renderAdminOrders(main);
+    } else if (view === 'users') {
+      await renderAdminUsers(main);
+    } else if (view === 'books') {
+      await renderAdminBooks(main);
+    }
+  } catch (e) { console.error('renderAdminPanel', e); toast('Admin panel failed to load'); }
+}
+
+// Admin Dashboard Overview
+async function renderAdminDashboard(main) {
+  try {
+    const [orders, users, books] = await Promise.all([
+      Api.getAdminOrders(AUTH.token).catch(() => []),
+      Api.getAdminUsers(AUTH.token).catch(() => []),
+      Api.getBooks().catch(() => ({ books: [] }))
+    ]);
+
+    const ordersArray = dedupeOrders(Array.isArray(orders) ? orders : (orders.orders || []));
+    const usersArray = Array.isArray(users) ? users : (users.users || []);
+    const booksArray = Array.isArray(books) ? books : (books.books || []);
+
+    // Calculate stats
+    const totalOrders = ordersArray.length;
+    const totalUsers = usersArray.length;
+    const totalBooks = booksArray.length;
+    const totalRevenue = ordersArray.reduce((sum, order) => {
+      const items = order.items || [];
+      const itemsTotal = items.reduce((s, it) => s + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
+      return sum + itemsTotal;
+    }, 0);
+
+    const recentOrders = ordersArray.slice(0, 5);
+    const recentUsers = usersArray.slice(0, 5);
+
+    main.innerHTML = `
+      <div class="admin-stats">
+        <div class="stat-card orders">
+          <div class="stat-icon">📦</div>
+          <div class="stat-value">${totalOrders}</div>
+          <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-card users">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value">${totalUsers}</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card books">
+          <div class="stat-icon">📚</div>
+          <div class="stat-value">${totalBooks}</div>
+          <div class="stat-label">Total Books</div>
+        </div>
+        <div class="stat-card revenue">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value">$${totalRevenue.toFixed(2)}</div>
+          <div class="stat-label">Total Revenue</div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <a href="#" class="quick-action" onclick="renderAdminPanel('orders')">
+          📦 View All Orders
+        </a>
+        <a href="#" class="quick-action" onclick="renderAdminPanel('users')">
+          👥 Manage Users  
+        </a>
+        <a href="#" class="quick-action" onclick="renderAdminPanel('books')">
+          📚 Manage Books
+        </a>
+      </div>
+
+      <div class="grid two" style="gap: 20px;">
+        <div>
+          <h3>📦 Recent Orders</h3>
+          ${recentOrders.length ? `
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Total</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recentOrders.map(o => {
+                  const itemsTotal = (o.items || []).reduce((s, it) => s + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
+                  return `
+                    <tr>
+                      <td><strong>#${o.id}</strong></td>
+                      <td>${o.user_name || o.user_email || 'N/A'}</td>
+                      <td>$${itemsTotal.toFixed(2)}</td>
+                      <td>${new Date(o.created_at || '').toLocaleDateString()}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          ` : '<p class="muted">No recent orders</p>'}
+        </div>
+
+        <div>
+          <h3>👥 Recent Users</h3>
+          ${recentUsers.length ? `
+            <div class="activity-list">
+              ${recentUsers.map(u => `
+                <div class="activity-item">
+                  <div class="activity-icon">👤</div>
+                  <div class="activity-content">
+                    <div class="activity-text">${u.name || 'Unknown'}</div>
+                    <div class="activity-time">${u.email}</div>
+                    <div class="activity-time">Joined ${new Date(u.created_at || '').toLocaleDateString()}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<p class="muted">No recent users</p>'}
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.error('renderAdminDashboard', e);
+    main.innerHTML = '<p class="bad">Failed to load dashboard</p>';
+  }
+}
+
+// Admin Analytics View
+async function renderAdminAnalytics(main) {
+  main.innerHTML = `
+    <h3>📈 Analytics & Reports</h3>
+    <div class="chart-placeholder">
+      <div class="chart-icon">📊</div>
+      <h4>Analytics Dashboard</h4>
+      <p>Advanced analytics features coming soon!</p>
+      <p class="small muted">This section will include:</p>
+      <ul style="text-align: left; display: inline-block; margin-top: 12px;">
+        <li>📈 Sales trends over time</li>
+        <li>📚 Popular books analysis</li>
+        <li>👥 User activity patterns</li>
+        <li>💰 Revenue breakdowns</li>
+        <li>📦 Order status distribution</li>
+      </ul>
+    </div>
+  `;
+}
+
+// Admin Orders View  
+async function renderAdminOrders(main) {
+  try {
+    const raw = await Api.getAdminOrders(AUTH.token).catch(() => []);
+    const orders = dedupeOrders(Array.isArray(raw) ? raw : (raw.orders || []));
+    if (!orders.length) { 
+      main.innerHTML = '<p class="muted">No orders found.</p>'; 
+      return; 
+    }
+    
+    main.innerHTML = `
+      <h3>📦 Orders Management</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${orders.map(o => {
+            const items = (o.items || []).map(i => `${i.title || i.book_id} (${i.quantity})`).join(', ');
+            const itemsTotal = (o.items || []).reduce((s, it) => s + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
+            const shipFee = (o.shipping_fee != null) ? Number(o.shipping_fee) : (o.shipping_speed ? ({ standard: 30, express: 70, priority: 120 }[o.shipping_speed] || 0) : 0);
+            const codFee = (o.cod_fee != null) ? Number(o.cod_fee) : ((o.payment_method === 'cod') ? 10 : 0);
+            const grandTotal = itemsTotal + shipFee + codFee;
+            
+            return `
+              <tr>
+                <td><strong>#${o.id}</strong></td>
+                <td>${o.user_name || o.user_email || 'N/A'}</td>
+                <td class="small">${items || 'No items'}</td>
+                <td><strong>$${grandTotal.toFixed(2)}</strong></td>
+                <td><span class="status-badge ${o.payment_method === 'card' ? 'completed' : 'pending'}">${(o.payment_method || 'unknown').toUpperCase()}</span></td>
+                <td>${new Date(o.created_at || '').toLocaleDateString()}</td>
+                <td><span class="status-badge ${o.status === 'completed' ? 'completed' : 'pending'}">${o.status || 'PENDING'}</span></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    console.error('renderAdminOrders', e);
+    main.innerHTML = '<p class="bad">Failed to load orders</p>';
+  }
+}
+
+// Admin Users View
+async function renderAdminUsers(main) {
+  try {
+    const raw = await Api.getAdminUsers(AUTH.token).catch(() => []);
+    const users = Array.isArray(raw) ? raw : (raw.users || []);
+    
+    if (!users.length) { 
+      main.innerHTML = '<p class="muted">No users found.</p>'; 
+      return; 
+    }
+    
+    main.innerHTML = `
+      <h3>👥 Users Management</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Admin</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td><strong>${u.id}</strong></td>
+              <td>${u.name || 'N/A'}</td>
+              <td>${u.email}</td>
+              <td>${u.phone || 'N/A'}</td>
+              <td><span class="status-badge ${u.is_admin ? 'completed' : 'pending'}">${u.is_admin ? 'ADMIN' : 'USER'}</span></td>
+              <td>${new Date(u.created_at || '').toLocaleDateString()}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    console.error('renderAdminUsers', e);
+    main.innerHTML = '<p class="bad">Failed to load users</p>';
+  }
+}
+
+// Admin Books View
+async function renderAdminBooks(main) {
+  try {
+    const raw = await Api.getBooks().catch(() => ({ books: [] }));
+    const books = Array.isArray(raw) ? raw : (raw.books || []);
+    
+    if (!books.length) { 
+      main.innerHTML = '<p class="muted">No books found.</p>'; 
+      return; 
+    }
+    
+    main.innerHTML = `
+      <h3>📚 Books Management</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Cover</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${books.map(b => `
+            <tr>
+              <td>
+                ${b.image_url ? `<img src="${b.image_url}" alt="${b.title}" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px;">` : '📚'}
+              </td>
+              <td><strong>${b.title}</strong></td>
+              <td>${b.author}</td>
+              <td><strong>$${Number(b.price || 0).toFixed(2)}</strong></td>
+              <td>
+                <input type="number" value="${b.stock || 0}" min="0" 
+                       data-book-id="${b.id}" 
+                       style="width: 70px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--muted); background: var(--soft); color: var(--text);" />
+              </td>
+              <td>
+                <button class="btn ghost small" onclick="editBook(${b.id})" style="font-size: 0.8rem; padding: 4px 8px;">✏️ Edit</button>
+                <button class="btn bad small" onclick="deleteBook(${b.id})" style="font-size: 0.8rem; padding: 4px 8px;">🗑️ Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Add stock update functionality
+    onAll('[data-book-id]', (inp) => {
+      inp.onchange = async () => {
+        const id = inp.dataset.bookId; 
+        const newStock = Number(inp.value || 0);
+        try { 
+          await Api.updateBookAdmin(AUTH.token, id, { stock: newStock }); 
+          toast('Stock updated'); 
+          await renderCatalog(); 
+        } catch (err) { 
+          console.error('updateStock', err); 
+          toast(err?.message || 'Stock update failed'); 
+        }
+      };
+    });
+  } catch (e) {
+    console.error('renderAdminBooks', e);
+    main.innerHTML = '<p class="bad">Failed to load books</p>';
+  }
+}
       const raw = await Api.getAdminOrders(AUTH.token).catch(() => []);
       const orders = dedupeOrders(Array.isArray(raw) ? raw : (raw.orders || []));
       if (!orders.length) { main.innerHTML = '<p class="muted">No orders found.</p>'; return; }
@@ -1223,11 +1559,87 @@ async function renderAdminPanel(view = 'orders') {
         };
       });
     }
-  } catch (e) { console.error('renderAdminPanel', e); toast('Admin panel failed to load'); }
+  } catch (e) { 
+    console.error('renderAdminBooks', e);
+    main.innerHTML = '<p class="bad">Failed to load books</p>';
+  }
 }
+
+// Event handlers for admin navigation
+on('#adminViewDashboard', 'click', () => renderAdminPanel('dashboard'));
 on('#adminViewOrders', 'click', () => renderAdminPanel('orders'));
 on('#adminViewUsers', 'click', () => renderAdminPanel('users'));
 on('#adminViewBooks', 'click', () => renderAdminPanel('books'));
+on('#adminViewAnalytics', 'click', () => renderAdminPanel('analytics'));
+
+// Book management functions
+window.editBook = async (bookId) => {
+  try {
+    const book = await Api.getBookById(bookId);
+    ADMIN_EDIT_BOOK_ID = bookId;
+    
+    const form = $('#adminBookForm');
+    if (form) {
+      form.title.value = book.title || '';
+      form.author.value = book.author || '';
+      form.price.value = book.price || '';
+      form.stock.value = book.stock || '';
+      form.image_url.value = book.image_url || '';
+      form.description.value = book.description || '';
+      
+      // Show preview if image exists
+      updateBookPreview(book.image_url);
+    }
+    toast('Book loaded for editing');
+  } catch (err) {
+    console.error('editBook', err);
+    toast('Failed to load book for editing');
+  }
+};
+
+window.deleteBook = async (bookId) => {
+  if (!confirm('Are you sure you want to delete this book? This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    await Api.deleteBookAdmin(AUTH.token, bookId);
+    toast('Book deleted successfully');
+    await renderAdminPanel('books');
+  } catch (err) {
+    console.error('deleteBook', err);
+    toast(err?.message || 'Failed to delete book');
+  }
+};
+
+// Book preview functionality
+function updateBookPreview(imageUrl) {
+  const preview = $('#bookImagePreview');
+  const img = $('#previewImg');
+  
+  if (imageUrl && img && preview) {
+    img.src = imageUrl;
+    preview.classList.remove('hidden');
+  } else if (preview) {
+    preview.classList.add('hidden');
+  }
+}
+
+// Image URL input handler for live preview
+on('input[name="image_url"]', 'input', (e) => {
+  updateBookPreview(e.target.value);
+});
+
+// Admin search functionality
+on('#adminSearch', 'input', (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+  const rows = document.querySelectorAll('.admin-table tbody tr');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
+});
 
 // Admin Add/Edit Book handler
 on('#adminBookForm', 'submit', async (e) => {
