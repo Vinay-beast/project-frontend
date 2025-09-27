@@ -105,8 +105,15 @@ on('#formRegister', 'submit', async (e) => {
   const data = Object.fromEntries(new FormData(e.target).entries());
   try {
     const out = await Api.register({ name: data.name, email: data.email, password: data.password, phone: data.phone || '', bio: data.bio || '' });
-    saveToken(out.token); AUTH.user = out.user; toast('Registered & signed in'); await renderNav();
-    if (AUTH.user?.is_admin) { setActiveNav('admin'); showSection('adminPanel'); } else { setActiveNav('home'); showSection('homeSection'); }
+    saveToken(out.token); AUTH.user = out.user; toast('Registered & signed in');
+    await renderNav();
+    if (AUTH.user?.is_admin) {
+      setActiveNav('admin');
+      showSection('adminPanel');
+    } else {
+      setActiveNav('home');
+      showSection('homeSection');
+    }
   } catch (err) { console.error(err); toast(err?.message || 'Register failed'); }
 });
 
@@ -115,8 +122,15 @@ on('#formLogin', 'submit', async (e) => {
   const data = Object.fromEntries(new FormData(e.target).entries());
   try {
     const out = await Api.login({ email: data.email, password: data.password });
-    saveToken(out.token); AUTH.user = out.user; toast('Logged in'); await renderNav();
-    if (AUTH.user?.is_admin) { setActiveNav('admin'); showSection('adminPanel'); } else { setActiveNav('home'); showSection('homeSection'); }
+    saveToken(out.token); AUTH.user = out.user; toast('Logged in');
+    await renderNav();
+    if (AUTH.user?.is_admin) {
+      setActiveNav('admin');
+      showSection('adminPanel');
+    } else {
+      setActiveNav('home');
+      showSection('homeSection');
+    }
   } catch (err) { console.error(err); toast(err?.message || 'Login failed'); }
 });
 
@@ -202,8 +216,15 @@ async function renderNav() {
       if (navCatalogBtn) navCatalogBtn.classList.remove('hidden');
       setHeaderMode('full');
 
-      // Update notifications when logged in
-      updateNavNotifications().catch(e => console.error('Failed to update notifications:', e));
+      // Update notifications when logged in (with safety check)
+      setTimeout(() => {
+        if (typeof updateNavNotifications === 'function') {
+          console.log('DEBUG: Calling updateNavNotifications from renderNav');
+          updateNavNotifications().catch(e => console.error('Failed to update notifications in renderNav:', e));
+        } else {
+          console.error('DEBUG: updateNavNotifications function not found');
+        }
+      }, 100); // Small delay to ensure DOM is ready
     }
   } else {
     if (btnLogin) btnLogin.classList.remove('hidden');
@@ -741,68 +762,116 @@ async function renderLibrary() {
 function openReader(title) { $('#readerTitle') && ($('#readerTitle').textContent = title); $('#readerBody') && ($('#readerBody').textContent = 'This is a sample reader.'); $('#readerModal')?.classList.add('show'); }
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
 
-// ---------- Gift Notifications ----------
-async function renderGiftNotifications() {
+// ---------- Navigation Notifications ----------
+async function updateNavNotifications() {
+  console.log('DEBUG: updateNavNotifications called, token:', !!AUTH.token);
+  try {
+    if (!AUTH.token) {
+      console.log('DEBUG: No token, skipping notification update');
+      return;
+    }
+
+    console.log('DEBUG: Fetching gifts...');
+    const gifts = await Api.getMyGifts(AUTH.token).catch(e => {
+      console.error('DEBUG: Error fetching gifts:', e);
+      return [];
+    });
+    console.log('DEBUG: Gifts received:', gifts);
+
+    const unclaimedGifts = gifts.filter(g => !g.claimed_at);
+    console.log('DEBUG: Unclaimed gifts:', unclaimedGifts.length);
+
+    const notificationBtn = $('#btnNotifications');
+    const notificationBadge = $('#navNotificationBadge');
+
+    console.log('DEBUG: Notification elements found:', {
+      btn: !!notificationBtn,
+      badge: !!notificationBadge
+    });
+
+    if (notificationBtn && notificationBadge) {
+      if (unclaimedGifts.length > 0) {
+        notificationBadge.textContent = unclaimedGifts.length;
+        notificationBadge.classList.remove('hidden');
+        notificationBtn.title = `${unclaimedGifts.length} unclaimed gift${unclaimedGifts.length === 1 ? '' : 's'}`;
+        console.log('DEBUG: Notification badge updated to:', unclaimedGifts.length);
+      } else {
+        notificationBadge.classList.add('hidden');
+        notificationBtn.title = 'Gift Notifications';
+        console.log('DEBUG: Notification badge hidden (no unclaimed gifts)');
+      }
+    }
+  } catch (e) {
+    console.error('updateNavNotifications error:', e);
+  }
+}
+
+// Manual test function for debugging
+window.testNotifications = async function () {
+  console.log('=== MANUAL NOTIFICATION TEST ===');
+  try {
+    if (!AUTH.token) {
+      console.log('No auth token found');
+      return;
+    }
+
+    console.log('Calling updateNavNotifications...');
+    await updateNavNotifications();
+
+    console.log('Test completed. Check above logs for details.');
+  } catch (e) {
+    console.error('Test failed:', e);
+  }
+};
+
+async function renderNotificationModal() {
   try {
     if (!AUTH.token) return;
 
     const gifts = await Api.getMyGifts(AUTH.token).catch(() => []);
-    const recentGifts = gifts.filter(g => {
-      // Show gifts from last 30 days or unclaimed gifts
-      const giftDate = new Date(g.created_at);
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      return !g.claimed_at || giftDate > thirtyDaysAgo;
-    });
+    const notificationList = $('#notificationList');
 
-    const unclaimedCount = gifts.filter(g => !g.claimed_at).length;
-    const notificationBadge = $('#profileNotificationBadge');
-    const notificationsEl = $('#giftNotifications');
+    if (!notificationList) return;
 
-    if (!notificationsEl) return;
-
-    // Update notification badge
-    if (notificationBadge) {
-      if (unclaimedCount > 0) {
-        notificationBadge.classList.remove('hidden');
-        notificationBadge.title = `${unclaimedCount} unclaimed gift${unclaimedCount === 1 ? '' : 's'}`;
-      } else {
-        notificationBadge.classList.add('hidden');
-      }
-    }
-
-    if (recentGifts.length === 0) {
-      notificationsEl.innerHTML = '<p class="small muted">No recent gift notifications</p>';
+    if (gifts.length === 0) {
+      notificationList.innerHTML = '<p class="muted" style="padding: 20px; text-align: center;">No gift notifications</p>';
       return;
     }
 
-    const notificationCards = await Promise.all(recentGifts.map(async g => {
+    const notificationItems = await Promise.all(gifts.map(async g => {
       const b = g.title ? g : await fetchBookById(g.book_id).catch(() => ({ title: 'Unknown Book', author: 'Unknown' }));
       const isClaimed = !!g.claimed_at;
       const timeAgo = new Date(g.created_at).toLocaleDateString();
 
+      // Get sender info from the backend data
+      const senderEmail = g.sender_email || 'Unknown sender';
+      const senderName = g.sender_name || senderEmail;
+
       return `
-        <div class="card small">
-          <div class="pillbar">
-            <span class="tag tiny ${isClaimed ? 'good' : 'warn'}">${isClaimed ? '✓ Claimed' : '🎁 New Gift'}</span>
-            <span class="tag tiny">${timeAgo}</span>
+        <div class="notification-item ${isClaimed ? '' : 'unread'}" data-gift-id="${g.id}" data-claimed="${isClaimed}">
+          <h4>${b.title || g.title}</h4>
+          <p>From: ${senderName} (${senderEmail})</p>
+          <p>Received: ${timeAgo}</p>
+          <div style="margin-top: 8px;">
+            <span class="tag tiny ${isClaimed ? 'good' : 'warn'}">${isClaimed ? '✓ Claimed' : '🎁 Click to Claim'}</span>
           </div>
-          <h4 style="margin: 4px 0;">${b.title || g.title}</h4>
-          <p class="small muted" style="margin: 0;">From: ${g.recipient_email}</p>
-          ${!isClaimed ? `<button class="btn tiny primary" data-claim-single-gift="${g.id}">Claim</button>` : ''}
         </div>
       `;
     }));
 
-    notificationsEl.innerHTML = notificationCards.join('');
+    notificationList.innerHTML = notificationItems.join('');
 
-    // Handle single gift claiming
-    onAll('[data-claim-single-gift]', (btn) => {
-      btn.onclick = async () => {
+    // Handle notification clicks (claim gifts)
+    onAll('.notification-item[data-claimed="false"]', (item) => {
+      item.onclick = async () => {
         try {
           const result = await Api.claimGifts(AUTH.token);
           toast(`Claimed ${result.claimed || 0} gift${result.claimed === 1 ? '' : 's'}!`);
-          await renderGiftNotifications(); // Refresh notifications
-          await renderLibrary(); // Refresh library to show new gifts
+
+          // Update UI
+          await updateNavNotifications();
+          await renderLibrary();
+          $('#notificationModal')?.classList.remove('show');
         } catch (e) {
           console.error('Claim gift failed:', e);
           toast(e?.message || 'Failed to claim gift');
@@ -830,13 +899,20 @@ async function renderProfile() {
 
   __renderProfileLock = true;
   try {
+    // Update navigation notifications regardless of profile loading success
+    if (typeof updateNavNotifications === 'function') {
+      try {
+        console.log('DEBUG: Updating notifications from renderProfile');
+        await updateNavNotifications();
+      } catch (e) {
+        console.error('Failed to update notifications in profile:', e);
+      }
+    }
+
     if (!AUTH.token) { setActiveNav('login'); showSection('loginSection'); return; }
     const u = await Api.getProfile(AUTH.token).catch(() => null);
     if (!u) { const pv = $('#profileView'); if (pv) pv.innerHTML = '<p class="muted">Failed to load profile</p>'; return; }
     AUTH.user = u;
-
-    // Update navigation notifications
-    await updateNavNotifications();
 
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
