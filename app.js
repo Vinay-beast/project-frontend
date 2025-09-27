@@ -250,7 +250,6 @@ async function renderNav() {
 
   renderCartIcon();
 }
-renderNav();
 
 // Switch between login and register
 const sToReg = $('#switchToRegister'); if (sToReg) sToReg.addEventListener('click', () => { showSection('registerSection'); });
@@ -1308,6 +1307,7 @@ async function renderAdminAnalytics(main) {
     // Payment method breakdown
     const cardPayments = ordersArray.filter(o => o.payment_method === 'card').length;
     const codPayments = ordersArray.filter(o => o.payment_method === 'cod').length;
+    const upiPayments = ordersArray.filter(o => o.payment_method === 'upi').length;
 
     // Recent activity (last 7 days)
     const recentDate = new Date();
@@ -1420,7 +1420,12 @@ async function renderAdminAnalytics(main) {
                 <td>${ordersArray.length ? ((cardPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
               </tr>
               <tr>
-                <td><span class="status-badge pending">COD</span></td>
+                <td><span class="status-badge pending">UPI</span></td>
+                <td><strong>${upiPayments}</strong></td>
+                <td>${ordersArray.length ? ((upiPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+              </tr>
+              <tr>
+                <td><span class="status-badge cancelled">COD</span></td>
                 <td><strong>${codPayments}</strong></td>
                 <td>${ordersArray.length ? ((codPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
               </tr>
@@ -1490,17 +1495,6 @@ async function renderAdminAnalytics(main) {
             <p>Total Revenue: <strong>₹${totalRevenue.toFixed(2)}</strong></p>
             <p>Average Order Value: <strong>₹${(totalRevenue / ordersArray.length || 0).toFixed(2)}</strong></p>
             <p>This Week's Activity: <strong>${recentOrders.length} orders, ${recentUsers.length} new users</strong></p>
-          </div>
-          
-          <div style="background: var(--soft); padding: 16px; border-radius: 8px; border: 1px solid var(--muted);">
-            <h5>🎯 Recommendations</h5>
-            <ul style="margin: 8px 0; padding-left: 20px;">
-              ${lowStockBooks.length ? `<li>⚠️ Restock ${lowStockBooks.length} low inventory items</li>` : ''}
-              ${giftOrders > buyOrders ? `<li>🎁 Gift orders are popular - promote gift features</li>` : ''}
-              ${codPayments > cardPayments ? `<li>💳 Encourage card payments with discounts</li>` : ''}
-              ${popularBooks.length ? `<li>📚 Promote "${popularBooks[0][1].title}" - your bestseller</li>` : ''}
-              <li>📊 Monitor weekly trends for inventory planning</li>
-            </ul>
           </div>
         </div>
       </div>
@@ -1798,9 +1792,15 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
 (async function init() {
   try {
     if (AUTH.token) {
-      try { AUTH.user = await Api.getProfile(AUTH.token); setActiveNav(AUTH.user?.is_admin ? 'admin' : 'home'); showSection(AUTH.user?.is_admin ? 'adminPanel' : 'homeSection'); }
+      try {
+        AUTH.user = await Api.getProfile(AUTH.token);
+        await renderNav(); // Call renderNav after setting AUTH.user
+        setActiveNav(AUTH.user?.is_admin ? 'admin' : 'home');
+        showSection(AUTH.user?.is_admin ? 'adminPanel' : 'homeSection');
+      }
       catch (e) { console.warn('init profile failed', e); saveToken(null); setActiveNav('login'); showSection('loginSection'); }
     } else {
+      await renderNav(); // Call renderNav for logged out state too
       setActiveNav('login'); showSection('loginSection');
     }
 
