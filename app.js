@@ -1334,7 +1334,7 @@ async function renderAdminAnalytics(main) {
     });
 
     const popularBooks = Object.entries(bookSales)
-      .sort(([,a], [,b]) => b.count - a.count)
+      .sort(([, a], [, b]) => b.count - a.count)
       .slice(0, 5);
 
     // Low stock books
@@ -1543,7 +1543,7 @@ async function renderAdminOrders(main) {
       const shipFee = (o.shipping_fee != null) ? Number(o.shipping_fee) : (o.shipping_speed ? ({ standard: 30, express: 70, priority: 120 }[o.shipping_speed] || 0) : 0);
       const codFee = (o.cod_fee != null) ? Number(o.cod_fee) : ((o.payment_method === 'cod') ? 10 : 0);
       const grandTotal = itemsTotal + shipFee + codFee;
-      
+
       // Determine order type based on mode or items
       let orderType = 'BUY';
       let typeClass = 'completed';
