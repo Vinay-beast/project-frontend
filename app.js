@@ -219,11 +219,22 @@ async function renderNav() {
       if (navCatalogBtn) navCatalogBtn.classList.remove('hidden');
       setHeaderMode('full');
 
-      // Update notifications when logged in (with safety check)
-      setTimeout(() => {
+      // Update notifications when logged in (with safety check and retry)
+      setTimeout(async () => {
         if (typeof updateNavNotifications === 'function') {
           console.log('DEBUG: Calling updateNavNotifications from renderNav');
-          updateNavNotifications().catch(e => console.error('Failed to update notifications in renderNav:', e));
+          try {
+            await updateNavNotifications();
+
+            // Additional check after 2 seconds to ensure notifications are updated
+            setTimeout(async () => {
+              console.log('DEBUG: Re-checking notifications after delay');
+              await updateNavNotifications();
+            }, 2000);
+
+          } catch (e) {
+            console.error('Failed to update notifications in renderNav:', e);
+          }
         } else {
           console.error('DEBUG: updateNavNotifications function not found');
         }
@@ -753,7 +764,10 @@ async function renderLibrary() {
         try {
           const result = await Api.claimGifts(AUTH.token);
           toast(`Claimed ${result.claimed || 0} gift${result.claimed === 1 ? '' : 's'}!`);
-          renderLibrary(); // Refresh to show updated status
+
+          // Immediately update notifications and library
+          await updateNavNotifications();
+          await renderLibrary(); // Refresh to show updated status
         } catch (e) {
           console.error('Claim gifts failed:', e);
           toast(e?.message || 'Failed to claim gifts');
@@ -805,12 +819,24 @@ async function updateNavNotifications() {
         if (unclaimedGifts.length > 0) {
           notificationBadge.textContent = unclaimedGifts.length;
           notificationBadge.classList.remove('hidden');
+          notificationBadge.style.display = 'inline-block';
           notificationBtn.title = `${unclaimedGifts.length} unclaimed gift${unclaimedGifts.length === 1 ? '' : 's'}`;
           console.log('DEBUG: Notification badge updated to:', unclaimedGifts.length);
+
+          // Make the notification button more visible with red glow
+          notificationBtn.style.background = 'rgba(239, 68, 68, 0.1)';
+          notificationBtn.style.borderColor = '#ef4444';
+          notificationBtn.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.3)';
         } else {
           notificationBadge.classList.add('hidden');
+          notificationBadge.style.display = 'none';
           notificationBtn.title = 'Gift Notifications (No new notifications)';
           console.log('DEBUG: Notification badge hidden (no unclaimed gifts)');
+
+          // Reset button appearance
+          notificationBtn.style.background = 'transparent';
+          notificationBtn.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          notificationBtn.style.boxShadow = 'none';
         }
       }
     }
@@ -1204,6 +1230,18 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
       const ordersSection = document.getElementById('ordersSection');
       if (ordersSection && !ordersSection.classList.contains('hidden')) { renderOrders().catch(e => console.error('auto-refresh orders failed', e)); }
     }, 60000);
+
+    // Periodic notification update to ensure they stay current
+    setInterval(async () => {
+      if (AUTH.token && typeof updateNavNotifications === 'function') {
+        console.log('DEBUG: Periodic notification check');
+        try {
+          await updateNavNotifications();
+        } catch (e) {
+          console.error('Periodic notification update failed:', e);
+        }
+      }
+    }, 30000); // Check every 30 seconds
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
 
