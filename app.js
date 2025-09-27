@@ -46,36 +46,6 @@ const addDaysISO = (isoDate, days) => { const d = new Date(isoDate); d.setDate(d
 function on(selector, event, handler) { const el = document.querySelector(selector); if (!el) return false; el.addEventListener(event, handler); return true; }
 function onAll(selector, handler) { const nodes = document.querySelectorAll(selector); if (!nodes || !nodes.length) return false; nodes.forEach(n => handler(n)); return true; }
 
-// ---------- Mobile Menu Toggle ----------
-function initMobileMenu() {
-  const mobileToggle = $('#mobileMenuToggle');
-  const navLinks = $('#navLinks');
-
-  if (mobileToggle && navLinks) {
-    mobileToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('mobile-hidden');
-      const isOpen = !navLinks.classList.contains('mobile-hidden');
-      mobileToggle.textContent = isOpen ? '✕' : '☰';
-    });
-  }
-
-  // Close mobile menu when clicking nav items
-  $$('.navbtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (navLinks) navLinks.classList.add('mobile-hidden');
-      if (mobileToggle) mobileToggle.textContent = '☰';
-    });
-  });
-
-  // Handle window resize for mobile menu
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 768 && navLinks) {
-      navLinks.classList.remove('mobile-hidden');
-      if (mobileToggle) mobileToggle.textContent = '☰';
-    }
-  });
-}
-
 // ---------- Header / nav helper ----------
 function setHeaderMode(mode) {
   const header = document.querySelector('header');
@@ -2009,9 +1979,6 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
         }
       }
     }, 30000); // Check every 30 seconds
-
-    // Initialize mobile menu functionality
-    initMobileMenu();
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
 
