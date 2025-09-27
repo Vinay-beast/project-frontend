@@ -1041,11 +1041,18 @@ async function renderProfile() {
     if (!u) { const pv = $('#profileView'); if (pv) pv.innerHTML = '<p class="muted">Failed to load profile</p>'; return; }
     AUTH.user = u;
 
+    // Debug: Check what we're receiving from the backend
+    console.log('Profile user object:', u);
+    console.log('Has password field:', u.has_password);
+
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
 
     // Check if user signed up with Google (Google users have has_password = 0)
-    const isGoogleUser = u.has_password === 0;
+    // Fallback: Also check if the user was created recently and profile_pic looks like a Google URL
+    const isGoogleUser = u.has_password === 0 ||
+      (u.has_password === undefined && u.profile_pic && u.profile_pic.includes('googleusercontent.com'));
+    console.log('Is Google user:', isGoogleUser, 'has_password:', u.has_password, 'profile_pic:', u.profile_pic);
 
     profileView.innerHTML = `
       <div class="profile-head">
@@ -1083,21 +1090,38 @@ async function renderProfile() {
 
     on('#peCancel', 'click', () => { $('#profileEdit')?.classList.add('hidden'); $('#profileView')?.classList.remove('hidden'); });
 
-    // Hide password section for Google users
+    // Show/hide password section with debug logging
     const passwordSection = document.querySelector('#profileSection .password-section');
-    if (isGoogleUser && passwordSection) {
-      passwordSection.style.display = 'none';
-    } else if (passwordSection) {
-      passwordSection.style.display = 'block';
+    console.log('Password section found:', !!passwordSection, 'Should hide for Google user:', isGoogleUser);
+
+    if (passwordSection) {
+      if (isGoogleUser) {
+        passwordSection.style.display = 'none';
+        console.log('Hiding password section for Google user');
+      } else {
+        passwordSection.style.display = 'block';
+        console.log('Showing password section for email user');
+      }
+    } else {
+      console.log('Password section not found in DOM');
     }
 
-    const cpBtn = document.getElementById('cpSave'); if (cpBtn && !isGoogleUser) cpBtn.onclick = async () => {
-      const cur = ($('#cpCurrent')?.value || '').trim(), nxt = ($('#cpNew')?.value || '').trim(), cfm = ($('#cpConfirm')?.value || '').trim();
-      if (!cur || !nxt || !cfm) { toast('Fill all password fields'); return; }
-      if (nxt !== cfm) { toast('New passwords do not match'); return; }
-      if (nxt.length < 6) { toast('New password must be at least 6 chars'); return; }
-      try { await Api.changePassword(AUTH.token, { oldPassword: cur, newPassword: nxt }); toast('Password updated', 'success'); $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpConfirm').value = ''; } catch (e) { console.error('changePassword', e); toast(e?.message || 'Password update failed', 'error'); }
-    };
+    const cpBtn = document.getElementById('cpSave');
+    if (cpBtn) {
+      if (!isGoogleUser) {
+        console.log('Attaching password change handler for email user');
+        cpBtn.onclick = async () => {
+          const cur = ($('#cpCurrent')?.value || '').trim(), nxt = ($('#cpNew')?.value || '').trim(), cfm = ($('#cpConfirm')?.value || '').trim();
+          if (!cur || !nxt || !cfm) { toast('Fill all password fields'); return; }
+          if (nxt !== cfm) { toast('New passwords do not match'); return; }
+          if (nxt.length < 6) { toast('New password must be at least 6 chars'); return; }
+          try { await Api.changePassword(AUTH.token, { oldPassword: cur, newPassword: nxt }); toast('Password updated', 'success'); $('#cpCurrent').value = ''; $('#cpNew').value = ''; $('#cpConfirm').value = ''; } catch (e) { console.error('changePassword', e); toast(e?.message || 'Password update failed', 'error'); }
+        };
+      } else {
+        console.log('Removing password button for Google user');
+        cpBtn.style.display = 'none';
+      }
+    }
 
     if (!AUTH.user?.is_admin) {
       let addrs = await Api.listAddresses(AUTH.token).catch(() => []);
