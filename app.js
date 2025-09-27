@@ -21,121 +21,6 @@ const addDaysISO = (isoDate, days) => { const d = new Date(isoDate); d.setDate(d
 function on(selector, event, handler) { const el = document.querySelector(selector); if (!el) return false; el.addEventListener(event, handler); return true; }
 function onAll(selector, handler) { const nodes = document.querySelectorAll(selector); if (!nodes || !nodes.length) return false; nodes.forEach(n => handler(n)); return true; }
 
-// ---------- New Enhanced Features ----------
-
-// Wishlist functionality
-let userWishlist = JSON.parse(localStorage.getItem('bookNookWishlist') || '[]');
-
-function addToWishlist(bookId) {
-  if (!userWishlist.includes(bookId)) {
-    userWishlist.push(bookId);
-    localStorage.setItem('bookNookWishlist', JSON.stringify(userWishlist));
-    toast('📚 Book added to wishlist!');
-    updateWishlistUI();
-  } else {
-    toast('Book already in wishlist');
-  }
-}
-
-function removeFromWishlist(bookId) {
-  userWishlist = userWishlist.filter(id => id !== bookId);
-  localStorage.setItem('bookNookWishlist', JSON.stringify(userWishlist));
-  toast('Removed from wishlist');
-  updateWishlistUI();
-}
-
-function updateWishlistUI() {
-  // Update wishlist heart icons
-  $$('.wishlist-btn').forEach(btn => {
-    const bookId = parseInt(btn.dataset.bookId);
-    const isInWishlist = userWishlist.includes(bookId);
-    btn.innerHTML = isInWishlist ? '❤️' : '🤍';
-    btn.classList.toggle('active', isInWishlist);
-  });
-
-  // Update wishlist count badge
-  const wishlistCount = $('#wishlistCount');
-  if (wishlistCount) {
-    if (userWishlist.length > 0) {
-      wishlistCount.textContent = userWishlist.length;
-      wishlistCount.classList.remove('hidden');
-    } else {
-      wishlistCount.classList.add('hidden');
-    }
-  }
-}
-
-// Search functionality
-let searchTimeout;
-function handleSearch(query) {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    if (query.length > 2) {
-      filterBooks(query);
-    } else {
-      showAllBooks();
-    }
-  }, 300);
-}
-
-function filterBooks(query) {
-  const books = $$('.book-card');
-  books.forEach(card => {
-    const title = card.querySelector('h3')?.textContent.toLowerCase() || '';
-    const author = card.querySelector('.author')?.textContent.toLowerCase() || '';
-    const genre = card.querySelector('.genre')?.textContent.toLowerCase() || '';
-
-    const matches = title.includes(query.toLowerCase()) ||
-      author.includes(query.toLowerCase()) ||
-      genre.includes(query.toLowerCase());
-
-    card.style.display = matches ? 'block' : 'none';
-
-    if (matches) {
-      card.style.animation = 'slideIn 0.3s ease';
-    }
-  });
-}
-
-function showAllBooks() {
-  $$('.book-card').forEach(card => {
-    card.style.display = 'block';
-    card.style.animation = 'slideIn 0.3s ease';
-  });
-}
-
-// Dark/Light theme toggle (enhanced)
-function toggleTheme() {
-  const currentTheme = document.body.dataset.theme || 'dark';
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  document.body.dataset.theme = newTheme;
-  localStorage.setItem('bookNookTheme', newTheme);
-  toast(`Switched to ${newTheme} theme`);
-}
-
-// Book quick view modal
-function showBookQuickView(bookId) {
-  // Find book data and show in modal
-  const modal = $('#quickViewModal');
-  if (modal) {
-    modal.classList.add('show');
-    // Populate modal with book details
-  }
-}
-
-// Enhanced loading states
-function showLoading(element) {
-  if (element) {
-    element.innerHTML = '<div class="loading"></div> Loading...';
-  }
-}
-
-function hideLoading(element, originalContent) {
-  if (element) {
-    element.innerHTML = originalContent;
-  }
-}
-
 // ---------- Header / nav helper ----------
 function setHeaderMode(mode) {
   const header = document.querySelector('header');
@@ -197,7 +82,7 @@ let ADMIN_EDIT_BOOK_ID = null;
 function setActiveNav(key) { $$('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.nav === key)); }
 async function showSection(id) {
   try {
-    ['loginSection', 'registerSection', 'homeSection', 'catalogSection', 'checkoutSection', 'ordersSection', 'profileSection', 'wishlistSection', 'adminPanel']
+    ['loginSection', 'registerSection', 'homeSection', 'catalogSection', 'checkoutSection', 'ordersSection', 'profileSection', 'adminPanel']
       .forEach(s => { const el = document.getElementById(s); if (el) el.classList.add('hidden'); });
     const target = document.getElementById(id);
     if (target) target.classList.remove('hidden');
@@ -213,7 +98,6 @@ async function showSection(id) {
     if (id === 'checkoutSection') { await renderCheckout(); }
     if (id === 'ordersSection') { await renderOrders(); }
     if (id === 'profileSection') { await renderProfile(); }
-    if (id === 'wishlistSection') { await renderWishlist(); }
     if (id === 'adminPanel') { await renderAdminPanel(); }
   } catch (err) { console.error('showSection error:', err); toast('UI error — see console'); }
 }
@@ -292,7 +176,6 @@ onAll('.navbtn', (b) => {
     if (key === 'catalog') showSection('catalogSection');
     if (key === 'orders') showSection('ordersSection');
     if (key === 'profile') showSection('profileSection');
-    if (key === 'wishlist') showSection('wishlistSection');
     if (key === 'admin') showSection('adminPanel');
   };
 });
@@ -581,21 +464,18 @@ async function renderCatalog(filter = '') {
     const books = q ? (await Api.searchBooks(q, 1, 60)).books || [] : await fetchBooks(1, 60);
     const grid = $('#bookGrid'); if (!grid) return;
     grid.innerHTML = books.map(b => `
-      <div class="card book-card" data-book-id="${b.id}" style="position: relative;">
-        <button class="wishlist-btn ${userWishlist.includes(b.id) ? 'active' : ''}" data-book-id="${b.id}">
-          ${userWishlist.includes(b.id) ? '❤️' : '🤍'}
-        </button>
+      <div class="card book-card">
         <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')"></div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span></div>
         <h2 class="book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
         <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
-        <p class="price gradient-text">${money(b.price)}</p>
+        <p class="price">${money(b.price)}</p>
         <div class="row">
-          <button class="btn primary" data-buy="${b.id}">🛒 Buy</button>
-          <button class="btn" data-rent="${b.id}">📚 Rent</button>
+          <button class="btn primary" data-buy="${b.id}">Buy</button>
+          <button class="btn" data-rent="${b.id}">Rent</button>
         </div>
         <div style="margin-top:8px">
-          <button class="btn ghost" data-gift="${b.id}">🎁 Gift</button>
+          <button class="btn" data-gift="${b.id}">Gift</button>
           <button class="btn ghost" data-addcart="${b.id}">Add to Cart</button>
         </div>
       </div>
@@ -606,9 +486,6 @@ async function renderCatalog(filter = '') {
     onAll('#bookGrid [data-gift]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.gift, qty: 1 }], 'gift'));
     onAll('#bookGrid [data-addcart]', el => el.onclick = () => addToCart(el.dataset.addcart, 1));
     onAll('#bookGrid .book-title', el => el.onclick = () => openBookModal(el.dataset.book));
-
-    // Update wishlist UI after rendering
-    updateWishlistUI();
   } catch (e) { console.error('renderCatalog error', e); toast('Failed loading catalog'); }
 }
 
@@ -1999,233 +1876,5 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
     }, 30000); // Check every 30 seconds
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
-
-// ---------- New Feature Functions ----------
-
-// Render wishlist
-async function renderWishlist() {
-  const wishlistGrid = $('#wishlistGrid');
-  if (!wishlistGrid) return;
-
-  if (userWishlist.length === 0) {
-    wishlistGrid.innerHTML = '<p class="muted">Your wishlist is empty. Add some books to get started!</p>';
-    return;
-  }
-
-  try {
-    const books = await Api.getBooks();
-    const wishlistBooks = books.filter(book => userWishlist.includes(book.id));
-
-    wishlistGrid.innerHTML = wishlistBooks.map(book => `
-      <div class="card book-card" data-book-id="${book.id}">
-        <div style="position: relative;">
-          <button class="wishlist-btn active" data-book-id="${book.id}">❤️</button>
-          <img src="${book.cover_url || 'https://via.placeholder.com/150x200?text=No+Cover'}" 
-               alt="${book.title}" 
-               style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
-        </div>
-        <div style="padding: 10px 0;">
-          <h3>${book.title}</h3>
-          <p class="author small muted">by ${book.author}</p>
-          <p class="genre badge">${book.genre}</p>
-          <div class="pillbar" style="margin-top: 10px;">
-            <span class="tag">${money(book.price)}</span>
-            <button class="btn primary tiny" onclick="addToCart(${book.id})">Add to Cart</button>
-          </div>
-        </div>
-      </div>
-    `).join('');
-
-    updateWishlistUI();
-  } catch (err) {
-    console.error('renderWishlist error:', err);
-    wishlistGrid.innerHTML = '<p class="muted">Error loading wishlist</p>';
-  }
-}
-
-// Event Handlers for New Features
-document.addEventListener('click', (e) => {
-  // Wishlist button handler
-  if (e.target.classList.contains('wishlist-btn')) {
-    const bookId = parseInt(e.target.dataset.bookId);
-    const isActive = e.target.classList.contains('active');
-
-    if (isActive) {
-      removeFromWishlist(bookId);
-    } else {
-      addToWishlist(bookId);
-    }
-  }
-
-  // Theme toggle handler
-  if (e.target.id === 'btnTheme') {
-    toggleTheme();
-  }
-
-  // FAB handler
-  if (e.target.id === 'fabMain') {
-    showFABMenu();
-  }
-
-  // Wishlist modal handlers
-  if (e.target.id === 'btnWishlist') {
-    showWishlistModal();
-  }
-
-  if (e.target.id === 'closeWishlistModal') {
-    hideWishlistModal();
-  }
-
-  if (e.target.id === 'closeQuickViewModal') {
-    hideQuickViewModal();
-  }
-});
-
-// Search input handler
-const searchInput = $('#searchBooks');
-if (searchInput) {
-  searchInput.addEventListener('input', (e) => {
-    handleSearch(e.target.value);
-  });
-}
-
-// Modal functions
-function showWishlistModal() {
-  const modal = $('#wishlistModal');
-  if (modal) {
-    renderWishlistModal();
-    modal.classList.add('show');
-  }
-}
-
-function hideWishlistModal() {
-  const modal = $('#wishlistModal');
-  if (modal) {
-    modal.classList.remove('show');
-  }
-}
-
-function hideQuickViewModal() {
-  const modal = $('#quickViewModal');
-  if (modal) {
-    modal.classList.remove('show');
-  }
-}
-
-async function renderWishlistModal() {
-  const wishlistContent = $('#wishlistContent');
-  if (!wishlistContent) return;
-
-  if (userWishlist.length === 0) {
-    wishlistContent.innerHTML = '<p class="muted">Your wishlist is empty</p>';
-    return;
-  }
-
-  try {
-    const books = await Api.getBooks();
-    const wishlistBooks = books.filter(book => userWishlist.includes(book.id));
-
-    wishlistContent.innerHTML = `
-      <div class="wishlist-grid">
-        ${wishlistBooks.map(book => `
-          <div class="card small">
-            <img src="${book.cover_url || 'https://via.placeholder.com/100x150?text=No+Cover'}" 
-                 alt="${book.title}" 
-                 style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px;">
-            <h4>${book.title}</h4>
-            <p class="small muted">${book.author}</p>
-            <div class="pillbar">
-              <span class="tag">${money(book.price)}</span>
-              <button class="btn tiny" onclick="removeFromWishlist(${book.id}); renderWishlistModal();">Remove</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } catch (err) {
-    wishlistContent.innerHTML = '<p class="muted">Error loading wishlist</p>';
-  }
-}
-
-// Initialize theme
-document.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('bookNookTheme') || 'dark';
-  document.body.dataset.theme = savedTheme;
-
-  // Update wishlist count
-  const wishlistCount = $('#wishlistCount');
-  if (wishlistCount) {
-    if (userWishlist.length > 0) {
-      wishlistCount.textContent = userWishlist.length;
-      wishlistCount.classList.remove('hidden');
-    } else {
-      wishlistCount.classList.add('hidden');
-    }
-  }
-});
-
-// FAB Menu functionality
-function showFABMenu() {
-  const actions = [
-    { icon: '🔍', text: 'Search', action: () => $('#searchBooks')?.focus() },
-    { icon: '❤️', text: 'Wishlist', action: () => showWishlistModal() },
-    { icon: '🛒', text: 'Cart', action: () => openCartDrawer() },
-    { icon: '🌙', text: 'Theme', action: () => toggleTheme() }
-  ];
-
-  // Create temporary menu
-  const menu = document.createElement('div');
-  menu.style.cssText = `
-    position: fixed;
-    bottom: 90px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 101;
-  `;
-
-  actions.forEach((action, index) => {
-    const btn = document.createElement('button');
-    btn.style.cssText = `
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      border: none;
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      font-size: 20px;
-      transition: all 0.3s ease;
-      animation: slideIn 0.3s ease ${index * 0.1}s backwards;
-    `;
-    btn.innerHTML = action.icon;
-    btn.title = action.text;
-    btn.onclick = () => {
-      action.action();
-      document.body.removeChild(menu);
-    };
-    menu.appendChild(btn);
-  });
-
-  document.body.appendChild(menu);
-
-  // Remove menu after 5 seconds or on outside click
-  setTimeout(() => {
-    if (document.body.contains(menu)) {
-      document.body.removeChild(menu);
-    }
-  }, 5000);
-
-  document.addEventListener('click', function removeMenu(e) {
-    if (!menu.contains(e.target) && e.target.id !== 'fabMain') {
-      if (document.body.contains(menu)) {
-        document.body.removeChild(menu);
-      }
-      document.removeEventListener('click', removeMenu);
-    }
-  });
-}
 
 

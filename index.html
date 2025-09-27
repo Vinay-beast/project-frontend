@@ -25,35 +25,21 @@
 <header>
   <div class="nav">
     <div class="brand"><div class="logo"></div> BookNook</div>
-    <button class="navbtn" data-nav="home">🏠 Home</button>
-    <button class="navbtn" data-nav="catalog">📚 Catalog</button>
-    <button class="navbtn" data-nav="orders">📦 Orders</button>
-    <button class="navbtn" data-nav="profile">👤 Profile</button>
-    <button class="navbtn" data-nav="wishlist">❤️ Wishlist</button>
-    
-    <!-- Search Bar -->
-    <div class="search-container">
-      <input type="text" id="searchBooks" placeholder="Search books, authors, genres..." class="search-input">
-      <button class="search-btn">🔍</button>
-    </div>
-    
+    <button class="navbtn" data-nav="home">Home</button>
+    <button class="navbtn" data-nav="catalog">Catalog</button>
+    <button class="navbtn" data-nav="orders">Orders</button>
+    <button class="navbtn" data-nav="profile">Profile</button>
     <div class="spacer"></div>
-    
-    <!-- Enhanced Navigation Icons -->
-    <button id="btnWishlist" class="btn ghost small" title="Wishlist">
-      ❤️ <span id="wishlistCount" class="notification-count hidden">0</span>
-    </button>
     <button id="btnNotifications" class="btn ghost small" title="Gift Notifications">
       🔔 <span id="navNotificationBadge" class="notification-count hidden">0</span>
     </button>
-    <button id="btnTheme" class="btn ghost small" title="Toggle Theme">🌙</button>
     <button id="btnReset" class="btn ghost small">Reset Demo</button>
     <button id="btnAdmin" class="btn ghost small">Admin Login</button>
     <span id="navAvatar" class="avatar-sm hidden"></span>
     <span id="navUser" class="tag hidden"></span>
-    <button id="btnLogin" class="btn primary">Login</button>
+    <button id="btnLogin" class="btn">Login</button>
     <button id="btnLogout" class="btn bad hidden">Logout</button>
-    <button id="btnCart" class="btn primary">🛒 Cart <span id="cartCount" class="kbd">0</span></button>
+    <button id="btnCart" class="btn primary">Cart <span id="cartCount" class="kbd">0</span></button>
   </div>
 </header>
 
@@ -437,19 +423,6 @@
       </form>
     </div>
   </section>
-
-  <!-- Wishlist Section -->
-  <section id="wishlistSection" class="hidden">
-    <div class="panel">
-      <div class="admin-header">
-        <h1 class="gradient-text">❤️ My Wishlist</h1>
-        <p class="sub">Books you want to read</p>
-      </div>
-      <div id="wishlistGrid" class="cards">
-        <p class="muted">Your wishlist is empty. Add some books to get started!</p>
-      </div>
-    </div>
-  </section>
 </main>
 
 <!-- Cart drawer -->
@@ -499,36 +472,7 @@
   </div>
 </div>
 
-<!-- Wishlist Modal -->
-<div id="wishlistModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>❤️ My Wishlist</h2>
-      <button id="closeWishlistModal" class="btn ghost small">×</button>
-    </div>
-    <div id="wishlistContent" class="wishlist-grid">
-      <p class="muted">Your wishlist is empty</p>
-    </div>
-  </div>
-</div>
-
-<!-- Quick View Modal -->
-<div id="quickViewModal" class="modal">
-  <div class="modal-content quick-view">
-    <div class="modal-header">
-      <h2>Quick View</h2>
-      <button id="closeQuickViewModal" class="btn ghost small">×</button>
-    </div>
-    <div id="quickViewContent" class="quick-view-content">
-      <!-- Quick view content will be populated here -->
-    </div>
-  </div>
-</div>
-
 <div id="toast"></div>
-
-<!-- Floating Action Button -->
-<button id="fabMain" class="fab" title="Quick Actions">✨</button>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
