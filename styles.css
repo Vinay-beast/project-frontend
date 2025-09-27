@@ -779,8 +779,15 @@ input[type=number] {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .admin-nav button {
@@ -842,10 +849,21 @@ input[type=number] {
     letter-spacing: 0.5px;
 }
 
-.stat-card.orders .stat-icon { color: var(--brand); }
-.stat-card.users .stat-icon { color: var(--accent); }
-.stat-card.books .stat-icon { color: var(--good); }
-.stat-card.revenue .stat-icon { color: var(--warn); }
+.stat-card.orders .stat-icon {
+    color: var(--brand);
+}
+
+.stat-card.users .stat-icon {
+    color: var(--accent);
+}
+
+.stat-card.books .stat-icon {
+    color: var(--good);
+}
+
+.stat-card.revenue .stat-icon {
+    color: var(--warn);
+}
 
 /* Enhanced Tables */
 .admin-table {
@@ -887,9 +905,20 @@ input[type=number] {
     text-transform: uppercase;
 }
 
-.status-badge.completed { background: rgba(52, 211, 153, 0.2); color: var(--good); }
-.status-badge.pending { background: rgba(251, 191, 36, 0.2); color: var(--warn); }
-.status-badge.cancelled { background: rgba(248, 113, 113, 0.2); color: var(--bad); }
+.status-badge.completed {
+    background: rgba(52, 211, 153, 0.2);
+    color: var(--good);
+}
+
+.status-badge.pending {
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--warn);
+}
+
+.status-badge.cancelled {
+    background: rgba(248, 113, 113, 0.2);
+    color: var(--bad);
+}
 
 /* Book Preview */
 .book-preview {
