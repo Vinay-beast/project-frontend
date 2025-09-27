@@ -44,6 +44,9 @@ function setHeaderMode(mode) {
     $$('#btnNotifications').forEach(el => el.classList.remove('hidden'));
     $$('#cartCount').forEach(el => el.classList.remove('hidden'));
     // Hide: login, admin, reset buttons when logged in
+    $$('#btnLogin').forEach(el => el.classList.add('hidden'));
+    $$('#btnAdmin').forEach(el => el.classList.add('hidden'));
+    $$('#btnReset').forEach(el => el.classList.add('hidden'));
   }
 }
 
@@ -768,6 +771,11 @@ async function updateNavNotifications() {
   try {
     if (!AUTH.token) {
       console.log('DEBUG: No token, skipping notification update');
+      // Hide notification elements when not logged in
+      const notificationBtn = $('#btnNotifications');
+      if (notificationBtn) {
+        notificationBtn.style.display = 'none';
+      }
       return;
     }
 
@@ -789,16 +797,21 @@ async function updateNavNotifications() {
       badge: !!notificationBadge
     });
 
-    if (notificationBtn && notificationBadge) {
-      if (unclaimedGifts.length > 0) {
-        notificationBadge.textContent = unclaimedGifts.length;
-        notificationBadge.classList.remove('hidden');
-        notificationBtn.title = `${unclaimedGifts.length} unclaimed gift${unclaimedGifts.length === 1 ? '' : 's'}`;
-        console.log('DEBUG: Notification badge updated to:', unclaimedGifts.length);
-      } else {
-        notificationBadge.classList.add('hidden');
-        notificationBtn.title = 'Gift Notifications';
-        console.log('DEBUG: Notification badge hidden (no unclaimed gifts)');
+    if (notificationBtn) {
+      // Always show notification button when logged in
+      notificationBtn.style.display = 'inline-flex';
+      
+      if (notificationBadge) {
+        if (unclaimedGifts.length > 0) {
+          notificationBadge.textContent = unclaimedGifts.length;
+          notificationBadge.classList.remove('hidden');
+          notificationBtn.title = `${unclaimedGifts.length} unclaimed gift${unclaimedGifts.length === 1 ? '' : 's'}`;
+          console.log('DEBUG: Notification badge updated to:', unclaimedGifts.length);
+        } else {
+          notificationBadge.classList.add('hidden');
+          notificationBtn.title = 'Gift Notifications (No new notifications)';
+          console.log('DEBUG: Notification badge hidden (no unclaimed gifts)');
+        }
       }
     }
   } catch (e) {

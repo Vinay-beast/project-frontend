@@ -407,17 +407,33 @@ input[type=number] {
 
 /* ---------- Notification Components ---------- */
 .notification-count {
-    background: var(--bad);
+    background: #ef4444;
     color: white;
     border-radius: 50%;
     padding: 2px 6px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: bold;
-    position: relative;
-    top: -2px;
+    position: absolute;
+    top: -8px;
+    right: -8px;
     margin-left: 4px;
-    min-width: 16px;
+    min-width: 18px;
+    height: 18px;
     text-align: center;
+    line-height: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Make the notification button have relative positioning for the badge */
+#btnNotifications {
+    position: relative;
+}
+
+/* Ensure notification button is visible when logged in */
+#btnNotifications:not(.hidden) {
+    display: inline-flex !important;
+    align-items: center;
 }
 
 .notification-dropdown {
