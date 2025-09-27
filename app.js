@@ -343,17 +343,77 @@ document.addEventListener('click', async (e) => {
 
 // ---------- Admin quick-login + logout ----------
 const btnAdmin = $('#btnAdmin');
-if (btnAdmin) btnAdmin.addEventListener('click', async () => {
-  const email = prompt('Admin email:'); if (!email) return;
-  const password = prompt('Admin password:'); if (!password) return;
+const adminLoginModal = $('#adminLoginModal');
+const closeAdminModal = $('#closeAdminModal');
+const cancelAdminLogin = $('#cancelAdminLogin');
+const formAdminLogin = $('#formAdminLogin');
+
+// Show admin login modal
+if (btnAdmin) btnAdmin.addEventListener('click', () => {
+  adminLoginModal.classList.remove('hidden');
+  adminLoginModal.classList.add('show');
+  $('#adminEmail').focus();
+});
+
+// Close modal handlers
+if (closeAdminModal) closeAdminModal.addEventListener('click', () => {
+  adminLoginModal.classList.add('hidden');
+  adminLoginModal.classList.remove('show');
+});
+
+if (cancelAdminLogin) cancelAdminLogin.addEventListener('click', () => {
+  adminLoginModal.classList.add('hidden');
+  adminLoginModal.classList.remove('show');
+});
+
+// Close modal when clicking outside
+adminLoginModal?.addEventListener('click', (e) => {
+  if (e.target === adminLoginModal) {
+    adminLoginModal.classList.add('hidden');
+    adminLoginModal.classList.remove('show');
+  }
+});
+
+// Handle admin login form submission
+if (formAdminLogin) formAdminLogin.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const email = $('#adminEmail').value.trim();
+  const password = $('#adminPassword').value.trim();
+
+  if (!email || !password) {
+    toast('Please fill in all fields');
+    return;
+  }
+
   try {
     const out = await Api.login({ email, password });
-    if (!out.user || !out.user.is_admin) { toast('Not an admin account'); Api.clearAuthToken(); return; }
-    saveToken(out.token); AUTH.user = out.user; toast('Admin signed in'); await renderNav();
+    if (!out.user || !out.user.is_admin) {
+      toast('Not an admin account');
+      Api.clearAuthToken();
+      return;
+    }
+
+    saveToken(out.token);
+    AUTH.user = out.user;
+    toast('Admin signed in successfully!');
+    await renderNav();
+
+    // Close the modal
+    adminLoginModal.classList.add('hidden');
+    adminLoginModal.classList.remove('show');
+
+    // Clear form
+    formAdminLogin.reset();
+
+    // Show admin panel
     setHeaderMode('hidden');
     setActiveNav('admin');
     showSection('adminPanel');
-  } catch (err) { console.error(err); toast(err?.message || 'Admin login failed'); }
+  } catch (err) {
+    console.error(err);
+    toast(err?.message || 'Admin login failed');
+  }
 });
 const adminLogoutBtn = $('#adminLogout'); if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => { saveToken(null); AUTH.user = null; Api.clearAuthToken(); toast('Admin logged out'); renderNav(); showSection('loginSection'); });
 

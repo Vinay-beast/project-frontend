@@ -84,6 +84,30 @@
     </div>
   </section>
 
+  <!-- Admin Login Modal -->
+  <div id="adminLoginModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Admin Login</h2>
+        <span id="closeAdminModal" class="close">&times;</span>
+      </div>
+      <form id="formAdminLogin" class="grid">
+        <div>
+          <label>Admin Email</label>
+          <input type="email" id="adminEmail" name="email" required placeholder="Enter admin email" />
+        </div>
+        <div>
+          <label>Admin Password</label>
+          <input type="password" id="adminPassword" name="password" required placeholder="Enter admin password" />
+        </div>
+        <div class="row">
+          <button type="submit" class="btn primary">Login as Admin</button>
+          <button type="button" id="cancelAdminLogin" class="btn ghost">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Admin Panel (hidden by default) -->
   <section id="adminPanel" class="hidden grid two">
     <div class="panel">
