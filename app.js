@@ -852,10 +852,10 @@ async function renderLibrary() {
         try {
           const giftId = btn.dataset.claimGift;
           const result = await Api.claimSpecificGift(AUTH.token, giftId);
-          
+
           if (result.claimed > 0) {
             toast('Gift claimed successfully!', 'success');
-            
+
             // Immediately update notifications and library
             await updateNavNotifications();
             await renderLibrary(); // Refresh to show updated status
@@ -1031,10 +1031,10 @@ async function renderNotificationModal() {
         try {
           const giftId = btn.dataset.claimSingle;
           const result = await Api.claimSpecificGift(AUTH.token, giftId);
-          
+
           if (result.claimed > 0) {
             toast('Gift claimed successfully!', 'success');
-            
+
             // Update UI
             await updateNavNotifications();
             await renderLibrary();
@@ -1055,13 +1055,13 @@ async function renderNotificationModal() {
         try {
           const giftId = btn.dataset.markRead;
           await Api.markGiftAsRead(AUTH.token, giftId);
-          
+
           // Update UI immediately
           const notificationItem = btn.closest('.notification-item');
           notificationItem.classList.remove('unread');
           notificationItem.classList.add('read');
           btn.remove(); // Remove the "Mark as Read" button
-          
+
           // Update notification count
           await updateNavNotifications();
         } catch (e) {
