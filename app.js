@@ -1208,7 +1208,7 @@ async function renderAdminDashboard(main) {
         </div>
         <div class="stat-card revenue">
           <div class="stat-icon">💰</div>
-          <div class="stat-value">$${totalRevenue.toFixed(2)}</div>
+          <div class="stat-value">₹${totalRevenue.toFixed(2)}</div>
           <div class="stat-label">Total Revenue</div>
         </div>
       </div>
@@ -1245,7 +1245,7 @@ async function renderAdminDashboard(main) {
                     <tr>
                       <td><strong>#${o.id}</strong></td>
                       <td>${o.user_name || o.user_email || 'N/A'}</td>
-                      <td>$${itemsTotal.toFixed(2)}</td>
+                      <td>₹${itemsTotal.toFixed(2)}</td>
                       <td>${new Date(o.created_at || '').toLocaleDateString()}</td>
                     </tr>
                   `;
@@ -1282,22 +1282,233 @@ async function renderAdminDashboard(main) {
 
 // Admin Analytics View
 async function renderAdminAnalytics(main) {
-  main.innerHTML = `
-    <h3>📈 Analytics & Reports</h3>
-    <div class="chart-placeholder">
-      <div class="chart-icon">📊</div>
-      <h4>Analytics Dashboard</h4>
-      <p>Advanced analytics features coming soon!</p>
-      <p class="small muted">This section will include:</p>
-      <ul style="text-align: left; display: inline-block; margin-top: 12px;">
-        <li>📈 Sales trends over time</li>
-        <li>📚 Popular books analysis</li>
-        <li>👥 User activity patterns</li>
-        <li>💰 Revenue breakdowns</li>
-        <li>📦 Order status distribution</li>
-      </ul>
-    </div>
-  `;
+  try {
+    const [orders, users, books] = await Promise.all([
+      Api.getAdminOrders(AUTH.token).catch(() => []),
+      Api.getAdminUsers(AUTH.token).catch(() => []),
+      Api.getBooks().catch(() => ({ books: [] }))
+    ]);
+
+    const ordersArray = dedupeOrders(Array.isArray(orders) ? orders : (orders.orders || []));
+    const usersArray = Array.isArray(users) ? users : (users.users || []);
+    const booksArray = Array.isArray(books) ? books : (books.books || []);
+
+    // Calculate analytics data
+    const totalRevenue = ordersArray.reduce((sum, order) => {
+      const items = order.items || [];
+      const itemsTotal = items.reduce((s, it) => s + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
+      return sum + itemsTotal;
+    }, 0);
+
+    // Order type breakdown
+    const buyOrders = ordersArray.filter(o => !o.mode || o.mode === 'buy').length;
+    const giftOrders = ordersArray.filter(o => o.mode === 'gift').length;
+    const rentOrders = ordersArray.filter(o => o.mode === 'rent').length;
+
+    // Payment method breakdown
+    const cardPayments = ordersArray.filter(o => o.payment_method === 'card').length;
+    const codPayments = ordersArray.filter(o => o.payment_method === 'cod').length;
+
+    // Recent activity (last 7 days)
+    const recentDate = new Date();
+    recentDate.setDate(recentDate.getDate() - 7);
+    const recentOrders = ordersArray.filter(o => new Date(o.created_at) >= recentDate);
+    const recentUsers = usersArray.filter(u => new Date(u.created_at) >= recentDate);
+
+    // Popular books (by order count)
+    const bookSales = {};
+    ordersArray.forEach(order => {
+      (order.items || []).forEach(item => {
+        const bookId = item.book_id;
+        if (bookSales[bookId]) {
+          bookSales[bookId].count += Number(item.quantity || 1);
+          bookSales[bookId].revenue += Number(item.price || 0) * Number(item.quantity || 1);
+        } else {
+          bookSales[bookId] = {
+            count: Number(item.quantity || 1),
+            revenue: Number(item.price || 0) * Number(item.quantity || 1),
+            title: item.title || `Book #${bookId}`
+          };
+        }
+      });
+    });
+
+    const popularBooks = Object.entries(bookSales)
+      .sort(([,a], [,b]) => b.count - a.count)
+      .slice(0, 5);
+
+    // Low stock books
+    const lowStockBooks = booksArray
+      .filter(b => Number(b.stock || 0) <= 5)
+      .sort((a, b) => (a.stock || 0) - (b.stock || 0))
+      .slice(0, 5);
+
+    main.innerHTML = `
+      <h3>📈 Analytics & Insights</h3>
+      
+      <!-- Key Performance Indicators -->
+      <div class="admin-stats">
+        <div class="stat-card orders">
+          <div class="stat-icon">💵</div>
+          <div class="stat-value">₹${(totalRevenue / ordersArray.length || 0).toFixed(0)}</div>
+          <div class="stat-label">Avg Order Value</div>
+        </div>
+        <div class="stat-card users">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value">${recentOrders.length}</div>
+          <div class="stat-label">Orders This Week</div>
+        </div>
+        <div class="stat-card books">
+          <div class="stat-icon">�</div>
+          <div class="stat-value">${recentUsers.length}</div>
+          <div class="stat-label">New Users This Week</div>
+        </div>
+        <div class="stat-card revenue">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value">${lowStockBooks.length}</div>
+          <div class="stat-label">Low Stock Alert</div>
+        </div>
+      </div>
+
+      <div class="grid two" style="gap: 20px; margin-top: 24px;">
+        <!-- Order Type Analysis -->
+        <div>
+          <h4>📦 Order Type Breakdown</h4>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order Type</th>
+                <th>Count</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="status-badge completed">BUY</span></td>
+                <td><strong>${buyOrders}</strong></td>
+                <td>${ordersArray.length ? ((buyOrders / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+              </tr>
+              <tr>
+                <td><span class="status-badge pending">GIFT</span></td>
+                <td><strong>${giftOrders}</strong></td>
+                <td>${ordersArray.length ? ((giftOrders / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+              </tr>
+              <tr>
+                <td><span class="status-badge cancelled">RENT</span></td>
+                <td><strong>${rentOrders}</strong></td>
+                <td>${ordersArray.length ? ((rentOrders / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Payment Methods -->
+        <div>
+          <h4>💳 Payment Methods</h4>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Payment Type</th>
+                <th>Count</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="status-badge completed">CARD</span></td>
+                <td><strong>${cardPayments}</strong></td>
+                <td>${ordersArray.length ? ((cardPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+              </tr>
+              <tr>
+                <td><span class="status-badge pending">COD</span></td>
+                <td><strong>${codPayments}</strong></td>
+                <td>${ordersArray.length ? ((codPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid two" style="gap: 20px; margin-top: 24px;">
+        <!-- Popular Books -->
+        <div>
+          <h4>� Top Selling Books</h4>
+          ${popularBooks.length ? `
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Sales</th>
+                  <th>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${popularBooks.map(([bookId, data]) => `
+                  <tr>
+                    <td><strong>${data.title}</strong></td>
+                    <td>${data.count} sold</td>
+                    <td><strong>₹${data.revenue.toFixed(2)}</strong></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : '<p class="muted">No sales data available</p>'}
+        </div>
+
+        <!-- Low Stock Alert -->
+        <div>
+          <h4>⚠️ Low Stock Alert</h4>
+          ${lowStockBooks.length ? `
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lowStockBooks.map(b => `
+                  <tr>
+                    <td><strong>${b.title}</strong></td>
+                    <td>${b.stock || 0}</td>
+                    <td><span class="status-badge ${(b.stock || 0) === 0 ? 'cancelled' : 'pending'}">${(b.stock || 0) === 0 ? 'OUT OF STOCK' : 'LOW STOCK'}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : '<p class="muted">✅ All books are well stocked!</p>'}
+        </div>
+      </div>
+
+      <!-- Business Insights -->
+      <div style="margin-top: 24px;">
+        <h4>💡 Business Insights</h4>
+        <div class="grid" style="gap: 16px;">
+          <div style="background: var(--soft); padding: 16px; border-radius: 8px; border: 1px solid var(--muted);">
+            <h5>� Revenue Trends</h5>
+            <p>Total Revenue: <strong>₹${totalRevenue.toFixed(2)}</strong></p>
+            <p>Average Order Value: <strong>₹${(totalRevenue / ordersArray.length || 0).toFixed(2)}</strong></p>
+            <p>This Week's Activity: <strong>${recentOrders.length} orders, ${recentUsers.length} new users</strong></p>
+          </div>
+          
+          <div style="background: var(--soft); padding: 16px; border-radius: 8px; border: 1px solid var(--muted);">
+            <h5>🎯 Recommendations</h5>
+            <ul style="margin: 8px 0; padding-left: 20px;">
+              ${lowStockBooks.length ? `<li>⚠️ Restock ${lowStockBooks.length} low inventory items</li>` : ''}
+              ${giftOrders > buyOrders ? `<li>🎁 Gift orders are popular - promote gift features</li>` : ''}
+              ${codPayments > cardPayments ? `<li>💳 Encourage card payments with discounts</li>` : ''}
+              ${popularBooks.length ? `<li>📚 Promote "${popularBooks[0][1].title}" - your bestseller</li>` : ''}
+              <li>📊 Monitor weekly trends for inventory planning</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.error('renderAdminAnalytics', e);
+    main.innerHTML = '<p class="bad">Failed to load analytics</p>';
+  }
 }
 
 // Admin Orders View  
@@ -1318,6 +1529,7 @@ async function renderAdminOrders(main) {
             <th>Order ID</th>
             <th>Customer</th>
             <th>Items</th>
+            <th>Type</th>
             <th>Total</th>
             <th>Payment</th>
             <th>Date</th>
@@ -1331,13 +1543,25 @@ async function renderAdminOrders(main) {
       const shipFee = (o.shipping_fee != null) ? Number(o.shipping_fee) : (o.shipping_speed ? ({ standard: 30, express: 70, priority: 120 }[o.shipping_speed] || 0) : 0);
       const codFee = (o.cod_fee != null) ? Number(o.cod_fee) : ((o.payment_method === 'cod') ? 10 : 0);
       const grandTotal = itemsTotal + shipFee + codFee;
+      
+      // Determine order type based on mode or items
+      let orderType = 'BUY';
+      let typeClass = 'completed';
+      if (o.mode === 'gift') {
+        orderType = 'GIFT';
+        typeClass = 'pending';
+      } else if (o.mode === 'rent') {
+        orderType = 'RENT';
+        typeClass = 'cancelled';
+      }
 
       return `
               <tr>
                 <td><strong>#${o.id}</strong></td>
                 <td>${o.user_name || o.user_email || 'N/A'}</td>
                 <td class="small">${items || 'No items'}</td>
-                <td><strong>$${grandTotal.toFixed(2)}</strong></td>
+                <td><span class="status-badge ${typeClass}">${orderType}</span></td>
+                <td><strong>₹${grandTotal.toFixed(2)}</strong></td>
                 <td><span class="status-badge ${o.payment_method === 'card' ? 'completed' : 'pending'}">${(o.payment_method || 'unknown').toUpperCase()}</span></td>
                 <td>${new Date(o.created_at || '').toLocaleDateString()}</td>
                 <td><span class="status-badge ${o.status === 'completed' ? 'completed' : 'pending'}">${o.status || 'PENDING'}</span></td>
@@ -1429,7 +1653,7 @@ async function renderAdminBooks(main) {
               </td>
               <td><strong>${b.title}</strong></td>
               <td>${b.author}</td>
-              <td><strong>$${Number(b.price || 0).toFixed(2)}</strong></td>
+              <td><strong>₹${Number(b.price || 0).toFixed(2)}</strong></td>
               <td>
                 <input type="number" value="${b.stock || 0}" min="0" 
                        data-book-id="${b.id}" 
