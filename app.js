@@ -1044,8 +1044,8 @@ async function renderProfile() {
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
 
-    // Check if user signed up with Google (for now, assume everyone is email user until backend provides proper field)
-    const isGoogleUser = false; // TODO: Add proper Google user detection when backend provides the field
+    // Check if user signed up with Google (Google users have has_password = 0)
+    const isGoogleUser = u.has_password === 0;
 
     profileView.innerHTML = `
       <div class="profile-head">
@@ -1055,7 +1055,7 @@ async function renderProfile() {
           <div><span class="muted">Email</span><div>${u.email || ''}</div></div>
           <div><span class="muted">Phone</span><div>${u.phone || '-'}</div></div>
           <div><span class="muted">Bio</span><div>${u.bio || '-'}</div></div>
-          <div><span class="muted">Account Type</span><div> Email Account</div></div>
+          <div><span class="muted">Account Type</span><div>${isGoogleUser ? '🔗 Google Account' : '📧 Email Account'}</div></div>
         </div>
       </div>
       <div class="pillbar" style="margin-top:8px"><button id="peStart" class="btn">Edit profile</button></div>
