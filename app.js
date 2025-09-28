@@ -1876,7 +1876,7 @@ window.editBook = async (bookId) => {
       form.price.value = book.price || '';
       form.stock.value = book.stock || '';
       form.description.value = book.description || '';
-      
+
       // Set page count if available
       if (form.page_count) {
         form.page_count.value = book.page_count || '';
