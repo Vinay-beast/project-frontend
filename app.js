@@ -566,7 +566,7 @@ async function renderCheckout(presetMode = null) {
       if (giftBlock) giftBlock.classList.toggle('hidden', !isGift);
       if (shippingWrap) shippingWrap.classList.toggle('hidden', !needsShipping);
       const paySel = $('#ckPayMethod');
-      if (paySel) { const codOpt = Array.from(paySel.options).find(o => o.value === 'cod'); if (codOpt) codOpt.disabled = !needsShipping; if (!needsShipping && paySel.value === 'cod') paySel.value = 'card'; }
+      if (paySel) { const codOpt = Array.from(paySel.options).find(o => o.value === 'cod'); if (codOpt) codOpt.disabled = !needsShipping; if (!needsShipping && paySel.value === 'cod') paySel.value = 'razorpay'; }
       computeSummary();
     };
     ckMode.onchange = refreshBlocks;
@@ -585,17 +585,14 @@ async function renderCheckout(presetMode = null) {
       catch (err) { console.error('save addr', err); toast(err?.message || 'Address save failed'); }
     };
 
-    const cardSel = $('#ckSavedCard'); const cards = await Api.listCards(AUTH.token).catch(() => []);
-    if (cardSel) cardSel.innerHTML = (cards || []).map(c => `<option value="${c.id}">${c.card_name || c.name} •••• ${String(c.card_number || '').slice(-4)}</option>`).join('') || '<option value="">No saved cards</option>';
-
     onAll('#ckItems [data-qty]', (inp) => { inp.onchange = () => { updateCartQty(inp.dataset.qty, parseInt(inp.value || '1', 10)); renderCheckout(ckMode.value); }; });
     on('#ckSpeed', 'change', computeSummary); on('#ckRental', 'change', computeSummary);
-    const ckPayMethod = $('#ckPayMethod'); if (ckPayMethod) ckPayMethod.onchange = () => { $('#cardSelectWrap')?.classList.toggle('hidden', $('#ckPayMethod').value !== 'card'); computeSummary(); };
+    const ckPayMethod = $('#ckPayMethod'); if (ckPayMethod) ckPayMethod.onchange = computeSummary;
 
     function computeSummary() {
       const mode = ckMode.value; const rentalDays = parseInt($('#ckRental')?.value || '30', 10); const needsShipping = (mode === 'buy');
       const shipMap = { standard: 30, express: 70, priority: 120 }; const shipKey = $('#ckSpeed')?.value || 'standard'; const shipFee = needsShipping ? (shipMap[shipKey] || 0) : 0;
-      const payMethod = $('#ckPayMethod')?.value || 'card'; const codFee = (needsShipping && payMethod === 'cod') ? 10 : 0;
+      const payMethod = $('#ckPayMethod')?.value || 'razorpay'; const codFee = (needsShipping && payMethod === 'cod') ? 10 : 0;
       const rentFactor = (mode === 'rent') ? (rentalDays === 30 ? 0.35 : 0.55) : 1.0;
       const lineItems = CART.map(ci => { const b = BOOK_CACHE.get(String(ci.bookId)); const unit = (b?.price || 0) * rentFactor; return { id: b?.id, title: b?.title || 'Item', qty: ci.qty, unit, total: unit * ci.qty }; });
       const subtotal = lineItems.reduce((s, x) => s + x.total, 0); const total = subtotal + shipFee + codFee;
@@ -631,8 +628,7 @@ async function renderCheckout(presetMode = null) {
         if (mode === 'gift') { const ge = $('#ckGiftEmail')?.value.trim() || ''; if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ge)) { toast('Enter a valid gift email'); return; } }
         let shipping_address_id = null, shipping_speed = null;
         if (lastSummary2.needsShipping) { shipping_address_id = $('#ckSavedAddr')?.value || null; if (!shipping_address_id) { toast('Select or add an address'); return; } shipping_speed = lastSummary2.shipKey; }
-        let saved_card_id = null; if (lastSummary2.payMethod === 'card') { saved_card_id = $('#ckSavedCard')?.value || null; if (!saved_card_id) { toast('Add a card in Profile or choose another method'); return; } }
-        const orderData = { mode, items: CART.map(ci => ({ book_id: ci.bookId, quantity: ci.qty })), shipping_address_id, shipping_speed, payment_method: lastSummary2.payMethod, saved_card_id, notes: $('#ckNotes')?.value || null, rental_duration: mode === 'rent' ? lastSummary2.rentalDays : null, gift_email: mode === 'gift' ? ($('#ckGiftEmail')?.value || '').trim() : null, shipping_fee: lastSummary2.shipFee, cod_fee: lastSummary2.codFee, delivery_eta: lastSummary2.deliveryEtaISO || null };
+        const orderData = { mode, items: CART.map(ci => ({ book_id: ci.bookId, quantity: ci.qty })), shipping_address_id, shipping_speed, payment_method: lastSummary2.payMethod, notes: $('#ckNotes')?.value || null, rental_duration: mode === 'rent' ? lastSummary2.rentalDays : null, gift_email: mode === 'gift' ? ($('#ckGiftEmail')?.value || '').trim() : null, shipping_fee: lastSummary2.shipFee, cod_fee: lastSummary2.codFee, delivery_eta: lastSummary2.deliveryEtaISO || null };
 
         if (btnPay.disabled) return;
         btnPay.disabled = true;
@@ -641,7 +637,7 @@ async function renderCheckout(presetMode = null) {
           if (lastSummary2.payMethod === 'razorpay') {
             await placeOrderWithRazorpay(orderData, lastSummary2.total, 'razorpay');
           } else {
-            // Handle other payment methods (COD, Card, UPI)
+            // Handle other payment methods (COD)
             await Api.placeOrder(AUTH.token, orderData);
             toast('Order placed');
             CART = []; renderCartIcon();
