@@ -373,6 +373,28 @@
         }
     }
 
+    // Book Content Functions
+    async function getBookReadingAccess(token, bookId) {
+        return await apiRequest(`/book-content/${bookId}/read`, { token });
+    }
+
+    async function getBookSample(bookId) {
+        return await apiRequest(`/book-content/${bookId}/sample`);
+    }
+
+    async function uploadBookContent(token, bookId, contentFile, pageCount) {
+        const fd = new FormData();
+        fd.append('content', contentFile);
+        if (pageCount) fd.append('page_count', pageCount);
+        return await apiUpload(`/book-content/${bookId}/content`, fd, { token });
+    }
+
+    async function uploadBookSample(token, bookId, sampleFile) {
+        const fd = new FormData();
+        fd.append('sample', sampleFile);
+        return await apiUpload(`/book-content/${bookId}/sample`, fd, { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -387,6 +409,7 @@
         getLibrary,
         getMyGifts, claimGifts, claimSpecificGift, markGiftAsRead, markAllGiftsAsRead,
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
+        getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();
