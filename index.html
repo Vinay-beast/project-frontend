@@ -11,6 +11,9 @@
   <!-- Your stylesheet -->
   <link rel="stylesheet" href="styles.css" />
 
+  <!-- Razorpay SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
   <!-- Safe fallback so sections can be hidden even if CSS/JS race -->
   <style>
     .hidden { display: none !important; }
@@ -18,7 +21,10 @@
 
   <!-- Backend base URL (adjust port if needed) -->
   <script>
-    window.API_BASE_URL = "http://127.0.0.1:5000/api";
+    // Use your actual Render backend URL here
+    window.API_BASE_URL = "https://project-backend-zt54.onrender.com/api";
+    // For local development, uncomment the line below:
+    // window.API_BASE_URL = "http://127.0.0.1:5000/api";
   </script>
 </head>
 <body>
@@ -315,6 +321,7 @@
           <label>Method</label>
           <select id="ckPayMethod">
             <option value="card">Card</option>
+            <option value="razorpay">Razorpay (Secure Payment)</option>
             <option value="cod">Cash on Delivery (+₹10)</option>
             <option value="upi">UPI</option>
           </select>
@@ -501,6 +508,7 @@
 </script>
 <!-- Scripts: API first, then your app logic -->
 <script src="api.js"></script>
+<script src="razorpay-integration.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

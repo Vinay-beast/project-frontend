@@ -685,10 +685,16 @@ async function renderCheckout(presetMode = null) {
         if (btnPay.disabled) return;
         btnPay.disabled = true;
         try {
-          await Api.placeOrder(AUTH.token, orderData);
-          toast('Order placed');
-          CART = []; renderCartIcon();
-          setActiveNav('orders'); showSection('ordersSection'); await renderOrders();
+          // Handle Razorpay payment method
+          if (lastSummary2.payMethod === 'razorpay') {
+            await placeOrderWithRazorpay(orderData, lastSummary2.total, 'razorpay');
+          } else {
+            // Handle other payment methods (COD, Card, UPI)
+            await Api.placeOrder(AUTH.token, orderData);
+            toast('Order placed');
+            CART = []; renderCartIcon();
+            setActiveNav('orders'); showSection('ordersSection'); await renderOrders();
+          }
         } catch (err) {
           console.error('placeOrder', err);
           toast(err?.message || 'Order failed');
