@@ -933,13 +933,20 @@ async function openReader(title, bookId) {
         setTimeout(async () => {
           try {
             const reader = new SecurePDFReader('secureReaderContainer');
-            await reader.loadPDF(bookData.readingUrl, title);
+            // Pass auth token and book ID for proper proxy handling
+            const authToken = AUTH.token?.replace('Bearer ', '') || AUTH.token;
+            await reader.loadPDF(bookData.readingUrl, title, authToken, bookId);
           } catch (error) {
             console.error('Secure reader failed, falling back to iframe:', error);
-            // Fallback to iframe if secure reader fails
+            // Fallback to iframe if secure reader fails - but use backend proxy
+            const authToken = AUTH.token?.replace('Bearer ', '') || AUTH.token;
+            const proxyUrl = bookData.readingUrl.includes('blob.core.windows.net')
+              ? `https://project-backend-zt54.onrender.com/api/secure-reader/${bookId}?token=${authToken}`
+              : bookData.readingUrl;
+
             document.getElementById('secureReaderContainer').innerHTML = `
               <iframe 
-                src="${bookData.readingUrl}" 
+                src="${proxyUrl}" 
                 width="100%" 
                 height="500px" 
                 frameborder="0"

@@ -7,7 +7,7 @@ class SecurePDFReader {
         this.pdfDoc = null;
     }
 
-    async loadPDF(url, bookTitle) {
+    async loadPDF(url, bookTitle, authToken, bookId) {
         try {
             // Load PDF.js library if not already loaded
             if (!window.pdfjsLib) {
@@ -17,8 +17,24 @@ class SecurePDFReader {
             // Set worker path
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-            // Load PDF document
-            const loadingTask = pdfjsLib.getDocument(url);
+            // Convert direct Azure URL to our backend proxy to avoid CORS issues
+            let proxyUrl = url;
+            if (url.includes('blob.core.windows.net')) {
+                // Use provided book ID or extract from URL
+                const targetBookId = bookId || this.extractBookIdFromContainer() || 'b3';
+                proxyUrl = `https://project-backend-zt54.onrender.com/api/secure-reader/${targetBookId}?token=${authToken}`;
+                console.log('Using backend proxy for CORS bypass:', proxyUrl);
+            }
+
+            // Load PDF document with custom fetch that includes auth headers
+            const loadingTask = pdfjsLib.getDocument({
+                url: proxyUrl,
+                httpHeaders: authToken ? {
+                    'Authorization': `Bearer ${authToken}`,
+                    'X-Auth-Token': authToken
+                } : {}
+            });
+
             this.pdfDoc = await loadingTask.promise;
             this.totalPages = this.pdfDoc.numPages;
 
@@ -33,7 +49,31 @@ class SecurePDFReader {
 
         } catch (error) {
             console.error('Error loading PDF:', error);
-            this.container.innerHTML = '<p class="error">Failed to load book content.</p>';
+            this.container.innerHTML = `
+                <p class="error">Failed to load book content.</p>
+                <p class="small muted">Error: ${error.message || 'Unknown error'}</p>
+                <p class="small muted">Falling back to simple viewer...</p>
+            `;
+
+            // Fallback to simple iframe
+            setTimeout(() => {
+                const fallbackUrl = url.includes('blob.core.windows.net') && bookId && authToken
+                    ? `https://project-backend-zt54.onrender.com/api/secure-reader/${bookId}?token=${authToken}`
+                    : url;
+
+                this.container.innerHTML = `
+                    <div class="fallback-reader">
+                        <h4>Simple PDF Viewer (Fallback)</h4>
+                        <iframe 
+                            src="${fallbackUrl}" 
+                            width="100%" 
+                            height="500px" 
+                            frameborder="0"
+                            style="border: 1px solid #ddd; border-radius: 4px;">
+                            <p>Unable to load book viewer. Please try again later.</p>
+                        </iframe>
+                    </div>`;
+            }, 2000);
         }
     }
 
