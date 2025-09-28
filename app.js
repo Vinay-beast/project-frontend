@@ -1826,8 +1826,8 @@ async function renderAdminBooks(main) {
                        style="width: 70px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--muted); background: var(--soft); color: var(--text);" />
               </td>
               <td>
-                <button class="btn ghost small" onclick="editBook(${b.id})" style="font-size: 0.8rem; padding: 4px 8px;">✏️ Edit</button>
-                <button class="btn bad small" onclick="deleteBook(${b.id})" style="font-size: 0.8rem; padding: 4px 8px;">🗑️ Delete</button>
+                <button class="btn ghost small" onclick="editBook('${b.id}')" style="font-size: 0.8rem; padding: 4px 8px;">✏️ Edit</button>
+                <button class="btn bad small" onclick="deleteBook('${b.id}')" style="font-size: 0.8rem; padding: 4px 8px;">🗑️ Delete</button>
               </td>
             </tr>
           `).join('')}
