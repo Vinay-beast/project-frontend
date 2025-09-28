@@ -892,7 +892,7 @@ async function openReader(title, bookId) {
             </div>
             <div class="pdf-viewer">
               <iframe 
-                src="${bookData.readingUrl}" 
+                src="${bookData.readingUrl.startsWith('http') ? bookData.readingUrl : `https://project-backend-zt54.onrender.com${bookData.readingUrl}`}" 
                 width="100%" 
                 height="500px" 
                 frameborder="0"
