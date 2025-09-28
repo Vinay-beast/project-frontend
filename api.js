@@ -406,6 +406,19 @@
         return await apiRequest(`/orders/test-purchase/${bookId}`, { method: 'POST', token });
     }
 
+    // ---------- Reading Statistics ----------
+    async function startReadingSession(token, bookId) {
+        return await apiRequest('/reading-stats/start-reading', { method: 'POST', token, body: { bookId } });
+    }
+
+    async function endReadingSession(token, bookId, pagesRead = 1) {
+        return await apiRequest('/reading-stats/end-reading', { method: 'POST', token, body: { bookId, pagesRead } });
+    }
+
+    async function getReadingStats(token) {
+        return await apiRequest('/reading-stats/stats', { method: 'GET', token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -421,6 +434,7 @@
         getMyGifts, claimGifts, claimSpecificGift, markGiftAsRead, markAllGiftsAsRead,
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
         getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover, createTestPurchase,
+        startReadingSession, endReadingSession, getReadingStats,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

@@ -1,20 +1,14 @@
-/* app.js — integrated with backend via Api (defensive + admin edit/delete)
-   Fixes:
-   - Prevent duplicated form/button handlers via delegation
-   - Guarded renderProfile to coalesce repeated calls
-   - Defensive dedupe of addresses before rendering
-   - Debug logs for script load & profile renders
+/* BookNook E-commerce Platform - Core Application
+   Features: User auth, book catalog, orders, admin panel
+   Optimized for performance and user experience
 */
-
-// Debug: detect duplicate script execution
-console.log('LOADED app.js', Date.now());
 
 // ---------- Shortcuts & utilities ----------
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const toast = (msg, type = 'info') => {
   const t = $('#toast');
-  if (!t) { console.log('TOAST:', msg); return; }
+  if (!t) { return; }
 
   // Add type-based styling
   t.className = 'show';
@@ -107,6 +101,16 @@ let ADMIN_EDIT_BOOK_ID = null;
 function setActiveNav(key) { $$('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.nav === key)); }
 async function showSection(id) {
   try {
+    // End reading session if navigating away from reader
+    if (window.currentPDFReader && id !== 'readerSection') {
+      try {
+        await window.currentPDFReader.endReadingSession();
+        window.currentPDFReader = null;
+      } catch (e) {
+        console.warn('Error ending reading session:', e);
+      }
+    }
+
     ['loginSection', 'registerSection', 'homeSection', 'catalogSection', 'checkoutSection', 'ordersSection', 'profileSection', 'adminPanel']
       .forEach(s => { const el = document.getElementById(s); if (el) el.classList.add('hidden'); });
     const target = document.getElementById(id);
@@ -244,24 +248,18 @@ async function renderNav() {
       if (navCatalogBtn) navCatalogBtn.classList.remove('hidden');
       setHeaderMode('full');
 
-      // Update notifications when logged in (with safety check and retry)
+      // Update notifications when logged in
       setTimeout(async () => {
         if (typeof updateNavNotifications === 'function') {
-          console.log('DEBUG: Calling updateNavNotifications from renderNav');
           try {
             await updateNavNotifications();
-
             // Additional check after 2 seconds to ensure notifications are updated
             setTimeout(async () => {
-              console.log('DEBUG: Re-checking notifications after delay');
               await updateNavNotifications();
             }, 2000);
-
           } catch (e) {
             console.error('Failed to update notifications in renderNav:', e);
           }
-        } else {
-          console.error('DEBUG: updateNavNotifications function not found');
         }
       }, 100); // Small delay to ensure DOM is ready
     }
@@ -285,7 +283,6 @@ document.addEventListener('submit', async (e) => {
   // Add Address
   if (e.target.matches('#formAddress')) {
     e.preventDefault();
-    console.log('DEBUG: delegated formAddress submit', Date.now());
     const data = Object.fromEntries(new FormData(e.target).entries());
     try {
       await Api.addAddress(AUTH.token, data);
@@ -304,7 +301,6 @@ document.addEventListener('click', async (e) => {
   // Delete address
   if (e.target.matches('[data-del-addr]')) {
     const id = e.target.dataset.delAddr;
-    console.log('DEBUG: delegated delete address click', id, Date.now());
     try {
       await Api.deleteAddress(AUTH.token, id);
       toast('Address deleted');
@@ -396,6 +392,17 @@ if (formAdminLogin) formAdminLogin.addEventListener('submit', async (e) => {
   }
 });
 const adminLogoutBtn = $('#adminLogout'); if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => { saveToken(null); AUTH.user = null; Api.clearAuthToken(); localStorage.removeItem('isAdminMode'); toast('Admin logged out'); renderNav(); showSection('loginSection'); });
+
+// Handle reading session cleanup on page unload
+window.addEventListener('beforeunload', async () => {
+  if (window.currentPDFReader) {
+    try {
+      await window.currentPDFReader.endReadingSession();
+    } catch (e) {
+      console.warn('Error ending reading session on unload:', e);
+    }
+  }
+});
 
 // ---------- Health check ----------
 (async () => { try { if (Api && Api.health) await Api.health(); } catch (e) { /* ignore */ } })();
@@ -692,7 +699,6 @@ async function renderOrders() {
         <div class="card">
           <div class="pillbar">
             <span class="tag">#${userSeq}</span>
-            <span class="tag small">ServerID:${o.id}</span>
             <span class="tag small">${(o.mode || '').toUpperCase()}</span>
             <span class="tag small">${new Date(o.created_at || o.dateISO || Date.now()).toLocaleString()}</span>
             <span class="tag small">${o.payment_method === 'cod' ? 'COD' : 'Prepaid'}</span>
@@ -831,23 +837,6 @@ async function renderLibrary() {
   } catch (e) { console.error('renderLibrary', e); toast('Failed to render library'); }
 }
 
-// Debug tools event handlers for testing book reading functionality
-on('#testPurchaseB3', 'click', async () => {
-  try {
-    const result = await createTestOrder('b3');
-    if (result && !result.error) {
-      toast('✅ Test purchase created! Now try reading the book.', 'success');
-      await renderLibraryPage(); // Refresh to show new purchase
-    }
-  } catch (error) {
-    console.error('Test purchase failed:', error);
-  }
-});
-
-on('#testReadB3', 'click', () => {
-  openReader('Atomic Habits (Test)', 'b3');
-});
-
 // Enhanced openReader function with Azure book content
 async function openReader(title, bookId) {
   try {
@@ -866,7 +855,7 @@ async function openReader(title, bookId) {
       return;
     }
 
-    console.log('Opening book reader for:', { title, bookId, token: AUTH.token ? 'present' : 'missing' });
+    console.log('Opening book reader for:', { title: title, bookId: bookId });
 
     // Show modal with loading state
     $('#readerTitle') && ($('#readerTitle').textContent = title);
@@ -933,6 +922,9 @@ async function openReader(title, bookId) {
         setTimeout(async () => {
           try {
             const reader = new SecurePDFReader('secureReaderContainer');
+            // Store reader globally for session tracking
+            window.currentPDFReader = reader;
+
             // Pass auth token and book ID for proper proxy handling
             const authToken = AUTH.token?.replace('Bearer ', '') || AUTH.token;
             await reader.loadPDF(bookData.readingUrl, title, authToken, bookId);
@@ -998,26 +990,24 @@ async function openReader(title, bookId) {
 
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
 
-// Debug function to create a test purchase order for book reading
-async function createTestOrder(bookId) {
-  if (!AUTH.token) {
-    toast('Please login first');
-    return;
-  }
-
-  try {
-    const result = await Api.createTestPurchase(AUTH.token, bookId);
-    toast(`✅ ${result.message}`, 'success');
-    console.log('Test purchase result:', result);
-    return result;
-  } catch (error) {
-    console.error('Error creating test order:', error);
-    toast(`❌ Failed to create test order: ${error.message}`);
-    return { error: error.message };
+// Reading statistics tracking
+function trackReadingSession(bookId, action = 'start') {
+  // This will be implemented with the reading stats API
+  if (action === 'start') {
+    localStorage.setItem('readingSession', JSON.stringify({
+      bookId: bookId,
+      startTime: Date.now()
+    }));
+  } else if (action === 'end') {
+    const session = localStorage.getItem('readingSession');
+    if (session) {
+      const sessionData = JSON.parse(session);
+      const duration = (Date.now() - sessionData.startTime) / 1000 / 60; // minutes
+      // TODO: Send to backend API for reading statistics
+      localStorage.removeItem('readingSession');
+    }
   }
 }
-
-// Add debug info to console for troubleshooting
 window.DEBUG_BOOKNOOK = {
   auth: () => ({ token: AUTH.token ? 'present' : 'missing', user: AUTH.user }),
   createTestOrder,
@@ -1258,6 +1248,59 @@ async function renderProfile() {
       (u.has_password === undefined && u.profile_pic && u.profile_pic.includes('googleusercontent.com'));
     console.log('Is Google user:', isGoogleUser, 'has_password:', u.has_password, 'profile_pic:', u.profile_pic);
 
+    // Fetch reading statistics
+    let readingStatsHtml = '';
+    try {
+      const readingStats = await Api.getReadingStats(AUTH.token);
+      const { stats, recentBooks, readingStreak, booksOwned } = readingStats;
+
+      const recentBooksHtml = recentBooks.map(book =>
+        `<div class="recent-book-item">
+          <img src="${book.cover_url}" alt="${book.title}" class="recent-book-cover">
+          <div>
+            <div class="book-title">${book.title}</div>
+            <div class="muted">${book.author}</div>
+          </div>
+        </div>`
+      ).join('');
+
+      readingStatsHtml = `
+        <div class="reading-stats-section" style="margin-top: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+          <h3 style="margin: 0 0 12px 0; color: #2c3e50;">📊 Reading Statistics</h3>
+          <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <div class="stat-item" style="text-align: center; padding: 8px; background: white; border-radius: 6px;">
+              <div style="font-size: 20px; font-weight: bold; color: #3498db;">${stats.total_pages_read || 0}</div>
+              <div style="font-size: 12px; color: #7f8c8d;">Pages Read</div>
+            </div>
+            <div class="stat-item" style="text-align: center; padding: 8px; background: white; border-radius: 6px;">
+              <div style="font-size: 20px; font-weight: bold; color: #e74c3c;">${booksOwned}</div>
+              <div style="font-size: 12px; color: #7f8c8d;">Books Owned</div>
+            </div>
+            <div class="stat-item" style="text-align: center; padding: 8px; background: white; border-radius: 6px;">
+              <div style="font-size: 20px; font-weight: bold; color: #f39c12;">${readingStreak}</div>
+              <div style="font-size: 12px; color: #7f8c8d;">Day Streak</div>
+            </div>
+          </div>
+          ${recentBooks.length > 0 ? `
+            <div class="recent-books">
+              <h4 style="margin: 0 0 8px 0; color: #34495e;">📚 Recent Reading</h4>
+              <div class="recent-books-list" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 0;">
+                ${recentBooksHtml}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    } catch (e) {
+      console.warn('Failed to load reading stats:', e);
+      readingStatsHtml = `
+        <div class="reading-stats-section" style="margin-top: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+          <h3 style="margin: 0 0 12px 0; color: #2c3e50;">📊 Reading Statistics</h3>
+          <p class="muted" style="margin: 0;">Start reading books to see your statistics here!</p>
+        </div>
+      `;
+    }
+
     profileView.innerHTML = `
       <div class="profile-head">
         <div class="avatar-lg" id="pfAvatar" style="${pfUrl ? `background-image:url('${pfUrl}')` : ''}"></div>
@@ -1269,6 +1312,7 @@ async function renderProfile() {
           <div><span class="muted">Account Type</span><div>${isGoogleUser ? '🔗 Google Account' : '📧 Email Account'}</div></div>
         </div>
       </div>
+      ${readingStatsHtml}
       <div class="pillbar" style="margin-top:8px"><button id="peStart" class="btn">Edit profile</button></div>
     `;
     on('#peStart', 'click', () => {
@@ -1586,10 +1630,9 @@ async function renderAdminAnalytics(main) {
     const giftOrders = ordersArray.filter(o => o.mode === 'gift').length;
     const rentOrders = ordersArray.filter(o => o.mode === 'rent').length;
 
-    // Payment method breakdown
-    const cardPayments = ordersArray.filter(o => o.payment_method === 'card').length;
+    // Payment method breakdown - Group UPI/Card as "Online Payment"
+    const onlinePayments = ordersArray.filter(o => o.payment_method === 'razorpay' || o.payment_method === 'card' || o.payment_method === 'upi').length;
     const codPayments = ordersArray.filter(o => o.payment_method === 'cod').length;
-    const upiPayments = ordersArray.filter(o => o.payment_method === 'upi').length;
 
     // Recent activity (last 7 days)
     const recentDate = new Date();
@@ -1697,14 +1740,9 @@ async function renderAdminAnalytics(main) {
             </thead>
             <tbody>
               <tr>
-                <td><span class="status-badge completed">CARD</span></td>
-                <td><strong>${cardPayments}</strong></td>
-                <td>${ordersArray.length ? ((cardPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
-              </tr>
-              <tr>
-                <td><span class="status-badge pending">UPI</span></td>
-                <td><strong>${upiPayments}</strong></td>
-                <td>${ordersArray.length ? ((upiPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+                <td><span class="status-badge completed">ONLINE PAYMENT</span></td>
+                <td><strong>${onlinePayments}</strong></td>
+                <td>${ordersArray.length ? ((onlinePayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
               </tr>
               <tr>
                 <td><span class="status-badge cancelled">COD</span></td>
