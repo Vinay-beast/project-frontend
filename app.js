@@ -2,7 +2,7 @@
    Fixes:
    - Prevent duplicated form/button handlers via delegation
    - Guarded renderProfile to coalesce repeated calls
-   - Defensive dedupe of addresses/cards before rendering
+   - Defensive dedupe of addresses before rendering
    - Debug logs for script load & profile renders
 */
 
@@ -298,24 +298,6 @@ document.addEventListener('submit', async (e) => {
     }
     return;
   }
-
-  // Add Card
-  if (e.target.matches('#formCard')) {
-    e.preventDefault();
-    console.log('DEBUG: delegated formCard submit', Date.now());
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    const payload = { name: data.name, number: data.number.replace(/\s+/g, ''), expiry: data.expiry, cvv: data.cvv, default: data.default === 'yes' };
-    try {
-      await Api.addCard(AUTH.token, payload);
-      e.target.reset();
-      toast('Card saved');
-      await renderProfile();
-    } catch (err) {
-      console.error('addCard', err);
-      toast(err?.message || 'Card save failed');
-    }
-    return;
-  }
 });
 
 document.addEventListener('click', async (e) => {
@@ -330,36 +312,6 @@ document.addEventListener('click', async (e) => {
     } catch (err) {
       console.error('deleteAddress', err);
       toast(err?.message || 'Delete failed');
-    }
-    return;
-  }
-
-  // Delete card
-  if (e.target.matches('[data-del-card]')) {
-    const id = e.target.dataset.delCard;
-    console.log('DEBUG: delegated delete card click', id, Date.now());
-    try {
-      await Api.deleteCard(AUTH.token, id);
-      toast('Deleted');
-      await renderProfile();
-    } catch (err) {
-      console.error('deleteCard', err);
-      toast(err?.message || 'Delete failed');
-    }
-    return;
-  }
-
-  // Make default card
-  if (e.target.matches('[data-make-default]')) {
-    const id = e.target.dataset.makeDefault;
-    console.log('DEBUG: delegated make-default click', id, Date.now());
-    try {
-      await Api.setDefaultCard(AUTH.token, id, true);
-      toast('Default updated');
-      await renderProfile();
-    } catch (err) {
-      console.error('setDefaultCard', err);
-      toast(err?.message || 'Update failed');
     }
     return;
   }
@@ -1174,10 +1126,8 @@ async function renderProfile() {
 
     if (!AUTH.user?.is_admin) {
       let addrs = await Api.listAddresses(AUTH.token).catch(() => []);
-      let cards = await Api.listCards(AUTH.token).catch(() => []);
       const dedupeById = (arr) => { const m = new Map(); (arr || []).forEach(a => { if (a && a.id != null && !m.has(String(a.id))) m.set(String(a.id), a); }); return Array.from(m.values()); };
       addrs = dedupeById(addrs);
-      cards = dedupeById(cards);
 
       const addrList = $('#addrList');
       if (addrList) {
@@ -1193,27 +1143,8 @@ async function renderProfile() {
           </div>
         `).join('') || '<p class="small muted">No addresses yet</p>';
       }
-
-      const cardList = $('#cardList');
-      if (cardList) {
-        cardList.innerHTML = (cards || []).map(c => `
-          <div class="card">
-            <div class="pillbar">
-              <span class="tag">${c.card_name || c.name}</span>
-              <span class="tag small">•••• ${String(c.card_number || '').slice(-4)}</span>
-              <span class="tag small">${c.expiry}</span>
-              ${c.is_default ? '<span class="tag" style="background:rgba(52,211,153,.2);border-color:rgba(52,211,153,.5)">Default</span>' : ''}
-            </div>
-            <div class="pillbar">
-              <button class="btn small" data-make-default="${c.id}">Make default</button>
-              <button class="btn bad small" data-del-card="${c.id}">Delete</button>
-            </div>
-          </div>
-        `).join('') || '<p class="small muted">No cards yet</p>';
-      }
     } else {
       const addrList = $('#addrList'); if (addrList) addrList.innerHTML = '<p class="small muted">Admin — addresses hidden</p>';
-      const cardList = $('#cardList'); if (cardList) cardList.innerHTML = '<p class="small muted">Admin — cards hidden</p>';
     }
 
   } catch (e) { console.error('renderProfile overall error', e); toast('Failed to render profile'); }

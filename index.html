@@ -320,15 +320,9 @@
         <div>
           <label>Method</label>
           <select id="ckPayMethod">
-            <option value="card">Card</option>
-            <option value="razorpay">Razorpay (Secure Payment)</option>
+            <option value="razorpay">Online Payment (Cards, UPI, Wallets)</option>
             <option value="cod">Cash on Delivery (+₹10)</option>
-            <option value="upi">UPI</option>
           </select>
-        </div>
-        <div id="cardSelectWrap">
-          <label>Saved card</label>
-          <select id="ckSavedCard"></select>
         </div>
       </div>
 
@@ -420,21 +414,6 @@
           <div><label>PIN</label><input name="zip" required /></div>
         </div>
         <button class="btn primary" type="submit">Add address</button>
-      </form>
-      <div class="hr"></div>
-      <h2>Payment methods</h2>
-      <div id="cardList" class="grid"></div>
-      <form id="formCard" class="grid" style="margin-top:8px">
-        <div class="row">
-          <div><label>Name on card</label><input name="name" required /></div>
-          <div><label>Card number</label><input name="number" inputmode="numeric" minlength="12" maxlength="19" required /></div>
-        </div>
-        <div class="row3">
-          <div><label>Expiry (MM/YY)</label><input name="expiry" placeholder="08/28" required /></div>
-          <div><label>CVV</label><input name="cvv" inputmode="numeric" minlength="3" maxlength="4" required /></div>
-          <div><label>Default</label><select name="default"><option value="yes">Yes</option><option value="no">No</option></select></div>
-        </div>
-        <button class="btn primary" type="submit">Add card</button>
       </form>
     </div>
   </section>

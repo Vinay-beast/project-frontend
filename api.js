@@ -270,25 +270,6 @@
         return { message: data?.message || "deleted" };
     }
 
-    // Cards
-    async function listCards(token) {
-        const res = await maybeUseFallback(() => GET("/users/cards", { token }));
-        if (res === "__FALLBACK__") return localFallback.cards.slice();
-        return Array.isArray(res) ? res : [];
-    }
-    async function addCard(token, card) {
-        const data = await POST("/users/cards", card, { token });
-        return { id: data?.id || null };
-    }
-    async function setDefaultCard(token, id, is_default) {
-        const data = await PUT(`/users/cards/${id}/default`, { is_default }, { token });
-        return { message: data?.message || "updated" };
-    }
-    async function deleteCard(token, id) {
-        const data = await DEL(`/users/cards/${id}`, { token });
-        return { message: data?.message || "deleted" };
-    }
-
     // Books
     async function getBooks(page = 1, limit = 20) {
         const res = await maybeUseFallback(() => GET(`/books?page=${page}&limit=${limit}`));
@@ -399,7 +380,6 @@
         loginWithGoogle,
         getProfile, updateProfile, changePassword, uploadProfilePic,
         listAddresses, addAddress, deleteAddress,
-        listCards, addCard, setDefaultCard, deleteCard,
         getBooks, searchBooks, getBookById,
         placeOrder, getOrders, getOrderById,
         getLibrary,
