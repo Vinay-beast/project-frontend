@@ -798,7 +798,11 @@ async function renderLibrary() {
     if (libraryRentedEl) libraryRentedEl.innerHTML = rentedCards.join('') || '<p class="muted">No rentals yet.</p>';
     if (libraryGiftsEl) libraryGiftsEl.innerHTML = giftCards.join('') || '<p class="muted">No gifts received yet.</p>';
 
-    onAll('#libraryOwned [data-read], #libraryRented [data-read], #libraryGifts [data-read]', (btn) => { if (!btn.hasAttribute('disabled')) btn.onclick = () => openReader(btn.dataset.title); });
+    onAll('#libraryOwned [data-read], #libraryRented [data-read], #libraryGifts [data-read]', (btn) => {
+      if (!btn.hasAttribute('disabled')) {
+        btn.onclick = () => openReader(btn.dataset.title, btn.dataset.read);
+      }
+    });
 
     // Handle gift claiming
     onAll('#libraryGifts [data-claim-gift]', (btn) => {
@@ -824,7 +828,100 @@ async function renderLibrary() {
     });
   } catch (e) { console.error('renderLibrary', e); toast('Failed to render library'); }
 }
-function openReader(title) { $('#readerTitle') && ($('#readerTitle').textContent = title); $('#readerBody') && ($('#readerBody').textContent = 'This is a sample reader.'); $('#readerModal')?.classList.add('show'); }
+
+// Enhanced openReader function with Azure book content
+async function openReader(title, bookId) {
+  try {
+    if (!bookId) {
+      console.error('No book ID provided to openReader');
+      toast('Unable to open book - missing book ID');
+      return;
+    }
+
+    // Show modal with loading state
+    $('#readerTitle') && ($('#readerTitle').textContent = title);
+    $('#readerBody') && ($('#readerBody').innerHTML = '<div class="loading">Loading book content...</div>');
+    $('#readerModal')?.classList.add('show');
+
+    // Fetch book reading access
+    const bookData = await Api.getBookReadingAccess(AUTH.token, bookId);
+
+    if (bookData.readingUrl) {
+      // Create book content display based on content type
+      let contentHtml = '';
+
+      if (bookData.contentType === 'pdf') {
+        // PDF viewer using iframe
+        contentHtml = `
+          <div class="book-reader">
+            <div class="reader-info">
+              <p><strong>Access Type:</strong> ${bookData.accessType === 'rental' ? '📅 Rental' : '✅ Purchased'}</p>
+              ${bookData.expiresAt ? `<p><strong>Expires:</strong> ${new Date(bookData.expiresAt).toLocaleDateString()}</p>` : ''}
+              ${bookData.pageCount ? `<p><strong>Pages:</strong> ${bookData.pageCount}</p>` : ''}
+            </div>
+            <iframe 
+              src="${bookData.readingUrl}" 
+              width="100%" 
+              height="500px" 
+              frameborder="0"
+              style="border: 1px solid #ddd; border-radius: 4px;">
+              <p>Your browser does not support iframes. <a href="${bookData.readingUrl}" target="_blank">Open book in new window</a></p>
+            </iframe>
+          </div>`;
+      } else if (bookData.contentType === 'html') {
+        // For HTML content, we could fetch and display it
+        contentHtml = `
+          <div class="book-reader">
+            <div class="reader-info">
+              <p><strong>Access Type:</strong> ${bookData.accessType === 'rental' ? '📅 Rental' : '✅ Purchased'}</p>
+              ${bookData.expiresAt ? `<p><strong>Expires:</strong> ${new Date(bookData.expiresAt).toLocaleDateString()}</p>` : ''}
+            </div>
+            <div class="book-content">
+              <iframe 
+                src="${bookData.readingUrl}" 
+                width="100%" 
+                height="500px" 
+                frameborder="0"
+                style="border: 1px solid #ddd; border-radius: 4px;">
+              </iframe>
+            </div>
+          </div>`;
+      } else {
+        // For other formats, provide download link
+        contentHtml = `
+          <div class="book-reader">
+            <div class="reader-info">
+              <p><strong>Access Type:</strong> ${bookData.accessType === 'rental' ? '📅 Rental' : '✅ Purchased'}</p>
+              ${bookData.expiresAt ? `<p><strong>Expires:</strong> ${new Date(bookData.expiresAt).toLocaleDateString()}</p>` : ''}
+              <p><strong>Format:</strong> ${bookData.contentType.toUpperCase()}</p>
+            </div>
+            <div class="download-section">
+              <p>This book is available as a ${bookData.contentType.toUpperCase()} file.</p>
+              <a href="${bookData.readingUrl}" class="btn primary" target="_blank">📖 Open Book</a>
+            </div>
+          </div>`;
+      }
+
+      $('#readerBody') && ($('#readerBody').innerHTML = contentHtml);
+    } else {
+      $('#readerBody') && ($('#readerBody').innerHTML = '<p class="error">Unable to load book content. Please try again later.</p>');
+    }
+
+  } catch (error) {
+    console.error('Error opening book reader:', error);
+    let errorMessage = 'Unable to open book.';
+
+    if (error.message.includes('do not have access')) {
+      errorMessage = 'You do not have access to this book. Please purchase or rent it first.';
+    } else if (error.message.includes('expired')) {
+      errorMessage = 'Your rental period for this book has expired.';
+    }
+
+    $('#readerBody') && ($('#readerBody').innerHTML = `<p class="error">${errorMessage}</p>`);
+    toast(errorMessage, 'error');
+  }
+}
+
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
 
 // ---------- Navigation Notifications ----------
