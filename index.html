@@ -161,7 +161,29 @@
           <div><label>Stock</label><input name="stock" inputmode="numeric" placeholder="0" /></div>
           <div><label>Category</label><input name="category" placeholder="Fiction, Science, etc." /></div>
         </div>
-        <div><label>Image URL</label><input name="image_url" placeholder="https://example.com/book-cover.jpg" /></div>
+        <div class="row">
+          <div>
+            <label>Book Cover Image</label>
+            <input name="cover_image" type="file" accept="image/*" />
+            <small class="muted">Upload JPG, PNG, or WebP image</small>
+          </div>
+          <div>
+            <label>Book Content (PDF)</label>
+            <input name="book_content" type="file" accept=".pdf,.epub" />
+            <small class="muted">Upload PDF or EPUB file</small>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Page Count</label>
+            <input name="page_count" inputmode="numeric" placeholder="0" />
+          </div>
+          <div>
+            <label>Book Sample (Optional)</label>
+            <input name="book_sample" type="file" accept=".pdf,.epub" />
+            <small class="muted">Upload sample pages for preview</small>
+          </div>
+        </div>
         <div><label>Description</label><textarea name="description" rows="4" placeholder="Enter book description..."></textarea></div>
         <div class="row">
           <button class="btn primary" type="submit">💾 Save Book</button>

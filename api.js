@@ -395,6 +395,12 @@
         return await apiUpload(`/book-content/${bookId}/sample`, fd, { token });
     }
 
+    async function uploadBookCover(token, bookId, coverFile) {
+        const fd = new FormData();
+        fd.append('cover', coverFile);
+        return await apiUpload(`/book-content/${bookId}/cover`, fd, { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -409,7 +415,7 @@
         getLibrary,
         getMyGifts, claimGifts, claimSpecificGift, markGiftAsRead, markAllGiftsAsRead,
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
-        getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample,
+        getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

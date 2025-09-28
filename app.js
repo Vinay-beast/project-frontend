@@ -1930,30 +1930,93 @@ on('#adminSearch', 'input', (e) => {
     const text = row.textContent.toLowerCase();
     row.style.display = text.includes(searchTerm) ? '' : 'none';
   });
-});// Admin Add/Edit Book handler
+});
+
+// Enhanced Admin Add/Edit Book handler with file uploads
 on('#adminBookForm', 'submit', async (e) => {
   e.preventDefault();
   if (!AUTH.token || !AUTH.user?.is_admin) { toast('Admin only'); return; }
+
   const fd = new FormData(e.target);
-  const body = {
+  const coverImageFile = fd.get('cover_image');
+  const bookContentFile = fd.get('book_content');
+  const bookSampleFile = fd.get('book_sample');
+
+  const bookData = {
     title: fd.get('title'),
     author: fd.get('author'),
     price: Number(fd.get('price')) || 0,
     stock: Number(fd.get('stock')) || 0,
-    image_url: fd.get('image_url') || null,
-    description: fd.get('description') || null
+    description: fd.get('description') || null,
+    page_count: Number(fd.get('page_count')) || 0
   };
+
   try {
+    let bookId;
+    let coverUrl = null;
+
+    // Step 1: Create or update the basic book info
     if (ADMIN_EDIT_BOOK_ID) {
-      await Api.updateBookAdmin(AUTH.token, ADMIN_EDIT_BOOK_ID, body);
-      toast('Book updated'); ADMIN_EDIT_BOOK_ID = null;
+      await Api.updateBookAdmin(AUTH.token, ADMIN_EDIT_BOOK_ID, bookData);
+      bookId = ADMIN_EDIT_BOOK_ID;
+      toast('Book info updated');
     } else {
-      await Api.createBookAdmin(AUTH.token, body);
+      const newBook = await Api.createBookAdmin(AUTH.token, bookData);
+      bookId = newBook.id || newBook.book?.id;
+      if (!bookId) throw new Error('Failed to get book ID from creation response');
       toast('Book created');
     }
+
+    // Step 2: Upload cover image if provided
+    if (coverImageFile && coverImageFile.size > 0) {
+      try {
+        const coverResult = await Api.uploadBookCover(AUTH.token, bookId, coverImageFile);
+        coverUrl = coverResult.coverUrl || coverResult.url;
+        toast('Book cover uploaded', 'success');
+
+        // Update book with cover URL
+        await Api.updateBookAdmin(AUTH.token, bookId, {
+          image_url: coverUrl,
+          cover: coverUrl
+        });
+      } catch (error) {
+        console.error('Cover upload error:', error);
+        toast('Cover upload failed: ' + (error.message || 'Unknown error'), 'error');
+      }
+    }
+
+    // Step 3: Upload book content if provided
+    if (bookContentFile && bookContentFile.size > 0) {
+      try {
+        await Api.uploadBookContent(AUTH.token, bookId, bookContentFile, bookData.page_count);
+        toast('Book content uploaded', 'success');
+      } catch (error) {
+        console.error('Content upload error:', error);
+        toast('Content upload failed: ' + (error.message || 'Unknown error'), 'error');
+      }
+    }
+
+    // Step 4: Upload book sample if provided
+    if (bookSampleFile && bookSampleFile.size > 0) {
+      try {
+        await Api.uploadBookSample(AUTH.token, bookId, bookSampleFile);
+        toast('Book sample uploaded', 'success');
+      } catch (error) {
+        console.error('Sample upload error:', error);
+        toast('Sample upload failed: ' + (error.message || 'Unknown error'), 'error');
+      }
+    }
+
+    // Reset form and refresh
+    ADMIN_EDIT_BOOK_ID = null;
     e.target.reset();
-    await renderAdminPanel('books'); await renderCatalog();
-  } catch (err) { console.error('create/update book admin', err); toast(err?.message || 'Create/update failed'); }
+    await renderAdminPanel('books');
+    await renderCatalog();
+
+  } catch (err) {
+    console.error('create/update book admin', err);
+    toast(err?.message || 'Create/update failed', 'error');
+  }
 });
 on('#adminBookCancel', (ev) => { ev.preventDefault(); ADMIN_EDIT_BOOK_ID = null; $('#adminBookForm')?.reset(); toast('Canceled edit'); });
 
