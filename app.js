@@ -746,7 +746,9 @@ async function renderLibrary() {
       <div class="card">
         <div class="pillbar"><span class="tag small">Owned</span><span class="tag small">${b.author || ''}</span></div>
         <h3>${b.title}</h3>
-        <button class="btn" data-read="${b.id}" data-title="${b.title}">Read</button>
+        <div class="row">
+          <button class="btn" data-read="${b.id}" data-title="${b.title}">Read</button>
+        </div>
       </div>`;
     }));
     const todayISO = new Date().toISOString();
@@ -829,6 +831,23 @@ async function renderLibrary() {
   } catch (e) { console.error('renderLibrary', e); toast('Failed to render library'); }
 }
 
+// Debug tools event handlers for testing book reading functionality
+on('#testPurchaseB3', 'click', async () => {
+  try {
+    const result = await createTestOrder('b3');
+    if (result && !result.error) {
+      toast('✅ Test purchase created! Now try reading the book.', 'success');
+      await renderLibraryPage(); // Refresh to show new purchase
+    }
+  } catch (error) {
+    console.error('Test purchase failed:', error);
+  }
+});
+
+on('#testReadB3', 'click', () => {
+  openReader('Atomic Habits (Test)', 'b3');
+});
+
 // Enhanced openReader function with Azure book content
 async function openReader(title, bookId) {
   try {
@@ -837,6 +856,17 @@ async function openReader(title, bookId) {
       toast('Unable to open book - missing book ID');
       return;
     }
+
+    // Check authentication first
+    if (!AUTH.token) {
+      console.error('User not authenticated');
+      toast('Please login first to read books');
+      setActiveNav('login');
+      showSection('loginSection');
+      return;
+    }
+
+    console.log('Opening book reader for:', { title, bookId, token: AUTH.token ? 'present' : 'missing' });
 
     // Show modal with loading state
     $('#readerTitle') && ($('#readerTitle').textContent = title);
@@ -911,10 +941,31 @@ async function openReader(title, bookId) {
     console.error('Error opening book reader:', error);
     let errorMessage = 'Unable to open book.';
 
-    if (error.message.includes('do not have access')) {
-      errorMessage = 'You do not have access to this book. Please purchase or rent it first.';
-    } else if (error.message.includes('expired')) {
-      errorMessage = 'Your rental period for this book has expired.';
+    if (error.status === 401) {
+      errorMessage = 'Authentication failed. Please login again.';
+      // Clear invalid token and redirect to login
+      saveToken(null);
+      AUTH.user = null;
+      setActiveNav('login');
+      showSection('loginSection');
+    } else if (error.status === 403) {
+      if (error.message.includes('do not have access')) {
+        errorMessage = 'You do not have access to this book. Please purchase or rent it first.';
+      } else if (error.message.includes('expired')) {
+        errorMessage = 'Your rental period for this book has expired.';
+      } else {
+        errorMessage = 'Access denied. Please purchase or rent this book first.';
+      }
+    } else if (error.status === 404) {
+      errorMessage = 'Book content not found. Please contact support.';
+    } else if (error.status === 500) {
+      errorMessage = 'Server error. Please try again later.';
+    } else if (error.message.includes('Invalid token')) {
+      errorMessage = 'Session expired. Please login again.';
+      saveToken(null);
+      AUTH.user = null;
+      setActiveNav('login');
+      showSection('loginSection');
     }
 
     $('#readerBody') && ($('#readerBody').innerHTML = `<p class="error">${errorMessage}</p>`);
@@ -923,6 +974,42 @@ async function openReader(title, bookId) {
 }
 
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
+
+// Debug function to create a test purchase order for book reading
+async function createTestOrder(bookId) {
+  if (!AUTH.token) {
+    toast('Please login first');
+    return;
+  }
+
+  try {
+    const result = await Api.createTestPurchase(AUTH.token, bookId);
+    toast(`✅ ${result.message}`, 'success');
+    console.log('Test purchase result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error creating test order:', error);
+    toast(`❌ Failed to create test order: ${error.message}`);
+    return { error: error.message };
+  }
+}
+
+// Add debug info to console for troubleshooting
+window.DEBUG_BOOKNOOK = {
+  auth: () => ({ token: AUTH.token ? 'present' : 'missing', user: AUTH.user }),
+  createTestOrder,
+  checkBookAccess: async (bookId) => {
+    if (!AUTH.token) return { error: 'Not authenticated' };
+    try {
+      const result = await Api.getBookReadingAccess(AUTH.token, bookId);
+      return result;
+    } catch (error) {
+      return { error: error.message, status: error.status };
+    }
+  }
+};
+
+console.log('BookNook Debug Tools loaded. Use DEBUG_BOOKNOOK object for testing.');
 
 // ---------- Navigation Notifications ----------
 async function updateNavNotifications() {
