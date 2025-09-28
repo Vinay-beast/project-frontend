@@ -881,22 +881,30 @@ async function openReader(title, bookId) {
       let contentHtml = '';
 
       if (bookData.contentType === 'pdf') {
-        // PDF viewer using iframe
+        // Secure PDF viewer that prevents downloads
+        const secureUrl = `${Api.API_BASE_URL}/secure-reader/pdf/${bookId}?token=${encodeURIComponent(AUTH.token)}`;
         contentHtml = `
           <div class="book-reader">
             <div class="reader-info">
               <p><strong>Access Type:</strong> ${bookData.accessType === 'rental' ? '📅 Rental' : '✅ Purchased'}</p>
               ${bookData.expiresAt ? `<p><strong>Expires:</strong> ${new Date(bookData.expiresAt).toLocaleDateString()}</p>` : ''}
               ${bookData.pageCount ? `<p><strong>Pages:</strong> ${bookData.pageCount}</p>` : ''}
+              <p class="small muted">🔒 This book is protected - downloads are disabled</p>
             </div>
-            <iframe 
-              src="${bookData.readingUrl}" 
-              width="100%" 
-              height="500px" 
-              frameborder="0"
-              style="border: 1px solid #ddd; border-radius: 4px;">
-              <p>Your browser does not support iframes. <a href="${bookData.readingUrl}" target="_blank">Open book in new window</a></p>
-            </iframe>
+            <div class="secure-pdf-viewer" id="secureViewer">
+              <iframe 
+                src="${secureUrl}" 
+                width="100%" 
+                height="500px" 
+                frameborder="0"
+                style="border: 1px solid #ddd; border-radius: 4px;"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms">
+                <p>Unable to load book viewer. Please try again later.</p>
+              </iframe>
+            </div>
+            <div class="viewer-footer">
+              <small class="muted">📚 Secure reading mode - Downloading is disabled for content protection</small>
+            </div>
           </div>`;
       } else if (bookData.contentType === 'html') {
         // For HTML content, we could fetch and display it
