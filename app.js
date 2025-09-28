@@ -1076,13 +1076,46 @@ async function renderProfile() {
 
     on('#peSave', 'click', async () => {
       const name = $('#peName')?.value.trim(); if (!name) { toast('Name is required'); return; }
+      const phone = $('#pePhone')?.value.trim();
+      const bio = $('#peBio')?.value.trim();
       let profilePicUrl = AUTH.user?.profile_pic || '';
+
       const picFile = $('#pePicFile')?.files?.[0] || null;
       if (picFile) {
-        try { const up = await Api.uploadProfilePic(AUTH.token, picFile); profilePicUrl = up?.url || profilePicUrl; } catch (e) { console.error('uploadProfilePic', e); toast(e?.message || 'Image upload failed'); return; }
-      } else { const urlInputVal = ($('#pePicUrl')?.value || '').trim(); if (urlInputVal) profilePicUrl = urlInputVal; }
-      const body = { name, phone: $('#pePhone')?.value.trim(), bio: $('#peBio')?.value.trim(), profile_pic: profilePicUrl };
-      try { await Api.updateProfile(AUTH.token, body); toast('Profile updated', 'success'); $('#profileEdit')?.classList.add('hidden'); $('#profileView')?.classList.remove('hidden'); await renderNav(); renderProfile(); } catch (err) { console.error('updateProfile', err); toast(err?.message || 'Update failed', 'error'); }
+        // Upload with user data since backend requires name
+        try {
+          const userData = { name, phone, bio };
+          const result = await Api.uploadProfilePic(AUTH.token, picFile, userData);
+          toast('Profile updated', 'success');
+          $('#profileEdit')?.classList.add('hidden');
+          $('#profileView')?.classList.remove('hidden');
+          await renderNav();
+          renderProfile();
+          return; // Exit early since profile is already updated
+        } catch (e) {
+          console.error('uploadProfilePic', e);
+          toast(e?.message || 'Image upload failed');
+          return;
+        }
+      } else {
+        // Handle URL input or no profile pic change
+        const urlInputVal = ($('#pePicUrl')?.value || '').trim();
+        if (urlInputVal) profilePicUrl = urlInputVal;
+      }
+
+      // Update profile without file upload
+      const body = { name, phone, bio, profile_pic: profilePicUrl };
+      try {
+        await Api.updateProfile(AUTH.token, body);
+        toast('Profile updated', 'success');
+        $('#profileEdit')?.classList.add('hidden');
+        $('#profileView')?.classList.remove('hidden');
+        await renderNav();
+        renderProfile();
+      } catch (err) {
+        console.error('updateProfile', err);
+        toast(err?.message || 'Update failed', 'error');
+      }
     });
 
     on('#peCancel', 'click', () => { $('#profileEdit')?.classList.add('hidden'); $('#profileView')?.classList.remove('hidden'); });

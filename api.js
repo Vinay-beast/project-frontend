@@ -91,11 +91,11 @@
     }
 
     // Multipart upload helper
-    async function apiUpload(endpoint, formData, { token = null, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+    async function apiUpload(endpoint, formData, { token = null, method = "POST", timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
         const headers = { ...authHeader(token) }; // no Content-Type
         try {
-            const res = await fetchWithTimeout(url, { method: "POST", headers, body: formData }, timeoutMs);
+            const res = await fetchWithTimeout(url, { method, headers, body: formData }, timeoutMs);
             let data = null;
             const text = await res.text();
             try { data = text ? JSON.parse(text) : null; } catch { data = text || null; }
@@ -228,20 +228,22 @@
         return { message: data?.message || "password_updated" };
     }
 
-    // ✅ Unified uploadProfilePic (tries /picture then /pic)
-    async function uploadProfilePic(token, file) {
+    // ✅ Upload Profile Picture using PUT /users/profile
+    async function uploadProfilePic(token, file, userData = {}) {
         const fd = new FormData();
-        fd.append("avatar", file);
+        fd.append("profile_pic", file); // Match backend field name
+
+        // Add required user data (name is required by backend)
+        if (userData.name) fd.append("name", userData.name);
+        if (userData.phone !== undefined) fd.append("phone", userData.phone);
+        if (userData.bio !== undefined) fd.append("bio", userData.bio);
+
         try {
-            const data = await apiUpload("/users/profile/picture", fd, { token });
+            const data = await apiUpload("/users/profile", fd, { token, method: 'PUT' });
             if (data?.user) return mapUser(data.user);
             return data;
         } catch (e) {
-            if (e?.status === 404) {
-                const fd2 = new FormData();
-                fd2.append("file", file);
-                return await apiUpload("/users/profile/pic", fd2, { token });
-            }
+            console.error('Profile pic upload error:', e);
             throw e;
         }
     }
