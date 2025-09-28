@@ -1875,11 +1875,21 @@ window.editBook = async (bookId) => {
       form.author.value = book.author || '';
       form.price.value = book.price || '';
       form.stock.value = book.stock || '';
-      form.image_url.value = book.image_url || '';
       form.description.value = book.description || '';
+      
+      // Set page count if available
+      if (form.page_count) {
+        form.page_count.value = book.page_count || '';
+      }
 
-      // Show preview if image exists
-      updateBookPreview(book.image_url);
+      // Note: File inputs (cover_image, book_content, book_sample) cannot be pre-populated for security reasons
+      // Show a message if the book already has content
+      if (book.image_url || book.cover) {
+        toast('This book already has a cover image. Upload a new one to replace it.', 'info');
+      }
+      if (book.content_url) {
+        toast('This book already has content. Upload new content to replace it.', 'info');
+      }
     }
     toast('Book loaded for editing');
   } catch (err) {
@@ -1915,11 +1925,6 @@ function updateBookPreview(imageUrl) {
     preview.classList.add('hidden');
   }
 }
-
-// Image URL input handler for live preview
-on('input[name="image_url"]', 'input', (e) => {
-  updateBookPreview(e.target.value);
-});
 
 // Admin search functionality
 on('#adminSearch', 'input', (e) => {
