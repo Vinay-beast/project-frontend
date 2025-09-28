@@ -9,21 +9,6 @@ class SecurePDFReader {
 
     async loadPDF(url, bookTitle, authToken, bookId) {
         try {
-            // Start reading session tracking
-            this.bookId = bookId;
-            this.authToken = authToken;
-            this.startTime = Date.now();
-            this.pagesRead = new Set();
-
-            if (this.authToken && this.bookId && window.Api) {
-                try {
-                    await Api.startReadingSession(this.authToken, this.bookId);
-                    console.log('Reading session started');
-                } catch (e) {
-                    console.warn('Failed to start reading session:', e);
-                }
-            }
-
             // Load PDF.js library if not already loaded
             if (!window.pdfjsLib) {
                 await this.loadPDFJS();
@@ -149,11 +134,6 @@ class SecurePDFReader {
 
             await page.render(renderContext).promise;
 
-            // Track page reading
-            if (this.pagesRead) {
-                this.pagesRead.add(pageNum);
-            }
-
             // Update UI
             document.getElementById('pageInfo').textContent = `Page ${pageNum} of ${this.totalPages}`;
             document.getElementById('prevPage').disabled = pageNum <= 1;
@@ -243,30 +223,6 @@ class SecurePDFReader {
         setTimeout(() => {
             warning.remove();
         }, 3000);
-    }
-
-    // End reading session and track statistics
-    async endReadingSession() {
-        if (this.authToken && this.bookId && window.Api && this.pagesRead) {
-            try {
-                const pagesRead = this.pagesRead.size;
-                await Api.endReadingSession(this.authToken, this.bookId, pagesRead);
-                console.log(`Reading session ended. Pages read: ${pagesRead}`);
-            } catch (e) {
-                console.warn('Failed to end reading session:', e);
-            }
-        }
-    }
-
-    // Extract book ID from container or URL for tracking
-    extractBookIdFromContainer() {
-        if (this.container && this.container.dataset.bookId) {
-            return this.container.dataset.bookId;
-        }
-
-        // Try to extract from URL as fallback
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('bookId') || null;
     }
 }
 
