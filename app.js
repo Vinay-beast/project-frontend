@@ -890,16 +890,7 @@ async function openReader(title, bookId) {
               ${bookData.pageCount ? `<p><strong>Pages:</strong> ${bookData.pageCount}</p>` : ''}
               <p class="small muted">� Reading access verified for purchased/rented content</p>
             </div>
-            <div class="pdf-viewer">
-              <iframe 
-                src="${bookData.readingUrl}" 
-                width="100%" 
-                height="500px" 
-                frameborder="0"
-                style="border: 1px solid #ddd; border-radius: 4px;">
-                <p>Unable to load book viewer. Please try again later.</p>
-              </iframe>
-            </div>
+            <div id="secureReaderContainer"></div>
           </div>`;
       } else if (bookData.contentType === 'html') {
         // For HTML content, we could fetch and display it
@@ -936,6 +927,28 @@ async function openReader(title, bookId) {
       }
 
       $('#readerBody') && ($('#readerBody').innerHTML = contentHtml);
+
+      // If using secure PDF reader, initialize it
+      if (bookData.contentType === 'pdf' && document.getElementById('secureReaderContainer')) {
+        setTimeout(async () => {
+          try {
+            const reader = new SecurePDFReader('secureReaderContainer');
+            await reader.loadPDF(bookData.readingUrl, title);
+          } catch (error) {
+            console.error('Secure reader failed, falling back to iframe:', error);
+            // Fallback to iframe if secure reader fails
+            document.getElementById('secureReaderContainer').innerHTML = `
+              <iframe 
+                src="${bookData.readingUrl}" 
+                width="100%" 
+                height="500px" 
+                frameborder="0"
+                style="border: 1px solid #ddd; border-radius: 4px;">
+                <p>Unable to load book viewer. Please try again later.</p>
+              </iframe>`;
+          }
+        }, 100);
+      }
     } else {
       $('#readerBody') && ($('#readerBody').innerHTML = '<p class="error">Unable to load book content. Please try again later.</p>');
     }
