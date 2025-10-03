@@ -1,13 +1,9 @@
-/* app.js — integrated with backend via Api (defensive + admin edit/delete)
-   Fixes:
+/* app.js — integrated with backend via Api
+   Features:
    - Prevent duplicated form/button handlers via delegation
    - Guarded renderProfile to coalesce repeated calls
    - Defensive dedupe of addresses before rendering
-   - Debug logs for script load & profile renders
 */
-
-// Debug: detect duplicate script execution
-console.log('LOADED app.js', Date.now());
 
 // ---------- Shortcuts & utilities ----------
 const $ = (s) => document.querySelector(s);
@@ -247,21 +243,17 @@ async function renderNav() {
       // Update notifications when logged in (with safety check and retry)
       setTimeout(async () => {
         if (typeof updateNavNotifications === 'function') {
-          console.log('DEBUG: Calling updateNavNotifications from renderNav');
           try {
             await updateNavNotifications();
 
             // Additional check after 2 seconds to ensure notifications are updated
             setTimeout(async () => {
-              console.log('DEBUG: Re-checking notifications after delay');
               await updateNavNotifications();
             }, 2000);
 
           } catch (e) {
             console.error('Failed to update notifications in renderNav:', e);
           }
-        } else {
-          console.error('DEBUG: updateNavNotifications function not found');
         }
       }, 100); // Small delay to ensure DOM is ready
     }
@@ -285,7 +277,6 @@ document.addEventListener('submit', async (e) => {
   // Add Address
   if (e.target.matches('#formAddress')) {
     e.preventDefault();
-    console.log('DEBUG: delegated formAddress submit', Date.now());
     const data = Object.fromEntries(new FormData(e.target).entries());
     try {
       await Api.addAddress(AUTH.token, data);
@@ -304,7 +295,6 @@ document.addEventListener('click', async (e) => {
   // Delete address
   if (e.target.matches('[data-del-addr]')) {
     const id = e.target.dataset.delAddr;
-    console.log('DEBUG: delegated delete address click', id, Date.now());
     try {
       await Api.deleteAddress(AUTH.token, id);
       toast('Address deleted');
@@ -692,7 +682,6 @@ async function renderOrders() {
         <div class="card">
           <div class="pillbar">
             <span class="tag">#${userSeq}</span>
-            <span class="tag small">ServerID:${o.id}</span>
             <span class="tag small">${(o.mode || '').toUpperCase()}</span>
             <span class="tag small">${new Date(o.created_at || o.dateISO || Date.now()).toLocaleString()}</span>
             <span class="tag small">${o.payment_method === 'cod' ? 'COD' : 'Prepaid'}</span>
@@ -830,23 +819,6 @@ async function renderLibrary() {
     });
   } catch (e) { console.error('renderLibrary', e); toast('Failed to render library'); }
 }
-
-// Debug tools event handlers for testing book reading functionality
-on('#testPurchaseB3', 'click', async () => {
-  try {
-    const result = await createTestOrder('b3');
-    if (result && !result.error) {
-      toast('✅ Test purchase created! Now try reading the book.', 'success');
-      await renderLibraryPage(); // Refresh to show new purchase
-    }
-  } catch (error) {
-    console.error('Test purchase failed:', error);
-  }
-});
-
-on('#testReadB3', 'click', () => {
-  openReader('Atomic Habits (Test)', 'b3');
-});
 
 // Enhanced openReader function with Azure book content
 async function openReader(title, bookId) {
@@ -998,48 +970,10 @@ async function openReader(title, bookId) {
 
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
 
-// Debug function to create a test purchase order for book reading
-async function createTestOrder(bookId) {
-  if (!AUTH.token) {
-    toast('Please login first');
-    return;
-  }
-
-  try {
-    const result = await Api.createTestPurchase(AUTH.token, bookId);
-    toast(`✅ ${result.message}`, 'success');
-    console.log('Test purchase result:', result);
-    return result;
-  } catch (error) {
-    console.error('Error creating test order:', error);
-    toast(`❌ Failed to create test order: ${error.message}`);
-    return { error: error.message };
-  }
-}
-
-// Add debug info to console for troubleshooting
-window.DEBUG_BOOKNOOK = {
-  auth: () => ({ token: AUTH.token ? 'present' : 'missing', user: AUTH.user }),
-  createTestOrder,
-  checkBookAccess: async (bookId) => {
-    if (!AUTH.token) return { error: 'Not authenticated' };
-    try {
-      const result = await Api.getBookReadingAccess(AUTH.token, bookId);
-      return result;
-    } catch (error) {
-      return { error: error.message, status: error.status };
-    }
-  }
-};
-
-console.log('BookNook Debug Tools loaded. Use DEBUG_BOOKNOOK object for testing.');
-
 // ---------- Navigation Notifications ----------
 async function updateNavNotifications() {
-  console.log('DEBUG: updateNavNotifications called, token:', !!AUTH.token);
   try {
     if (!AUTH.token) {
-      console.log('DEBUG: No token, skipping notification update');
       // Hide notification elements when not logged in
       const notificationBtn = $('#btnNotifications');
       if (notificationBtn) {
