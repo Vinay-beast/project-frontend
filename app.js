@@ -761,7 +761,7 @@ async function renderLibrary() {
         <h3>${b.title || g.title}</h3>
         <p class="small muted">Received: ${g.created_at ? new Date(g.created_at).toLocaleDateString() : '-'}</p>
         ${isClaimed ?
-          `<button class="btn" data-read="${b.id || g.book_id}" data-title="${b.title || g.title}">Read</button>` :
+          `<button class="btn" data-read="${g.book_id}" data-title="${b.title || g.title}">Read</button>` :
           `<button class="btn primary" data-claim-gift="${g.id}">Add to Library</button>`
         }
       </div>`;
