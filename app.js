@@ -833,8 +833,6 @@ async function openReader(title, bookId) {
       return;
     }
 
-    console.log('Opening book reader for:', { title, bookId, token: AUTH.token ? 'present' : 'missing' });
-
     // Show modal with loading state
     $('#readerTitle') && ($('#readerTitle').textContent = title);
     $('#readerBody') && ($('#readerBody').innerHTML = '<div class="loading">Loading book content...</div>');
@@ -965,25 +963,6 @@ async function openReader(title, bookId) {
 
 on('#readerClose', 'click', () => $('#readerModal')?.classList.remove('show'));
 
-// Debug function to create a test purchase order for book reading
-async function createTestOrder(bookId) {
-  if (!AUTH.token) {
-    toast('Please login first');
-    return;
-  }
-
-  try {
-    const result = await Api.createTestPurchase(AUTH.token, bookId);
-    toast(`✅ ${result.message}`, 'success');
-    console.log('Test purchase result:', result);
-    return result;
-  } catch (error) {
-    console.error('Error creating test order:', error);
-    toast(`❌ Failed to create test order: ${error.message}`);
-    return { error: error.message };
-  }
-}
-
 // ---------- Navigation Notifications ----------
 async function updateNavNotifications() {
   try {
@@ -1003,15 +982,9 @@ async function updateNavNotifications() {
 
     // Count unread gifts for notifications (simplified)
     const unreadGifts = gifts.filter(g => !g.read_at);
-    console.log('DEBUG: Unread gifts:', unreadGifts.length);
 
     const notificationBtn = $('#btnNotifications');
     const notificationBadge = $('#navNotificationBadge');
-
-    console.log('DEBUG: Notification elements found:', {
-      btn: !!notificationBtn,
-      badge: !!notificationBadge
-    });
 
     if (notificationBtn) {
       // Always show notification button when logged in
@@ -1130,11 +1103,8 @@ let __renderProfileLock = false;
 let __renderProfileQueued = false;
 
 async function renderProfile() {
-  console.log('DEBUG: renderProfile called', Date.now());
-
   if (__renderProfileLock) {
     __renderProfileQueued = true;
-    console.log('DEBUG: renderProfile queued because lock is active');
     return;
   }
 

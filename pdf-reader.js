@@ -23,7 +23,6 @@ class SecurePDFReader {
                 // Use provided book ID or extract from URL
                 const targetBookId = bookId || this.extractBookIdFromContainer() || 'b3';
                 proxyUrl = `https://project-backend-zt54.onrender.com/api/secure-reader/${targetBookId}?token=${authToken}`;
-                console.log('Using backend proxy for CORS bypass:', proxyUrl);
             }
 
             // Load PDF document with custom fetch that includes auth headers
