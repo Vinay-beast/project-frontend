@@ -401,6 +401,11 @@
         return await apiUpload(`/book-content/${bookId}/cover`, fd, { token });
     }
 
+    // Test endpoint for creating completed orders
+    async function createTestPurchase(token, bookId) {
+        return await apiRequest(`/orders/test-purchase/${bookId}`, { method: 'POST', token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -415,7 +420,7 @@
         getLibrary,
         getMyGifts, claimGifts, claimSpecificGift, markGiftAsRead, markAllGiftsAsRead,
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
-        getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover,
+        getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover, createTestPurchase,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

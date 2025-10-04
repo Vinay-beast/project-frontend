@@ -192,14 +192,11 @@ class SecurePDFReader {
     detectDevTools() {
         // Basic dev tools detection
         setInterval(() => {
-            const canvas = document.getElementById('pdfCanvas');
-            if (!canvas) return; // Exit if canvas doesn't exist yet
-
             if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.innerWidth > 200) {
-                canvas.style.filter = 'blur(10px)';
+                document.getElementById('pdfCanvas').style.filter = 'blur(10px)';
                 this.showWarning('Please close developer tools to continue reading');
             } else {
-                canvas.style.filter = 'none';
+                document.getElementById('pdfCanvas').style.filter = 'none';
             }
         }, 1000);
     }
