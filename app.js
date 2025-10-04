@@ -1482,10 +1482,9 @@ async function renderAdminAnalytics(main) {
     const giftOrders = ordersArray.filter(o => o.mode === 'gift').length;
     const rentOrders = ordersArray.filter(o => o.mode === 'rent').length;
 
-    // Payment method breakdown
-    const cardPayments = ordersArray.filter(o => o.payment_method === 'card').length;
+    // Payment method breakdown (Razorpay vs COD)
+    const razorpayPayments = ordersArray.filter(o => o.payment_method === 'razorpay').length;
     const codPayments = ordersArray.filter(o => o.payment_method === 'cod').length;
-    const upiPayments = ordersArray.filter(o => o.payment_method === 'upi').length;
 
     // Recent activity (last 7 days)
     const recentDate = new Date();
@@ -1593,17 +1592,12 @@ async function renderAdminAnalytics(main) {
             </thead>
             <tbody>
               <tr>
-                <td><span class="status-badge completed">CARD</span></td>
-                <td><strong>${cardPayments}</strong></td>
-                <td>${ordersArray.length ? ((cardPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
+                <td><span class="status-badge completed">Razorpay</span></td>
+                <td><strong>${razorpayPayments}</strong></td>
+                <td>${ordersArray.length ? ((razorpayPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
               </tr>
               <tr>
-                <td><span class="status-badge pending">UPI</span></td>
-                <td><strong>${upiPayments}</strong></td>
-                <td>${ordersArray.length ? ((upiPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
-              </tr>
-              <tr>
-                <td><span class="status-badge cancelled">COD</span></td>
+                <td><span class="status-badge pending">COD</span></td>
                 <td><strong>${codPayments}</strong></td>
                 <td>${ordersArray.length ? ((codPayments / ordersArray.length) * 100).toFixed(1) : 0}%</td>
               </tr>
