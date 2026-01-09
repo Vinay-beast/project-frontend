@@ -671,10 +671,10 @@ async function loadBookReviews(bookId) {
 
     if (AUTH.token) {
       loginToReview?.classList.add('hidden');
-      
+
       // Check if user owns the book (bought, rented, or received as gift)
       const canReviewResult = await Api.canReviewBook(AUTH.token, bookId);
-      
+
       if (canReviewResult.canReview) {
         writeReviewForm?.classList.remove('hidden');
         purchaseToReview?.classList.add('hidden');
@@ -1616,19 +1616,20 @@ async function renderAdminPanel(view = 'dashboard') {
     }
 
     // Update active tabs
-    const tabDashboard = $('#adminViewDashboard'), tabOrders = $('#adminViewOrders'), tabUsers = $('#adminViewUsers'), tabBooks = $('#adminViewBooks'), tabAnalytics = $('#adminViewAnalytics');
-    [tabDashboard, tabOrders, tabUsers, tabBooks, tabAnalytics].forEach(tab => tab?.classList.remove('primary'));
+    const tabDashboard = $('#adminViewDashboard'), tabOrders = $('#adminViewOrders'), tabUsers = $('#adminViewUsers'), tabBooks = $('#adminViewBooks'), tabAnalytics = $('#adminViewAnalytics'), tabGoogleBooks = $('#adminViewGoogleBooks');
+    [tabDashboard, tabOrders, tabUsers, tabBooks, tabAnalytics, tabGoogleBooks].forEach(tab => tab?.classList.remove('primary'));
 
     if (view === 'dashboard' && tabDashboard) tabDashboard.classList.add('primary');
     else if (view === 'orders' && tabOrders) tabOrders.classList.add('primary');
     else if (view === 'users' && tabUsers) tabUsers.classList.add('primary');
     else if (view === 'books' && tabBooks) tabBooks.classList.add('primary');
     else if (view === 'analytics' && tabAnalytics) tabAnalytics.classList.add('primary');
+    else if (view === 'googleBooks' && tabGoogleBooks) tabGoogleBooks.classList.add('primary');
 
     // Show/hide search bar based on view
     const searchBar = $('#adminSearchBar');
     if (searchBar) {
-      if (view === 'dashboard' || view === 'analytics') {
+      if (view === 'dashboard' || view === 'analytics' || view === 'googleBooks') {
         searchBar.classList.add('hidden');
       } else {
         searchBar.classList.remove('hidden');
@@ -1645,6 +1646,8 @@ async function renderAdminPanel(view = 'dashboard') {
       await renderAdminUsers(main);
     } else if (view === 'books') {
       await renderAdminBooks(main);
+    } else if (view === 'googleBooks') {
+      await renderGoogleBooksImport(main);
     }
   } catch (e) { console.error('renderAdminPanel', e); toast('Admin panel failed to load'); }
 }
@@ -2165,11 +2168,279 @@ async function renderAdminBooks(main) {
   }
 }
 
+// Google Books Import Feature
+let GOOGLE_BOOKS_RESULTS = [];
+let SELECTED_GOOGLE_BOOKS = new Set();
+
+async function renderGoogleBooksImport(main) {
+  main.innerHTML = `
+    <div class="google-books-import">
+      <h3>🔍 Import Books from Google Books</h3>
+      <p class="muted">Search Google Books database and import book metadata into your store.</p>
+      
+      <div class="google-search-box" style="display: flex; gap: 10px; margin: 20px 0;">
+        <input type="text" id="googleBooksSearch" placeholder="Search by title, author, or ISBN..." 
+               style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--muted); background: var(--soft); color: var(--text); font-size: 1rem;" />
+        <button id="googleSearchBtn" class="btn primary" style="padding: 12px 24px;">
+          🔍 Search
+        </button>
+      </div>
+      
+      <div class="search-tips" style="margin-bottom: 20px;">
+        <small class="muted">💡 Tips: Search by book title, author name, or ISBN. You can also use intitle:, inauthor:, or isbn: prefixes.</small>
+      </div>
+      
+      <div id="googleBooksResults"></div>
+      
+      <div id="bulkImportBar" class="hidden" style="position: sticky; bottom: 0; background: var(--panel); padding: 15px; border-radius: 8px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--muted);">
+        <span id="selectedCount">0 books selected</span>
+        <div>
+          <button id="clearSelectionBtn" class="btn ghost">Clear Selection</button>
+          <button id="importSelectedBtn" class="btn primary">📥 Import Selected</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Setup search handlers
+  const searchInput = $('#googleBooksSearch');
+  const searchBtn = $('#googleSearchBtn');
+  
+  const doSearch = async () => {
+    const query = searchInput.value.trim();
+    if (!query || query.length < 2) {
+      toast('Enter at least 2 characters to search');
+      return;
+    }
+    
+    searchBtn.disabled = true;
+    searchBtn.innerHTML = '⏳ Searching...';
+    
+    try {
+      const result = await Api.searchGoogleBooks(AUTH.token, query, 20);
+      GOOGLE_BOOKS_RESULTS = result.books || [];
+      SELECTED_GOOGLE_BOOKS.clear();
+      renderGoogleBooksResults();
+    } catch (err) {
+      console.error('Google Books search failed:', err);
+      toast(err.message || 'Search failed', 'error');
+    } finally {
+      searchBtn.disabled = false;
+      searchBtn.innerHTML = '🔍 Search';
+    }
+  };
+  
+  searchBtn.onclick = doSearch;
+  searchInput.onkeypress = (e) => { if (e.key === 'Enter') doSearch(); };
+  
+  // Clear selection handler
+  on('#clearSelectionBtn', 'click', () => {
+    SELECTED_GOOGLE_BOOKS.clear();
+    renderGoogleBooksResults();
+  });
+  
+  // Import selected handler
+  on('#importSelectedBtn', 'click', async () => {
+    if (SELECTED_GOOGLE_BOOKS.size === 0) {
+      toast('Select at least one book to import');
+      return;
+    }
+    
+    const selectedBooks = GOOGLE_BOOKS_RESULTS.filter(b => SELECTED_GOOGLE_BOOKS.has(b.googleBooksId));
+    
+    if (!confirm(`Import ${selectedBooks.length} book(s)?`)) return;
+    
+    try {
+      const result = await Api.bulkImportGoogleBooks(AUTH.token, selectedBooks);
+      toast(`Imported ${result.results.success.length} books successfully!`, 'success');
+      
+      if (result.results.skipped.length > 0) {
+        toast(`${result.results.skipped.length} books were already imported`, 'info');
+      }
+      
+      SELECTED_GOOGLE_BOOKS.clear();
+      renderGoogleBooksResults();
+      await renderCatalog(); // Refresh catalog
+    } catch (err) {
+      console.error('Bulk import failed:', err);
+      toast(err.message || 'Import failed', 'error');
+    }
+  });
+}
+
+function renderGoogleBooksResults() {
+  const container = $('#googleBooksResults');
+  const bulkBar = $('#bulkImportBar');
+  const selectedCountEl = $('#selectedCount');
+  
+  if (!GOOGLE_BOOKS_RESULTS.length) {
+    container.innerHTML = '<p class="muted" style="text-align: center; padding: 40px;">Search Google Books to find books to import</p>';
+    bulkBar?.classList.add('hidden');
+    return;
+  }
+  
+  // Update bulk import bar
+  if (SELECTED_GOOGLE_BOOKS.size > 0) {
+    bulkBar?.classList.remove('hidden');
+    if (selectedCountEl) selectedCountEl.textContent = `${SELECTED_GOOGLE_BOOKS.size} book(s) selected`;
+  } else {
+    bulkBar?.classList.add('hidden');
+  }
+  
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h4>Found ${GOOGLE_BOOKS_RESULTS.length} books</h4>
+      <button class="btn ghost small" onclick="selectAllGoogleBooks()">Select All</button>
+    </div>
+    <div class="google-books-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+      ${GOOGLE_BOOKS_RESULTS.map(book => `
+        <div class="google-book-card ${SELECTED_GOOGLE_BOOKS.has(book.googleBooksId) ? 'selected' : ''}" 
+             data-google-id="${book.googleBooksId}"
+             style="background: var(--soft); border-radius: 12px; padding: 15px; border: 2px solid ${SELECTED_GOOGLE_BOOKS.has(book.googleBooksId) ? 'var(--accent)' : 'transparent'}; cursor: pointer; transition: all 0.2s;">
+          <div style="display: flex; gap: 15px;">
+            <img src="${book.image_url || 'https://via.placeholder.com/80x120?text=No+Cover'}" 
+                 alt="${book.title}" 
+                 style="width: 80px; height: 120px; object-fit: cover; border-radius: 8px; flex-shrink: 0;"
+                 onerror="this.src='https://via.placeholder.com/80x120?text=No+Cover'" />
+            <div style="flex: 1; min-width: 0;">
+              <h4 style="margin: 0 0 5px 0; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${book.title}</h4>
+              <p class="muted" style="margin: 0 0 5px 0; font-size: 0.85rem;">${book.author}</p>
+              ${book.page_count ? `<span class="tag small">${book.page_count} pages</span>` : ''}
+              ${book.published_date ? `<span class="tag small">${book.published_date.split('-')[0]}</span>` : ''}
+              <p style="margin: 10px 0 0 0; font-size: 0.9rem; color: var(--accent);">₹${book.suggested_price}</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button class="btn ghost small" onclick="event.stopPropagation(); previewGoogleBook('${book.googleBooksId}')" style="flex: 1;">
+              👁️ Preview
+            </button>
+            <button class="btn primary small" onclick="event.stopPropagation(); quickImportGoogleBook('${book.googleBooksId}')" style="flex: 1;">
+              📥 Import
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  // Add click handlers for selection
+  $$('.google-book-card').forEach(card => {
+    card.onclick = (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      const id = card.dataset.googleId;
+      if (SELECTED_GOOGLE_BOOKS.has(id)) {
+        SELECTED_GOOGLE_BOOKS.delete(id);
+      } else {
+        SELECTED_GOOGLE_BOOKS.add(id);
+      }
+      renderGoogleBooksResults();
+    };
+  });
+}
+
+window.selectAllGoogleBooks = () => {
+  if (SELECTED_GOOGLE_BOOKS.size === GOOGLE_BOOKS_RESULTS.length) {
+    SELECTED_GOOGLE_BOOKS.clear();
+  } else {
+    GOOGLE_BOOKS_RESULTS.forEach(b => SELECTED_GOOGLE_BOOKS.add(b.googleBooksId));
+  }
+  renderGoogleBooksResults();
+};
+
+window.previewGoogleBook = (googleBooksId) => {
+  const book = GOOGLE_BOOKS_RESULTS.find(b => b.googleBooksId === googleBooksId);
+  if (!book) return;
+  
+  // Create a preview modal
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+      <div style="display: flex; gap: 20px;">
+        <img src="${book.image_url || 'https://via.placeholder.com/150x220?text=No+Cover'}" 
+             alt="${book.title}"
+             style="width: 150px; height: 220px; object-fit: cover; border-radius: 8px; flex-shrink: 0;"
+             onerror="this.src='https://via.placeholder.com/150x220?text=No+Cover'" />
+        <div>
+          <h2 style="margin: 0 0 10px 0;">${book.title}</h2>
+          <p class="muted">${book.author}</p>
+          <div style="margin: 15px 0;">
+            ${book.publisher ? `<p><strong>Publisher:</strong> ${book.publisher}</p>` : ''}
+            ${book.published_date ? `<p><strong>Published:</strong> ${book.published_date}</p>` : ''}
+            ${book.page_count ? `<p><strong>Pages:</strong> ${book.page_count}</p>` : ''}
+            ${book.isbn ? `<p><strong>ISBN:</strong> ${book.isbn}</p>` : ''}
+            ${book.categories?.length ? `<p><strong>Categories:</strong> ${book.categories.join(', ')}</p>` : ''}
+          </div>
+          <p style="color: var(--accent); font-size: 1.2rem; font-weight: bold;">Suggested Price: ₹${book.suggested_price}</p>
+        </div>
+      </div>
+      ${book.description ? `
+        <div style="margin-top: 20px;">
+          <h3>Description</h3>
+          <p style="line-height: 1.6; color: var(--muted);">${book.description}</p>
+        </div>
+      ` : ''}
+      ${book.preview_link ? `
+        <a href="${book.preview_link}" target="_blank" class="btn ghost" style="margin-top: 15px;">
+          📖 Preview on Google Books
+        </a>
+      ` : ''}
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button class="btn primary" onclick="quickImportGoogleBook('${book.googleBooksId}'); this.closest('.modal-overlay').remove();">
+          📥 Import This Book
+        </button>
+        <button class="btn ghost" onclick="this.closest('.modal-overlay').remove();">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+};
+
+window.quickImportGoogleBook = async (googleBooksId) => {
+  const book = GOOGLE_BOOKS_RESULTS.find(b => b.googleBooksId === googleBooksId);
+  if (!book) return;
+  
+  if (!confirm(`Import "${book.title}" by ${book.author}?`)) return;
+  
+  try {
+    const result = await Api.importGoogleBook(AUTH.token, {
+      googleBooksId: book.googleBooksId,
+      title: book.title,
+      author: book.author,
+      description: book.description,
+      image_url: book.image_url,
+      page_count: book.page_count,
+      price: book.suggested_price,
+      stock: 10,
+      category: book.categories?.[0] || null
+    });
+    
+    toast(`"${book.title}" imported successfully!`, 'success');
+    
+    // Remove from results since it's imported
+    GOOGLE_BOOKS_RESULTS = GOOGLE_BOOKS_RESULTS.filter(b => b.googleBooksId !== googleBooksId);
+    SELECTED_GOOGLE_BOOKS.delete(googleBooksId);
+    renderGoogleBooksResults();
+    
+    await renderCatalog(); // Refresh catalog
+  } catch (err) {
+    console.error('Import failed:', err);
+    if (err.message?.includes('already been imported')) {
+      toast('This book has already been imported', 'info');
+    } else {
+      toast(err.message || 'Import failed', 'error');
+    }
+  }
+};
+
 // Event handlers for admin navigation
 on('#adminViewDashboard', 'click', () => renderAdminPanel('dashboard'));
 on('#adminViewOrders', 'click', () => renderAdminPanel('orders'));
 on('#adminViewUsers', 'click', () => renderAdminPanel('users'));
 on('#adminViewBooks', 'click', () => renderAdminPanel('books'));
+on('#adminViewGoogleBooks', 'click', () => renderAdminPanel('googleBooks'));
 on('#adminViewAnalytics', 'click', () => renderAdminPanel('analytics'));
 
 // Book management functions

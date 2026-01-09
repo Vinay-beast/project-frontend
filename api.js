@@ -448,6 +448,23 @@
         return await DEL(`/reviews/${bookId}`, { token });
     }
 
+    // Google Books Functions
+    async function searchGoogleBooks(token, query, maxResults = 20) {
+        return await GET(`/google-books/search?q=${encodeURIComponent(query)}&maxResults=${maxResults}`, { token });
+    }
+
+    async function getGoogleBookDetails(token, googleBooksId) {
+        return await GET(`/google-books/details/${googleBooksId}`, { token });
+    }
+
+    async function importGoogleBook(token, bookData) {
+        return await POST('/google-books/import', bookData, { token });
+    }
+
+    async function bulkImportGoogleBooks(token, books) {
+        return await POST('/google-books/bulk-import', { books }, { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -465,6 +482,7 @@
         getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover,
         getWishlist, addToWishlist, removeFromWishlist, checkWishlist, getWishlistCount,
         getBookReviews, getBulkRatings, getMyReview, canReviewBook, submitReview, deleteReview,
+        searchGoogleBooks, getGoogleBookDetails, importGoogleBook, bulkImportGoogleBooks,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

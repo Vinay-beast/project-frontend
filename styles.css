@@ -2233,3 +2233,62 @@ details[open] summary {
     font-weight: 600;
     margin-left: auto;
 }
+
+/* ================================
+   Google Books Import Styles
+   ================================ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-overlay .modal-content {
+    width: min(700px, 92vw);
+    max-width: 700px;
+    padding: 24px;
+    position: relative;
+}
+
+.modal-overlay .modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.modal-overlay .modal-close:hover {
+    opacity: 1;
+}
+
+.google-book-card {
+    transition: all 0.2s ease;
+}
+
+.google-book-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.google-book-card.selected {
+    border-color: var(--accent) !important;
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(167, 139, 250, 0.05)) !important;
+}
+
+.google-books-import .tag.small {
+    font-size: 11px;
+    padding: 2px 6px;
+    margin-right: 4px;
+}
