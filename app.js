@@ -2201,21 +2201,21 @@ async function renderGoogleBooksImport(main) {
       </div>
     </div>
   `;
-  
+
   // Setup search handlers
   const searchInput = $('#googleBooksSearch');
   const searchBtn = $('#googleSearchBtn');
-  
+
   const doSearch = async () => {
     const query = searchInput.value.trim();
     if (!query || query.length < 2) {
       toast('Enter at least 2 characters to search');
       return;
     }
-    
+
     searchBtn.disabled = true;
     searchBtn.innerHTML = '⏳ Searching...';
-    
+
     try {
       const result = await Api.searchGoogleBooks(AUTH.token, query, 20);
       GOOGLE_BOOKS_RESULTS = result.books || [];
@@ -2229,35 +2229,35 @@ async function renderGoogleBooksImport(main) {
       searchBtn.innerHTML = '🔍 Search';
     }
   };
-  
+
   searchBtn.onclick = doSearch;
   searchInput.onkeypress = (e) => { if (e.key === 'Enter') doSearch(); };
-  
+
   // Clear selection handler
   on('#clearSelectionBtn', 'click', () => {
     SELECTED_GOOGLE_BOOKS.clear();
     renderGoogleBooksResults();
   });
-  
+
   // Import selected handler
   on('#importSelectedBtn', 'click', async () => {
     if (SELECTED_GOOGLE_BOOKS.size === 0) {
       toast('Select at least one book to import');
       return;
     }
-    
+
     const selectedBooks = GOOGLE_BOOKS_RESULTS.filter(b => SELECTED_GOOGLE_BOOKS.has(b.googleBooksId));
-    
+
     if (!confirm(`Import ${selectedBooks.length} book(s)?`)) return;
-    
+
     try {
       const result = await Api.bulkImportGoogleBooks(AUTH.token, selectedBooks);
       toast(`Imported ${result.results.success.length} books successfully!`, 'success');
-      
+
       if (result.results.skipped.length > 0) {
         toast(`${result.results.skipped.length} books were already imported`, 'info');
       }
-      
+
       SELECTED_GOOGLE_BOOKS.clear();
       renderGoogleBooksResults();
       await renderCatalog(); // Refresh catalog
@@ -2272,13 +2272,13 @@ function renderGoogleBooksResults() {
   const container = $('#googleBooksResults');
   const bulkBar = $('#bulkImportBar');
   const selectedCountEl = $('#selectedCount');
-  
+
   if (!GOOGLE_BOOKS_RESULTS.length) {
     container.innerHTML = '<p class="muted" style="text-align: center; padding: 40px;">Search Google Books to find books to import</p>';
     bulkBar?.classList.add('hidden');
     return;
   }
-  
+
   // Update bulk import bar
   if (SELECTED_GOOGLE_BOOKS.size > 0) {
     bulkBar?.classList.remove('hidden');
@@ -2286,7 +2286,7 @@ function renderGoogleBooksResults() {
   } else {
     bulkBar?.classList.add('hidden');
   }
-  
+
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
       <h4>Found ${GOOGLE_BOOKS_RESULTS.length} books</h4>
@@ -2322,7 +2322,7 @@ function renderGoogleBooksResults() {
       `).join('')}
     </div>
   `;
-  
+
   // Add click handlers for selection
   $$('.google-book-card').forEach(card => {
     card.onclick = (e) => {
@@ -2350,7 +2350,7 @@ window.selectAllGoogleBooks = () => {
 window.previewGoogleBook = (googleBooksId) => {
   const book = GOOGLE_BOOKS_RESULTS.find(b => b.googleBooksId === googleBooksId);
   if (!book) return;
-  
+
   // Create a preview modal
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
@@ -2401,9 +2401,9 @@ window.previewGoogleBook = (googleBooksId) => {
 window.quickImportGoogleBook = async (googleBooksId) => {
   const book = GOOGLE_BOOKS_RESULTS.find(b => b.googleBooksId === googleBooksId);
   if (!book) return;
-  
+
   if (!confirm(`Import "${book.title}" by ${book.author}?`)) return;
-  
+
   try {
     const result = await Api.importGoogleBook(AUTH.token, {
       googleBooksId: book.googleBooksId,
@@ -2416,14 +2416,14 @@ window.quickImportGoogleBook = async (googleBooksId) => {
       stock: 10,
       category: book.categories?.[0] || null
     });
-    
+
     toast(`"${book.title}" imported successfully!`, 'success');
-    
+
     // Remove from results since it's imported
     GOOGLE_BOOKS_RESULTS = GOOGLE_BOOKS_RESULTS.filter(b => b.googleBooksId !== googleBooksId);
     SELECTED_GOOGLE_BOOKS.delete(googleBooksId);
     renderGoogleBooksResults();
-    
+
     await renderCatalog(); // Refresh catalog
   } catch (err) {
     console.error('Import failed:', err);
