@@ -436,6 +436,10 @@
         return await GET(`/reviews/my/${bookId}`, { token });
     }
 
+    async function canReviewBook(token, bookId) {
+        return await GET(`/reviews/can-review/${bookId}`, { token });
+    }
+
     async function submitReview(token, bookId, rating, reviewText) {
         return await POST(`/reviews/${bookId}`, { rating, reviewText }, { token });
     }
@@ -460,7 +464,7 @@
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
         getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover,
         getWishlist, addToWishlist, removeFromWishlist, checkWishlist, getWishlistCount,
-        getBookReviews, getBulkRatings, getMyReview, submitReview, deleteReview,
+        getBookReviews, getBulkRatings, getMyReview, canReviewBook, submitReview, deleteReview,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

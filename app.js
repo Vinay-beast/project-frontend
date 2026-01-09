@@ -667,30 +667,43 @@ async function loadBookReviews(bookId) {
     // Handle review form visibility
     const writeReviewForm = $('#writeReviewForm');
     const loginToReview = $('#loginToReview');
+    const purchaseToReview = $('#purchaseToReview');
 
     if (AUTH.token) {
-      writeReviewForm?.classList.remove('hidden');
       loginToReview?.classList.add('hidden');
+      
+      // Check if user owns the book (bought, rented, or received as gift)
+      const canReviewResult = await Api.canReviewBook(AUTH.token, bookId);
+      
+      if (canReviewResult.canReview) {
+        writeReviewForm?.classList.remove('hidden');
+        purchaseToReview?.classList.add('hidden');
 
-      // Check if user has existing review
-      const myReview = await Api.getMyReview(AUTH.token, bookId);
-      const deleteBtn = $('#deleteReviewBtn');
-      const formTitle = $('#reviewFormTitle');
+        // Check if user has existing review
+        const myReview = await Api.getMyReview(AUTH.token, bookId);
+        const deleteBtn = $('#deleteReviewBtn');
+        const formTitle = $('#reviewFormTitle');
 
-      if (myReview.hasReview) {
-        currentUserRating = myReview.review.rating;
-        $('#reviewTextInput').value = myReview.review.review_text || '';
-        formTitle.textContent = 'Edit Your Review';
-        deleteBtn?.classList.remove('hidden');
+        if (myReview.hasReview) {
+          currentUserRating = myReview.review.rating;
+          $('#reviewTextInput').value = myReview.review.review_text || '';
+          formTitle.textContent = 'Edit Your Review';
+          deleteBtn?.classList.remove('hidden');
+        } else {
+          currentUserRating = 0;
+          $('#reviewTextInput').value = '';
+          formTitle.textContent = 'Write a Review';
+          deleteBtn?.classList.add('hidden');
+        }
+        updateStarDisplay();
       } else {
-        currentUserRating = 0;
-        $('#reviewTextInput').value = '';
-        formTitle.textContent = 'Write a Review';
-        deleteBtn?.classList.add('hidden');
+        // User doesn't own the book
+        writeReviewForm?.classList.add('hidden');
+        purchaseToReview?.classList.remove('hidden');
       }
-      updateStarDisplay();
     } else {
       writeReviewForm?.classList.add('hidden');
+      purchaseToReview?.classList.add('hidden');
       loginToReview?.classList.remove('hidden');
     }
 
