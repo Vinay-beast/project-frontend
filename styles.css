@@ -2057,3 +2057,179 @@ details[open] summary {
     text-align: center;
     padding: 16px;
 }
+
+/* ========== Reviews & Ratings Styles ========== */
+.reviews-section {
+    margin-top: 16px;
+}
+
+.reviews-section h2 {
+    color: var(--brand);
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+}
+
+/* Star Rating Input */
+.write-review {
+    background: var(--soft);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.write-review h3 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.star-rating-input {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.star-label {
+    color: var(--sub);
+    font-size: 14px;
+}
+
+.stars-input {
+    display: flex;
+    gap: 4px;
+}
+
+.stars-input .star {
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.stars-input .star:hover,
+.stars-input .star.hover {
+    color: var(--warn);
+    transform: scale(1.1);
+}
+
+.stars-input .star.selected {
+    color: var(--warn);
+}
+
+.rating-text {
+    color: var(--sub);
+    font-size: 14px;
+    font-style: italic;
+}
+
+.write-review textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 12px;
+}
+
+.write-review textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+
+.write-review textarea::placeholder {
+    color: var(--sub);
+}
+
+/* Reviews List */
+.reviews-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.review-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.review-card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.review-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.review-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand), var(--accent));
+    background-size: cover;
+    background-position: center;
+}
+
+.review-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.review-rating {
+    color: var(--warn);
+    font-size: 14px;
+}
+
+.review-rating .rating-value {
+    color: var(--sub);
+    margin-left: 6px;
+}
+
+.review-text {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+}
+
+.review-date {
+    color: var(--sub);
+    font-size: 12px;
+}
+
+/* Rating Tag in Modal */
+.rating-tag {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.05)) !important;
+    color: var(--warn) !important;
+}
+
+/* Book Rating on Cards */
+.book-rating {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+    color: var(--warn);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+}

@@ -255,6 +255,7 @@
       <div class="pillbar">
         <span id="bmAuthor" class="tag small"></span>
         <span id="bmStock" class="tag small"></span>
+        <span id="bmRating" class="tag small rating-tag">⭐ -- (0 reviews)</span>
       </div>
       <h1 id="bmTitle"></h1>
       <p id="bmDesc" class="muted"></p>
@@ -267,6 +268,40 @@
         <button id="bmGift" class="btn">Gift</button>
         <button id="bmAddCart" class="btn ghost">Add to Cart</button>
       </div>
+      
+      <!-- Reviews Section -->
+      <div class="hr"></div>
+      <div class="reviews-section">
+        <h2>⭐ Reviews & Ratings</h2>
+        
+        <!-- Write Review Form (for logged in users) -->
+        <div id="writeReviewForm" class="write-review hidden">
+          <h3 id="reviewFormTitle">Write a Review</h3>
+          <div class="star-rating-input">
+            <span class="star-label">Your Rating:</span>
+            <div class="stars-input" id="starsInput">
+              <span class="star" data-rating="1">☆</span>
+              <span class="star" data-rating="2">☆</span>
+              <span class="star" data-rating="3">☆</span>
+              <span class="star" data-rating="4">☆</span>
+              <span class="star" data-rating="5">☆</span>
+            </div>
+            <span id="ratingText" class="rating-text"></span>
+          </div>
+          <textarea id="reviewTextInput" placeholder="Share your thoughts about this book (optional)..." rows="3"></textarea>
+          <div class="row">
+            <button id="submitReviewBtn" class="btn primary">Submit Review</button>
+            <button id="deleteReviewBtn" class="btn bad hidden">Delete My Review</button>
+          </div>
+        </div>
+        <p id="loginToReview" class="muted hidden">Please <a href="#" data-login-prompt>login</a> to write a review.</p>
+        
+        <!-- Reviews List -->
+        <div id="reviewsList" class="reviews-list">
+          <p class="muted">Loading reviews...</p>
+        </div>
+      </div>
+      
       <div class="hr"></div>
       <div class="right">
         <button id="bmClose" class="btn bad">Close</button>

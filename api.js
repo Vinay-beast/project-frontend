@@ -423,6 +423,27 @@
         return await GET("/wishlist/count", { token });
     }
 
+    // Reviews Functions
+    async function getBookReviews(bookId) {
+        return await GET(`/reviews/book/${bookId}`);
+    }
+
+    async function getBulkRatings(bookIds) {
+        return await POST('/reviews/ratings/bulk', { bookIds });
+    }
+
+    async function getMyReview(token, bookId) {
+        return await GET(`/reviews/my/${bookId}`, { token });
+    }
+
+    async function submitReview(token, bookId, rating, reviewText) {
+        return await POST(`/reviews/${bookId}`, { rating, reviewText }, { token });
+    }
+
+    async function deleteReview(token, bookId) {
+        return await DEL(`/reviews/${bookId}`, { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -439,6 +460,7 @@
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
         getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover,
         getWishlist, addToWishlist, removeFromWishlist, checkWishlist, getWishlistCount,
+        getBookReviews, getBulkRatings, getMyReview, submitReview, deleteReview,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

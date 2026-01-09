@@ -439,7 +439,7 @@ async function renderWishlistSection() {
   if (!AUTH.token) return;
   const wishlistEl = $('#libraryWishlist');
   if (!wishlistEl) return;
-  
+
   try {
     const wishlist = await Api.getWishlist(AUTH.token);
     if (!wishlist.length) {
@@ -473,17 +473,42 @@ async function renderWishlistSection() {
   } catch (e) { console.error('renderWishlistSection error', e); }
 }
 
+// Cache for book ratings
+let BOOK_RATINGS = {};
+
+async function loadBulkRatings(bookIds) {
+  try {
+    const ratings = await Api.getBulkRatings(bookIds);
+    BOOK_RATINGS = { ...BOOK_RATINGS, ...ratings };
+    return ratings;
+  } catch (e) {
+    console.error('loadBulkRatings error', e);
+    return {};
+  }
+}
+
+function getRatingDisplay(bookId) {
+  const r = BOOK_RATINGS[bookId];
+  if (!r || !r.avgRating) return '';
+  return `<span class="book-rating">⭐ ${r.avgRating}</span>`;
+}
+
 async function renderHomeCatalog() {
   try {
     await loadWishlist();
     const books = await fetchBooks(1, 24);
+    
+    // Load ratings for all books
+    const bookIds = books.map(b => b.id);
+    await loadBulkRatings(bookIds);
+    
     const grid = $('#homeBookGrid'); if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
         <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
           <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
         </div>
-        <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span></div>
+        <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
         <h2 class="home-book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
         <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
         <p class="price">${money(b.price)}</p>
@@ -512,13 +537,18 @@ async function renderCatalog(filter = '') {
     await loadWishlist();
     const q = (filter || '').trim();
     const books = q ? (await Api.searchBooks(q, 1, 60)).books || [] : await fetchBooks(1, 60);
+    
+    // Load ratings for all books
+    const bookIds = books.map(b => b.id);
+    await loadBulkRatings(bookIds);
+    
     const grid = $('#bookGrid'); if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
         <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
           <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
         </div>
-        <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span></div>
+        <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
         <h2 class="book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
         <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
         <p class="price">${money(b.price)}</p>
@@ -546,10 +576,178 @@ on('#searchBtn', 'click', () => renderCatalog($('#searchInput') ? $('#searchInpu
 on('#clearSearchBtn', 'click', () => { if ($('#searchInput')) $('#searchInput').value = ''; renderCatalog(''); });
 
 let currentModalBook = null;
+let currentUserRating = 0;
+
+// Star rating helper
+function renderStars(rating, filled = true) {
+  const fullStar = filled ? '★' : '☆';
+  const emptyStar = '☆';
+  let stars = '';
+  for (let i = 1; i <= 5; i++) {
+    stars += i <= rating ? fullStar : emptyStar;
+  }
+  return stars;
+}
+
+function getRatingText(rating) {
+  const texts = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+  return texts[rating] || '';
+}
+
+// Initialize star rating input interactions
+function initStarRating() {
+  const starsInput = $('#starsInput');
+  if (!starsInput) return;
+  
+  const stars = starsInput.querySelectorAll('.star');
+  stars.forEach(star => {
+    star.onclick = () => {
+      currentUserRating = parseInt(star.dataset.rating);
+      updateStarDisplay();
+    };
+    star.onmouseenter = () => {
+      const hoverRating = parseInt(star.dataset.rating);
+      stars.forEach((s, i) => {
+        s.textContent = i < hoverRating ? '★' : '☆';
+        s.classList.toggle('hover', i < hoverRating);
+      });
+    };
+  });
+  
+  starsInput.onmouseleave = () => updateStarDisplay();
+}
+
+function updateStarDisplay() {
+  const stars = $('#starsInput')?.querySelectorAll('.star');
+  if (!stars) return;
+  stars.forEach((s, i) => {
+    s.textContent = i < currentUserRating ? '★' : '☆';
+    s.classList.toggle('selected', i < currentUserRating);
+    s.classList.remove('hover');
+  });
+  const ratingText = $('#ratingText');
+  if (ratingText) ratingText.textContent = getRatingText(currentUserRating);
+}
+
+async function loadBookReviews(bookId) {
+  try {
+    const data = await Api.getBookReviews(bookId);
+    const { reviews, avgRating, totalReviews } = data;
+    
+    // Update rating display in modal header
+    const bmRating = $('#bmRating');
+    if (bmRating) {
+      bmRating.innerHTML = avgRating 
+        ? `⭐ ${avgRating} (${totalReviews} review${totalReviews !== 1 ? 's' : ''})`
+        : '⭐ No ratings yet';
+    }
+    
+    // Render reviews list
+    const reviewsList = $('#reviewsList');
+    if (reviewsList) {
+      if (reviews.length === 0) {
+        reviewsList.innerHTML = '<p class="muted">No reviews yet. Be the first to review!</p>';
+      } else {
+        reviewsList.innerHTML = reviews.map(r => `
+          <div class="review-card">
+            <div class="review-header">
+              <div class="review-user">
+                <div class="review-avatar" style="background-image:url('${r.user_avatar || ''}')"></div>
+                <span class="review-name">${r.user_name}</span>
+              </div>
+              <div class="review-rating">${renderStars(r.rating)} <span class="rating-value">${r.rating}/5</span></div>
+            </div>
+            ${r.review_text ? `<p class="review-text">${r.review_text}</p>` : ''}
+            <div class="review-date">${new Date(r.created_at).toLocaleDateString()}</div>
+          </div>
+        `).join('');
+      }
+    }
+    
+    // Handle review form visibility
+    const writeReviewForm = $('#writeReviewForm');
+    const loginToReview = $('#loginToReview');
+    
+    if (AUTH.token) {
+      writeReviewForm?.classList.remove('hidden');
+      loginToReview?.classList.add('hidden');
+      
+      // Check if user has existing review
+      const myReview = await Api.getMyReview(AUTH.token, bookId);
+      const deleteBtn = $('#deleteReviewBtn');
+      const formTitle = $('#reviewFormTitle');
+      
+      if (myReview.hasReview) {
+        currentUserRating = myReview.review.rating;
+        $('#reviewTextInput').value = myReview.review.review_text || '';
+        formTitle.textContent = 'Edit Your Review';
+        deleteBtn?.classList.remove('hidden');
+      } else {
+        currentUserRating = 0;
+        $('#reviewTextInput').value = '';
+        formTitle.textContent = 'Write a Review';
+        deleteBtn?.classList.add('hidden');
+      }
+      updateStarDisplay();
+    } else {
+      writeReviewForm?.classList.add('hidden');
+      loginToReview?.classList.remove('hidden');
+    }
+    
+  } catch (e) {
+    console.error('loadBookReviews error', e);
+  }
+}
+
+async function submitReview() {
+  if (!AUTH.token || !currentModalBook) return;
+  if (currentUserRating === 0) {
+    toast('Please select a rating');
+    return;
+  }
+  
+  try {
+    const reviewText = $('#reviewTextInput')?.value || '';
+    await Api.submitReview(AUTH.token, currentModalBook.id, currentUserRating, reviewText);
+    toast('Review submitted!');
+    await loadBookReviews(currentModalBook.id);
+  } catch (e) {
+    console.error('submitReview error', e);
+    toast('Failed to submit review');
+  }
+}
+
+async function deleteMyReview() {
+  if (!AUTH.token || !currentModalBook) return;
+  if (!confirm('Delete your review?')) return;
+  
+  try {
+    await Api.deleteReview(AUTH.token, currentModalBook.id);
+    toast('Review deleted');
+    currentUserRating = 0;
+    $('#reviewTextInput').value = '';
+    await loadBookReviews(currentModalBook.id);
+  } catch (e) {
+    console.error('deleteMyReview error', e);
+    toast('Failed to delete review');
+  }
+}
+
+// Initialize review form handlers
+on('#submitReviewBtn', 'click', submitReview);
+on('#deleteReviewBtn', 'click', deleteMyReview);
+on('#loginToReview [data-login-prompt]', 'click', (e) => {
+  e.preventDefault();
+  $('#bookModal')?.classList.remove('show');
+  setActiveNav('login');
+  showSection('loginSection');
+});
+
 async function openBookModal(id) {
   try {
     const b = await fetchBookById(id); if (!b) return;
     currentModalBook = b;
+    currentUserRating = 0;
     $('#bmAuthor') && ($('#bmAuthor').textContent = b.author || '');
     $('#bmStock') && ($('#bmStock').textContent = 'Stock: ' + (b.stock ?? '-'));
     $('#bmTitle') && ($('#bmTitle').textContent = b.title);
@@ -557,6 +755,10 @@ async function openBookModal(id) {
     $('#bmPrice') && ($('#bmPrice').textContent = money(b.price));
     $('#bmCover') && ($('#bmCover').style.backgroundImage = `url("${b.image_url || b.cover || ''}")`);
     $('#bookModal') && $('#bookModal').classList.add('show');
+    
+    // Load reviews
+    initStarRating();
+    await loadBookReviews(id);
   } catch (e) { console.error('openBookModal', e); toast('Failed to open book'); }
 }
 on('#bmClose', 'click', () => $('#bookModal')?.classList.remove('show'));
