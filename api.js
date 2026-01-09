@@ -401,6 +401,28 @@
         return await apiUpload(`/book-content/${bookId}/cover`, fd, { token });
     }
 
+    // Wishlist Functions
+    async function getWishlist(token) {
+        const res = await GET("/wishlist", { token });
+        return Array.isArray(res) ? res : [];
+    }
+
+    async function addToWishlist(token, bookId) {
+        return await POST(`/wishlist/${bookId}`, {}, { token });
+    }
+
+    async function removeFromWishlist(token, bookId) {
+        return await DEL(`/wishlist/${bookId}`, { token });
+    }
+
+    async function checkWishlist(token, bookId) {
+        return await GET(`/wishlist/check/${bookId}`, { token });
+    }
+
+    async function getWishlistCount(token) {
+        return await GET("/wishlist/count", { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -416,6 +438,7 @@
         getMyGifts, claimGifts, claimSpecificGift, markGiftAsRead, markAllGiftsAsRead,
         getAdminOrders, getAdminUsers, createBookAdmin, updateBookAdmin, deleteBookAdmin,
         getBookReadingAccess, getBookSample, uploadBookContent, uploadBookSample, uploadBookCover,
+        getWishlist, addToWishlist, removeFromWishlist, checkWishlist, getWishlistCount,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

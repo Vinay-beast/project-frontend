@@ -390,13 +390,99 @@ let BOOK_CACHE = new Map();
 async function fetchBooks(page = 1, limit = 50) { const res = await Api.getBooks(page, limit); (res.books || []).forEach(b => BOOK_CACHE.set(String(b.id), b)); return res.books || []; }
 async function fetchBookById(id) { if (BOOK_CACHE.has(String(id))) return BOOK_CACHE.get(String(id)); const b = await Api.getBookById(id); BOOK_CACHE.set(String(b.id), b); return b; }
 
+// ---------- Wishlist ----------
+let USER_WISHLIST = new Set();
+
+async function loadWishlist() {
+  if (!AUTH.token) return;
+  try {
+    const wishlist = await Api.getWishlist(AUTH.token);
+    USER_WISHLIST = new Set(wishlist.map(w => String(w.book_id)));
+  } catch (e) { console.error('Failed to load wishlist', e); }
+}
+
+async function toggleWishlist(bookId) {
+  if (!AUTH.token) { toast('Please login first'); return; }
+  const id = String(bookId);
+  try {
+    if (USER_WISHLIST.has(id)) {
+      await Api.removeFromWishlist(AUTH.token, bookId);
+      USER_WISHLIST.delete(id);
+      toast('Removed from wishlist');
+    } else {
+      await Api.addToWishlist(AUTH.token, bookId);
+      USER_WISHLIST.add(id);
+      toast('Added to wishlist ❤️', 'success');
+    }
+    updateWishlistButtons();
+    renderWishlistSection();
+    updateWishlistCount();
+  } catch (e) { console.error('Wishlist toggle failed', e); toast(e?.message || 'Wishlist action failed'); }
+}
+
+function updateWishlistButtons() {
+  $$('[data-wishlist]').forEach(btn => {
+    const bookId = String(btn.dataset.wishlist);
+    const inWishlist = USER_WISHLIST.has(bookId);
+    btn.textContent = inWishlist ? '❤️' : '🤍';
+    btn.title = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
+    btn.classList.toggle('wishlisted', inWishlist);
+  });
+}
+
+async function updateWishlistCount() {
+  const countEl = $('#wishlistCount');
+  if (countEl) countEl.textContent = USER_WISHLIST.size;
+}
+
+async function renderWishlistSection() {
+  if (!AUTH.token) return;
+  const wishlistEl = $('#libraryWishlist');
+  if (!wishlistEl) return;
+  
+  try {
+    const wishlist = await Api.getWishlist(AUTH.token);
+    if (!wishlist.length) {
+      wishlistEl.innerHTML = '<p class="muted">No books in your wishlist yet. Click ❤️ on any book to save it for later.</p>';
+      return;
+    }
+
+    const cards = wishlist.map(w => `
+      <div class="card">
+        <div class="book-cover-sm" style="background-image:url('${w.image_url || w.cover || ''}')"></div>
+        <div class="pillbar"><span class="tag small">${w.author || ''}</span></div>
+        <h3>${w.title}</h3>
+        <p class="price">${money(w.price)}</p>
+        <div class="row">
+          <button class="btn primary small" data-wishlist-buy="${w.book_id}">Buy</button>
+          <button class="btn small" data-wishlist-rent="${w.book_id}">Rent</button>
+          <button class="btn bad small" data-wishlist-remove="${w.book_id}">Remove</button>
+        </div>
+      </div>
+    `).join('');
+
+    wishlistEl.innerHTML = cards;
+    updateWishlistCount();
+
+    // Attach event handlers
+    onAll('#libraryWishlist [data-wishlist-buy]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.wishlistBuy, qty: 1 }], 'buy'));
+    onAll('#libraryWishlist [data-wishlist-rent]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.wishlistRent, qty: 1 }], 'rent'));
+    onAll('#libraryWishlist [data-wishlist-remove]', el => el.onclick = async () => {
+      await toggleWishlist(el.dataset.wishlistRemove);
+    });
+  } catch (e) { console.error('renderWishlistSection error', e); }
+}
+
 async function renderHomeCatalog() {
   try {
+    await loadWishlist();
     const books = await fetchBooks(1, 24);
     const grid = $('#homeBookGrid'); if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
-        <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')"></div>
+        <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
+          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+        </div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span></div>
         <h2 class="home-book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
         <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
@@ -417,17 +503,21 @@ async function renderHomeCatalog() {
     onAll('#homeBookGrid [data-home-gift]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.homeGift, qty: 1 }], 'gift'));
     onAll('#homeBookGrid [data-home-addcart]', el => el.onclick = () => addToCart(el.dataset.homeAddcart, 1));
     onAll('#homeBookGrid .home-book-title', el => el.onclick = () => openBookModal(el.dataset.book));
+    onAll('#homeBookGrid [data-wishlist]', el => el.onclick = (e) => { e.stopPropagation(); toggleWishlist(el.dataset.wishlist); });
   } catch (e) { console.error('renderHomeCatalog error', e); toast('Failed loading books'); }
 }
 
 async function renderCatalog(filter = '') {
   try {
+    await loadWishlist();
     const q = (filter || '').trim();
     const books = q ? (await Api.searchBooks(q, 1, 60)).books || [] : await fetchBooks(1, 60);
     const grid = $('#bookGrid'); if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
-        <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')"></div>
+        <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
+          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+        </div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span></div>
         <h2 class="book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
         <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
@@ -448,6 +538,7 @@ async function renderCatalog(filter = '') {
     onAll('#bookGrid [data-gift]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.gift, qty: 1 }], 'gift'));
     onAll('#bookGrid [data-addcart]', el => el.onclick = () => addToCart(el.dataset.addcart, 1));
     onAll('#bookGrid .book-title', el => el.onclick = () => openBookModal(el.dataset.book));
+    onAll('#bookGrid [data-wishlist]', el => el.onclick = (e) => { e.stopPropagation(); toggleWishlist(el.dataset.wishlist); });
   } catch (e) { console.error('renderCatalog error', e); toast('Failed loading catalog'); }
 }
 
@@ -783,6 +874,9 @@ async function renderLibrary() {
     if (libraryOwnedEl) libraryOwnedEl.innerHTML = ownedCards.join('') || '<p class="muted">No purchased books yet.</p>';
     if (libraryRentedEl) libraryRentedEl.innerHTML = rentedCards.join('') || '<p class="muted">No rentals yet.</p>';
     if (libraryGiftsEl) libraryGiftsEl.innerHTML = giftCards.join('') || '<p class="muted">No gifts received yet.</p>';
+
+    // Render wishlist section
+    await renderWishlistSection();
 
     onAll('#libraryOwned [data-read], #libraryRented [data-read], #libraryGifts [data-read]', (btn) => {
       if (!btn.hasAttribute('disabled')) {
