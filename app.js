@@ -497,11 +497,11 @@ async function renderHomeCatalog() {
   try {
     await loadWishlist();
     const books = await fetchBooks(1, 24);
-    
+
     // Load ratings for all books
     const bookIds = books.map(b => b.id);
     await loadBulkRatings(bookIds);
-    
+
     const grid = $('#homeBookGrid'); if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
@@ -537,11 +537,11 @@ async function renderCatalog(filter = '') {
     await loadWishlist();
     const q = (filter || '').trim();
     const books = q ? (await Api.searchBooks(q, 1, 60)).books || [] : await fetchBooks(1, 60);
-    
+
     // Load ratings for all books
     const bookIds = books.map(b => b.id);
     await loadBulkRatings(bookIds);
-    
+
     const grid = $('#bookGrid'); if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
@@ -598,7 +598,7 @@ function getRatingText(rating) {
 function initStarRating() {
   const starsInput = $('#starsInput');
   if (!starsInput) return;
-  
+
   const stars = starsInput.querySelectorAll('.star');
   stars.forEach(star => {
     star.onclick = () => {
@@ -613,7 +613,7 @@ function initStarRating() {
       });
     };
   });
-  
+
   starsInput.onmouseleave = () => updateStarDisplay();
 }
 
@@ -633,15 +633,15 @@ async function loadBookReviews(bookId) {
   try {
     const data = await Api.getBookReviews(bookId);
     const { reviews, avgRating, totalReviews } = data;
-    
+
     // Update rating display in modal header
     const bmRating = $('#bmRating');
     if (bmRating) {
-      bmRating.innerHTML = avgRating 
+      bmRating.innerHTML = avgRating
         ? `⭐ ${avgRating} (${totalReviews} review${totalReviews !== 1 ? 's' : ''})`
         : '⭐ No ratings yet';
     }
-    
+
     // Render reviews list
     const reviewsList = $('#reviewsList');
     if (reviewsList) {
@@ -663,20 +663,20 @@ async function loadBookReviews(bookId) {
         `).join('');
       }
     }
-    
+
     // Handle review form visibility
     const writeReviewForm = $('#writeReviewForm');
     const loginToReview = $('#loginToReview');
-    
+
     if (AUTH.token) {
       writeReviewForm?.classList.remove('hidden');
       loginToReview?.classList.add('hidden');
-      
+
       // Check if user has existing review
       const myReview = await Api.getMyReview(AUTH.token, bookId);
       const deleteBtn = $('#deleteReviewBtn');
       const formTitle = $('#reviewFormTitle');
-      
+
       if (myReview.hasReview) {
         currentUserRating = myReview.review.rating;
         $('#reviewTextInput').value = myReview.review.review_text || '';
@@ -693,7 +693,7 @@ async function loadBookReviews(bookId) {
       writeReviewForm?.classList.add('hidden');
       loginToReview?.classList.remove('hidden');
     }
-    
+
   } catch (e) {
     console.error('loadBookReviews error', e);
   }
@@ -705,7 +705,7 @@ async function submitReview() {
     toast('Please select a rating');
     return;
   }
-  
+
   try {
     const reviewText = $('#reviewTextInput')?.value || '';
     await Api.submitReview(AUTH.token, currentModalBook.id, currentUserRating, reviewText);
@@ -720,7 +720,7 @@ async function submitReview() {
 async function deleteMyReview() {
   if (!AUTH.token || !currentModalBook) return;
   if (!confirm('Delete your review?')) return;
-  
+
   try {
     await Api.deleteReview(AUTH.token, currentModalBook.id);
     toast('Review deleted');
@@ -755,7 +755,7 @@ async function openBookModal(id) {
     $('#bmPrice') && ($('#bmPrice').textContent = money(b.price));
     $('#bmCover') && ($('#bmCover').style.backgroundImage = `url("${b.image_url || b.cover || ''}")`);
     $('#bookModal') && $('#bookModal').classList.add('show');
-    
+
     // Load reviews
     initStarRating();
     await loadBookReviews(id);
