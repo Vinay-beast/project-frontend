@@ -546,6 +546,39 @@
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
 </script>
+
+<!-- AI Chat Assistant Widget -->
+<div id="aiChatWidget" class="ai-chat-widget">
+  <button id="aiChatToggle" class="ai-chat-toggle" title="AI Book Assistant">
+    🤖
+  </button>
+  <div id="aiChatWindow" class="ai-chat-window hidden">
+    <div class="ai-chat-header">
+      <div class="ai-chat-title">
+        <span class="ai-avatar">🤖</span>
+        <div>
+          <strong>BookNook AI</strong>
+          <span class="ai-status">● Online</span>
+        </div>
+      </div>
+      <button id="aiChatClose" class="ai-chat-close">×</button>
+    </div>
+    <div id="aiChatMessages" class="ai-chat-messages">
+      <div class="ai-message bot">
+        <div class="ai-message-content">
+          Hi! I'm your AI book assistant. Tell me what kind of book you're looking for!
+          <br><br>
+          Try: <em>"I want a short thriller under ₹300"</em> or <em>"Show me inspiring business books"</em>
+        </div>
+      </div>
+    </div>
+    <div class="ai-chat-input">
+      <input type="text" id="aiChatInput" placeholder="Describe what you want to read..." />
+      <button id="aiChatSend" class="btn primary">Send</button>
+    </div>
+  </div>
+</div>
+
 <!-- Scripts: API first, then your app logic -->
 <script src="api.js"></script>
 <script src="pdf-reader.js"></script>

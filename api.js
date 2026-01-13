@@ -465,6 +465,19 @@
         return await POST('/google-books/bulk-import', { books }, { token });
     }
 
+    // AI Recommendation Functions
+    async function chatRecommendation(token, message) {
+        return await POST('/recommendations/chat', { message }, { token });
+    }
+
+    async function getPersonalizedRecommendations(token) {
+        return await GET('/recommendations/personalized', { token });
+    }
+
+    async function getSimilarBooks(bookId) {
+        return await GET(`/recommendations/similar/${bookId}`);
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -483,6 +496,7 @@
         getWishlist, addToWishlist, removeFromWishlist, checkWishlist, getWishlistCount,
         getBookReviews, getBulkRatings, getMyReview, canReviewBook, submitReview, deleteReview,
         searchGoogleBooks, getGoogleBookDetails, importGoogleBook, bulkImportGoogleBooks,
+        chatRecommendation, getPersonalizedRecommendations, getSimilarBooks,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

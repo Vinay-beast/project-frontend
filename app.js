@@ -2690,7 +2690,176 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
         }
       }
     }, 30000); // Check every 30 seconds
+
+    // Initialize AI Chat Widget
+    initAIChat();
+    
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
 
+// ============================================
+// AI CHAT WIDGET
+// ============================================
 
+function initAIChat() {
+  const toggle = $('#aiChatToggle');
+  const window_ = $('#aiChatWindow');
+  const close = $('#aiChatClose');
+  const input = $('#aiChatInput');
+  const sendBtn = $('#aiChatSend');
+
+  if (!toggle || !window_) return;
+
+  // Toggle chat window
+  toggle.onclick = () => {
+    window_.classList.remove('hidden');
+    toggle.classList.add('active');
+    input?.focus();
+  };
+
+  // Close chat window
+  close.onclick = () => {
+    window_.classList.add('hidden');
+    toggle.classList.remove('active');
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    const message = input?.value?.trim();
+    if (!message) return;
+
+    if (!AUTH.token) {
+      addChatMessage('bot', 'Please login first to get personalized recommendations!');
+      return;
+    }
+
+    // Add user message
+    addChatMessage('user', message);
+    input.value = '';
+
+    // Show typing indicator
+    const typingId = showTypingIndicator();
+
+    try {
+      const response = await Api.chatRecommendation(AUTH.token, message);
+      
+      // Remove typing indicator
+      removeTypingIndicator(typingId);
+
+      // Show response
+      if (response.success) {
+        addChatMessage('bot', response.message, response.intent, response.recommendations);
+      } else {
+        addChatMessage('bot', 'Sorry, I had trouble understanding that. Could you try rephrasing?');
+      }
+    } catch (err) {
+      removeTypingIndicator(typingId);
+      console.error('AI Chat error:', err);
+      addChatMessage('bot', 'Sorry, something went wrong. Please try again!');
+    }
+  };
+
+  sendBtn.onclick = sendMessage;
+  input.onkeypress = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
+}
+
+function addChatMessage(type, content, intent = null, recommendations = null) {
+  const container = $('#aiChatMessages');
+  if (!container) return;
+
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `ai-message ${type}`;
+
+  let html = `<div class="ai-message-content">${content}`;
+
+  // Add intent tags if present
+  if (intent && (intent.genre || intent.mood || intent.length || intent.budget)) {
+    html += '<div class="ai-intent-tags">';
+    if (intent.genre) html += `<span class="ai-intent-tag">🎭 ${intent.genre}</span>`;
+    if (intent.mood) html += `<span class="ai-intent-tag">💫 ${intent.mood}</span>`;
+    if (intent.length) html += `<span class="ai-intent-tag">📄 ${intent.length}</span>`;
+    if (intent.budget) html += `<span class="ai-intent-tag">💰 ≤₹${intent.budget}</span>`;
+    html += '</div>';
+  }
+
+  // Add book recommendations if present
+  if (recommendations && recommendations.length > 0) {
+    html += '<div class="ai-book-recommendations">';
+    recommendations.forEach(book => {
+      const scorePercent = Math.round((book.scores?.final || 0) * 100);
+      html += `
+        <div class="ai-book-card" onclick="viewBookFromChat('${book.id}')">
+          <img class="ai-book-cover" src="${book.image_url || ''}" alt="${book.title}" 
+               onerror="this.src='https://via.placeholder.com/50x70?text=📚'" />
+          <div class="ai-book-info">
+            <div class="ai-book-title">${book.title}</div>
+            <div class="ai-book-author">${book.author}</div>
+            <div class="ai-book-meta">
+              <span class="tag small">₹${book.price}</span>
+              ${book.page_count ? `<span class="tag small">${book.page_count}p</span>` : ''}
+              <span class="tag small good">${scorePercent}% match</span>
+            </div>
+            <div class="ai-score-bar">
+              <div class="ai-score-fill" style="width: ${scorePercent}%"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  msgDiv.innerHTML = html;
+  container.appendChild(msgDiv);
+
+  // Scroll to bottom
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const container = $('#aiChatMessages');
+  if (!container) return null;
+
+  const id = 'typing-' + Date.now();
+  const typingDiv = document.createElement('div');
+  typingDiv.id = id;
+  typingDiv.className = 'ai-message bot';
+  typingDiv.innerHTML = `
+    <div class="ai-message-content">
+      <div class="ai-typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  `;
+  container.appendChild(typingDiv);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeTypingIndicator(id) {
+  if (id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+}
+
+// View book from chat recommendation
+window.viewBookFromChat = async (bookId) => {
+  try {
+    const book = await Api.getBookById(bookId);
+    if (book) {
+      // Close chat
+      $('#aiChatWindow')?.classList.add('hidden');
+      $('#aiChatToggle')?.classList.remove('active');
+      
+      // Open book modal
+      openBookModal(book);
+    }
+  } catch (err) {
+    console.error('Failed to view book:', err);
+    toast('Failed to load book details');
+  }
+};
