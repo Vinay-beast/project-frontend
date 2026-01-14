@@ -493,8 +493,25 @@ function getRatingDisplay(bookId) {
   return `<span class="book-rating">⭐ ${r.avgRating}</span>`;
 }
 
+// Skeleton loader for book grids
+function showBookSkeletons(container, count = 8) {
+  const skeletonHTML = Array(count).fill(`
+    <div class="card book-card book-skeleton">
+      <div class="skeleton skeleton-image"></div>
+      <div class="skeleton skeleton-text" style="width: 60%"></div>
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-text" style="width: 80%"></div>
+      <div class="skeleton skeleton-text" style="width: 40%"></div>
+    </div>
+  `).join('');
+  if (container) container.innerHTML = skeletonHTML;
+}
+
 async function renderHomeCatalog() {
   try {
+    const grid = $('#homeBookGrid');
+    if (grid) showBookSkeletons(grid, 8);
+    
     await loadWishlist();
     const books = await fetchBooks(1, 24);
 
@@ -502,14 +519,15 @@ async function renderHomeCatalog() {
     const bookIds = books.map(b => b.id);
     await loadBulkRatings(bookIds);
 
-    const grid = $('#homeBookGrid'); if (!grid) return;
+    if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
-        <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
-          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+        <div class="cover-wrap">
+          <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')"></div>
+          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'active' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
         </div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
-        <h2 class="home-book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
+        <h3 class="home-book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h3>
         <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
         <p class="price">${money(b.price)}</p>
         <div class="row">
@@ -517,8 +535,8 @@ async function renderHomeCatalog() {
           <button class="btn" data-home-rent="${b.id}">Rent</button>
         </div>
         <div style="margin-top:8px">
-          <button class="btn" data-home-gift="${b.id}">Gift</button>
-          <button class="btn ghost" data-home-addcart="${b.id}">Add to Cart</button>
+          <button class="btn small" data-home-gift="${b.id}">🎁 Gift</button>
+          <button class="btn ghost small" data-home-addcart="${b.id}">🛒 Add to Cart</button>
         </div>
       </div>
     `).join('') || '<p class="muted">No books available.</p>';
@@ -534,6 +552,9 @@ async function renderHomeCatalog() {
 
 async function renderCatalog(filter = '') {
   try {
+    const grid = $('#bookGrid');
+    if (grid) showBookSkeletons(grid, 12);
+    
     await loadWishlist();
     const q = (filter || '').trim();
     const books = q ? (await Api.searchBooks(q, 1, 60)).books || [] : await fetchBooks(1, 60);
@@ -542,14 +563,15 @@ async function renderCatalog(filter = '') {
     const bookIds = books.map(b => b.id);
     await loadBulkRatings(bookIds);
 
-    const grid = $('#bookGrid'); if (!grid) return;
+    if (!grid) return;
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
-        <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
-          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+        <div class="cover-wrap">
+          <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')"></div>
+          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'active' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
         </div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
-        <h2 class="book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
+        <h3 class="book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h3>
         <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
         <p class="price">${money(b.price)}</p>
         <div class="row">
@@ -557,8 +579,8 @@ async function renderCatalog(filter = '') {
           <button class="btn" data-rent="${b.id}">Rent</button>
         </div>
         <div style="margin-top:8px">
-          <button class="btn" data-gift="${b.id}">Gift</button>
-          <button class="btn ghost" data-addcart="${b.id}">Add to Cart</button>
+          <button class="btn small" data-gift="${b.id}">🎁 Gift</button>
+          <button class="btn ghost small" data-addcart="${b.id}">🛒 Add to Cart</button>
         </div>
       </div>
     `).join('') || '<p class="muted">No books found.</p>';
@@ -2693,7 +2715,7 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
 
     // Initialize AI Chat Widget
     initAIChat();
-    
+
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
 
@@ -2742,7 +2764,7 @@ function initAIChat() {
 
     try {
       const response = await Api.chatRecommendation(AUTH.token, message);
-      
+
       // Remove typing indicator
       removeTypingIndicator(typingId);
 
@@ -2854,7 +2876,7 @@ window.viewBookFromChat = async (bookId) => {
       // Close chat
       $('#aiChatWindow')?.classList.add('hidden');
       $('#aiChatToggle')?.classList.remove('active');
-      
+
       // Open book modal
       openBookModal(book);
     }
