@@ -2746,9 +2746,17 @@ function initAIChat() {
       // Remove typing indicator
       removeTypingIndicator(typingId);
 
-      // Show response
+      // Show response with agent insights
       if (response.success) {
-        addChatMessage('bot', response.message, response.intent, response.recommendations);
+        // Map new agentInsights format to expected format
+        const intent = response.agentInsights?.intent ? {
+          genre: response.agentInsights.intent.detected_genre,
+          mood: response.agentInsights.intent.detected_mood,
+          budget: response.agentInsights.intent.budget,
+          keywords: response.agentInsights.intent.keywords
+        } : response.intent;
+        
+        addChatMessage('bot', response.message, intent, response.recommendations, response.agentInsights);
       } else {
         addChatMessage('bot', 'Sorry, I had trouble understanding that. Could you try rephrasing?');
       }
@@ -2765,7 +2773,7 @@ function initAIChat() {
   };
 }
 
-function addChatMessage(type, content, intent = null, recommendations = null) {
+function addChatMessage(type, content, intent = null, recommendations = null, agentInsights = null) {
   const container = $('#aiChatMessages');
   if (!container) return;
 
@@ -2774,8 +2782,62 @@ function addChatMessage(type, content, intent = null, recommendations = null) {
 
   let html = `<div class="ai-message-content">${content}`;
 
-  // Add intent tags if present
-  if (intent && (intent.genre || intent.mood || intent.length || intent.budget)) {
+  // Add agent insights panel if present (shows what each agent did)
+  if (agentInsights) {
+    html += '<div class="ai-agents-panel">';
+    html += '<div class="ai-agents-title">🤖 Multi-Agent Analysis</div>';
+    html += '<div class="ai-agents-list">';
+    
+    // Intent Agent
+    if (agentInsights.intent) {
+      const i = agentInsights.intent;
+      html += `<div class="ai-agent-item">
+        <span class="ai-agent-name">${i.agent || '🎯 Intent Agent'}</span>
+        <span class="ai-agent-output">Genre: ${i.detected_genre || 'any'}, Mood: ${i.detected_mood || 'any'}${i.budget ? `, Budget: ₹${i.budget}` : ''}</span>
+      </div>`;
+    }
+    
+    // History Agent
+    if (agentInsights.history) {
+      const h = agentInsights.history;
+      html += `<div class="ai-agent-item">
+        <span class="ai-agent-name">${h.agent || '📚 History Agent'}</span>
+        <span class="ai-agent-output">${h.strategy || (h.favorite_genres?.length ? 'Found preferences: ' + h.favorite_genres.join(', ') : 'No purchase history')}</span>
+      </div>`;
+    }
+    
+    // Mood Expert
+    if (agentInsights.mood) {
+      const m = agentInsights.mood;
+      html += `<div class="ai-agent-item">
+        <span class="ai-agent-name">${m.agent || '💭 Mood Expert'}</span>
+        <span class="ai-agent-output">${m.characteristics || m.reasoning || 'Analyzed mood preferences'}</span>
+      </div>`;
+    }
+    
+    // Ranking Agent
+    if (agentInsights.ranking) {
+      const r = agentInsights.ranking;
+      html += `<div class="ai-agent-item">
+        <span class="ai-agent-name">${r.agent || '📊 Ranking Agent'}</span>
+        <span class="ai-agent-output">Evaluated ${r.books_evaluated || '?'} books, ranked top matches</span>
+      </div>`;
+    }
+    
+    // Coordinator
+    if (agentInsights.coordinator) {
+      const c = agentInsights.coordinator;
+      html += `<div class="ai-agent-item">
+        <span class="ai-agent-name">${c.agent || '🤖 Coordinator'}</span>
+        <span class="ai-agent-output">Confidence: ${c.confidence || 'high'}</span>
+      </div>`;
+    }
+    
+    html += '</div></div>';
+  }
+
+  // Add intent tags if present (fallback for old format)
+  if (!agentInsights && intent && (intent.genre || intent.mood || intent.length || intent.budget)) {
     html += '<div class="ai-intent-tags">';
     if (intent.genre) html += `<span class="ai-intent-tag">🎭 ${intent.genre}</span>`;
     if (intent.mood) html += `<span class="ai-intent-tag">💫 ${intent.mood}</span>`;
@@ -2788,7 +2850,9 @@ function addChatMessage(type, content, intent = null, recommendations = null) {
   if (recommendations && recommendations.length > 0) {
     html += '<div class="ai-book-recommendations">';
     recommendations.forEach(book => {
-      const scorePercent = Math.round((book.scores?.final || 0) * 100);
+      // Support both old format (scores.final) and new format (match_score)
+      const scorePercent = book.match_score || Math.round((book.scores?.final || 0.75) * 100);
+      const reason = book.recommendation_reason || '';
       html += `
         <div class="ai-book-card" onclick="viewBookFromChat('${book.id}')">
           <img class="ai-book-cover" src="${book.image_url || ''}" alt="${book.title}" 
@@ -2796,6 +2860,7 @@ function addChatMessage(type, content, intent = null, recommendations = null) {
           <div class="ai-book-info">
             <div class="ai-book-title">${book.title}</div>
             <div class="ai-book-author">${book.author}</div>
+            ${reason ? `<div class="ai-book-reason">${reason}</div>` : ''}
             <div class="ai-book-meta">
               <span class="tag small">₹${book.price}</span>
               ${book.page_count ? `<span class="tag small">${book.page_count}p</span>` : ''}
