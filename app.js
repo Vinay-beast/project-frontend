@@ -2755,7 +2755,7 @@ function initAIChat() {
           budget: response.agentInsights.intent.budget,
           keywords: response.agentInsights.intent.keywords
         } : response.intent;
-        
+
         addChatMessage('bot', response.message, intent, response.recommendations, response.agentInsights);
       } else {
         addChatMessage('bot', 'Sorry, I had trouble understanding that. Could you try rephrasing?');
@@ -2787,7 +2787,7 @@ function addChatMessage(type, content, intent = null, recommendations = null, ag
     html += '<div class="ai-agents-panel">';
     html += '<div class="ai-agents-title">🤖 Multi-Agent Analysis</div>';
     html += '<div class="ai-agents-list">';
-    
+
     // Intent Agent
     if (agentInsights.intent) {
       const i = agentInsights.intent;
@@ -2796,7 +2796,7 @@ function addChatMessage(type, content, intent = null, recommendations = null, ag
         <span class="ai-agent-output">Genre: ${i.detected_genre || 'any'}, Mood: ${i.detected_mood || 'any'}${i.budget ? `, Budget: ₹${i.budget}` : ''}</span>
       </div>`;
     }
-    
+
     // History Agent
     if (agentInsights.history) {
       const h = agentInsights.history;
@@ -2805,7 +2805,7 @@ function addChatMessage(type, content, intent = null, recommendations = null, ag
         <span class="ai-agent-output">${h.strategy || (h.favorite_genres?.length ? 'Found preferences: ' + h.favorite_genres.join(', ') : 'No purchase history')}</span>
       </div>`;
     }
-    
+
     // Mood Expert
     if (agentInsights.mood) {
       const m = agentInsights.mood;
@@ -2814,7 +2814,7 @@ function addChatMessage(type, content, intent = null, recommendations = null, ag
         <span class="ai-agent-output">${m.characteristics || m.reasoning || 'Analyzed mood preferences'}</span>
       </div>`;
     }
-    
+
     // Ranking Agent
     if (agentInsights.ranking) {
       const r = agentInsights.ranking;
@@ -2823,7 +2823,7 @@ function addChatMessage(type, content, intent = null, recommendations = null, ag
         <span class="ai-agent-output">Evaluated ${r.books_evaluated || '?'} books, ranked top matches</span>
       </div>`;
     }
-    
+
     // Coordinator
     if (agentInsights.coordinator) {
       const c = agentInsights.coordinator;
@@ -2832,7 +2832,7 @@ function addChatMessage(type, content, intent = null, recommendations = null, ag
         <span class="ai-agent-output">Confidence: ${c.confidence || 'high'}</span>
       </div>`;
     }
-    
+
     html += '</div></div>';
   }
 
