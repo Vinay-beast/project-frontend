@@ -2928,3 +2928,226 @@ window.viewBookFromChat = async (bookId) => {
     toast('Failed to load book details');
   }
 };
+
+// ============================================
+// BOOK SEARCH BY IMAGE (5-Agent Pipeline)
+// ============================================
+
+(function initBookSearchWidget() {
+  const toggle = $('#bookSearchToggle');
+  const window = $('#bookSearchWindow');
+  const closeBtn = $('#bookSearchClose');
+  const dropZone = $('#bookSearchDropZone');
+  const fileInput = $('#bookSearchInput');
+  const preview = $('#bookSearchPreview');
+  const previewImg = $('#bookSearchImage');
+  const clearBtn = $('#bookSearchClear');
+  const submitBtn = $('#bookSearchSubmit');
+  const loadingDiv = $('#bookSearchLoading');
+  const resultDiv = $('#bookSearchResult');
+
+  if (!toggle || !window) return;
+
+  let selectedFile = null;
+
+  // Toggle window
+  toggle.addEventListener('click', () => {
+    window.classList.toggle('hidden');
+    toggle.classList.toggle('active');
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    window.classList.add('hidden');
+    toggle.classList.remove('active');
+  });
+
+  // Drag and drop
+  dropZone?.addEventListener('click', () => fileInput?.click());
+
+  dropZone?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+
+  dropZone?.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
+
+  dropZone?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleFileSelect(file);
+    }
+  });
+
+  fileInput?.addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+      handleFileSelect(e.target.files[0]);
+    }
+  });
+
+  function handleFileSelect(file) {
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImg.src = e.target.result;
+      dropZone?.classList.add('hidden');
+      preview?.classList.remove('hidden');
+      submitBtn?.classList.remove('hidden');
+      resultDiv?.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearBtn?.addEventListener('click', () => {
+    selectedFile = null;
+    previewImg.src = '';
+    preview?.classList.add('hidden');
+    dropZone?.classList.remove('hidden');
+    submitBtn?.classList.add('hidden');
+    resultDiv?.classList.add('hidden');
+    fileInput.value = '';
+  });
+
+  // Submit search
+  submitBtn?.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    // Show loading with agent progress
+    preview?.classList.add('hidden');
+    submitBtn?.classList.add('hidden');
+    loadingDiv?.classList.remove('hidden');
+    resultDiv?.classList.add('hidden');
+
+    // Animate agent steps
+    const steps = loadingDiv?.querySelectorAll('.agent-step');
+    const agentNames = ['ocr', 'processing', 'search', 'ranking', 'response'];
+
+    let currentStep = 0;
+    const stepInterval = setInterval(() => {
+      if (currentStep > 0 && steps[currentStep - 1]) {
+        steps[currentStep - 1].classList.remove('active');
+        steps[currentStep - 1].classList.add('complete');
+      }
+      if (currentStep < steps.length && steps[currentStep]) {
+        steps[currentStep].classList.add('active');
+      }
+      currentStep++;
+      if (currentStep > steps.length) {
+        clearInterval(stepInterval);
+      }
+    }, 800);
+
+    try {
+      // Upload and search
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      const response = await fetch(`${Api.BASE_URL}/book-search/image`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      // Stop animation
+      clearInterval(stepInterval);
+      steps?.forEach(s => {
+        s.classList.remove('active');
+        s.classList.add('complete');
+      });
+
+      // Show result after small delay
+      setTimeout(() => {
+        loadingDiv?.classList.add('hidden');
+        displaySearchResult(result);
+      }, 500);
+
+    } catch (err) {
+      clearInterval(stepInterval);
+      loadingDiv?.classList.add('hidden');
+      toast('Search failed: ' + err.message, 'error');
+      dropZone?.classList.remove('hidden');
+      submitBtn?.classList.remove('hidden');
+    }
+  });
+
+  function displaySearchResult(result) {
+    resultDiv?.classList.remove('hidden');
+
+    if (result.success) {
+      const r = result.result;
+      $('#resultConfidence').textContent = r.confidence + '%';
+      $('#resultBookName').textContent = r.bookName || 'Unknown Book';
+      $('#resultPageNumber').textContent = r.pageNumber ? `Page ${r.pageNumber}` : '';
+      $('#resultMessage').textContent = r.message || '';
+      $('#resultExplanation').textContent = r.confidenceExplanation || r.excerptHighlight || '';
+
+      // Confidence color
+      const confEl = $('#resultConfidence');
+      if (r.confidence >= 80) {
+        confEl.style.color = 'var(--good)';
+      } else if (r.confidence >= 50) {
+        confEl.style.color = 'var(--warn)';
+      } else {
+        confEl.style.color = 'var(--bad)';
+      }
+
+      // Show agent insights
+      const insightsDiv = $('#resultAgentInsights');
+      if (insightsDiv && result.agentInsights) {
+        insightsDiv.innerHTML = `
+          <h4 style="margin: 16px 0 8px 0; font-size: 14px;">🤖 Agent Insights:</h4>
+          <div class="agent-insight-item">
+            <strong>${result.agentInsights.ocr?.agent || '🖼️ OCR Agent'}</strong>
+            Extracted ${result.agentInsights.ocr?.wordCount || 0} words from image
+          </div>
+          ${result.agentInsights.processing?.key_phrases ? `
+          <div class="agent-insight-item">
+            <strong>${result.agentInsights.processing?.agent || '🧹 Processing Agent'}</strong>
+            Key phrases: ${result.agentInsights.processing.key_phrases?.slice(0, 5).join(', ')}
+          </div>
+          ` : ''}
+          <div class="agent-insight-item">
+            <strong>${result.agentInsights.search?.agent || '🔍 Search Agent'}</strong>
+            Found ${result.agentInsights.search?.matchCount || 0} potential matches
+          </div>
+        `;
+      }
+    } else {
+      $('#resultConfidence').textContent = '0%';
+      $('#resultConfidence').style.color = 'var(--bad)';
+      $('#resultBookName').textContent = 'Book Not Found';
+      $('#resultPageNumber').textContent = '';
+      $('#resultMessage').textContent = result.error || 'Could not identify the book';
+      $('#resultExplanation').textContent = 'Try uploading a clearer image with more text visible.';
+      $('#resultAgentInsights').innerHTML = '';
+    }
+
+    // Add try again button
+    const existingRetry = resultDiv.querySelector('.retry-btn');
+    if (!existingRetry) {
+      const retryBtn = document.createElement('button');
+      retryBtn.className = 'btn ghost retry-btn';
+      retryBtn.style.marginTop = '16px';
+      retryBtn.style.width = '100%';
+      retryBtn.textContent = '🔄 Search Another Image';
+      retryBtn.addEventListener('click', () => {
+        selectedFile = null;
+        previewImg.src = '';
+        preview?.classList.add('hidden');
+        dropZone?.classList.remove('hidden');
+        submitBtn?.classList.add('hidden');
+        resultDiv?.classList.add('hidden');
+        fileInput.value = '';
+        // Reset agent steps
+        loadingDiv?.querySelectorAll('.agent-step').forEach(s => {
+          s.classList.remove('active', 'complete');
+        });
+      });
+      resultDiv.appendChild(retryBtn);
+    }
+  }
+})();

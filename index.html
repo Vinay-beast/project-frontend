@@ -579,6 +579,68 @@
   </div>
 </div>
 
+<!-- Book Search by Image Widget -->
+<div id="bookSearchWidget" class="book-search-widget">
+  <button id="bookSearchToggle" class="book-search-toggle" title="Find Book by Image">
+    📸
+  </button>
+  <div id="bookSearchWindow" class="book-search-window hidden">
+    <div class="book-search-header">
+      <div class="book-search-title">
+        <span class="search-avatar">🔍</span>
+        <div>
+          <strong>Book Finder AI</strong>
+          <span class="ai-status">● 5 Agents Ready</span>
+        </div>
+      </div>
+      <button id="bookSearchClose" class="book-search-close">×</button>
+    </div>
+    <div class="book-search-content">
+      <div class="book-search-upload-area" id="bookSearchDropZone">
+        <div class="upload-icon">📄</div>
+        <p><strong>Upload a book page</strong></p>
+        <p class="small muted">Drag & drop or click to upload</p>
+        <p class="small muted">Our AI will identify which book it's from!</p>
+        <input type="file" id="bookSearchInput" accept="image/*" hidden />
+      </div>
+      <div id="bookSearchPreview" class="book-search-preview hidden">
+        <img id="bookSearchImage" src="" alt="Uploaded image" />
+        <button id="bookSearchClear" class="btn ghost small">✕ Clear</button>
+      </div>
+      <button id="bookSearchSubmit" class="btn primary book-search-submit hidden">
+        🔍 Find This Book
+      </button>
+      <div id="bookSearchLoading" class="book-search-loading hidden">
+        <div class="agent-progress">
+          <div class="agent-step" data-agent="ocr">🖼️ OCR Agent extracting text...</div>
+          <div class="agent-step" data-agent="processing">🧹 Processing Agent analyzing...</div>
+          <div class="agent-step" data-agent="search">🔍 Search Agent querying index...</div>
+          <div class="agent-step" data-agent="ranking">📊 Ranking Agent scoring matches...</div>
+          <div class="agent-step" data-agent="response">🤖 Response Agent generating result...</div>
+        </div>
+      </div>
+      <div id="bookSearchResult" class="book-search-result hidden">
+        <div class="result-card">
+          <div class="result-confidence">
+            <span id="resultConfidence">94%</span>
+            <span class="confidence-label">Confidence</span>
+          </div>
+          <div class="result-details">
+            <h3 id="resultBookName">Book Name</h3>
+            <p id="resultPageNumber" class="result-page">Page 47</p>
+            <p id="resultMessage" class="result-message"></p>
+          </div>
+        </div>
+        <div class="result-explanation">
+          <h4>🤖 How I found it:</h4>
+          <p id="resultExplanation"></p>
+        </div>
+        <div id="resultAgentInsights" class="agent-insights"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Scripts: API first, then your app logic -->
 <script src="api.js"></script>
 <script src="pdf-reader.js"></script>
