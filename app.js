@@ -3045,7 +3045,7 @@ window.viewBookFromChat = async (bookId) => {
       const formData = new FormData();
       formData.append('image', selectedFile);
 
-      const response = await fetch(`${Api.BASE_URL}/book-search/image`, {
+      const response = await fetch(`${Api.API_BASE_URL}/book-search/image`, {
         method: 'POST',
         body: formData
       });
