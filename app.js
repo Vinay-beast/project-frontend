@@ -3265,12 +3265,25 @@ window.viewBookFromChat = async (bookId) => {
       if (result.success) {
         displaySummary(result);
       } else {
-        showSummaryError(result.error || 'Failed to generate summary');
+        // Check for specific error types
+        const errorMsg = result.error || 'Failed to generate summary';
+        if (errorMsg.includes('not found in search index') || errorMsg.includes('not indexed')) {
+          showSummaryError('📖 This book hasn\'t been indexed yet. The AI summary will be available once the book content is processed by our system.');
+        } else if (errorMsg.includes('Service unavailable')) {
+          showSummaryError('🔧 AI Summary service is temporarily unavailable. Please try again later.');
+        } else {
+          showSummaryError(errorMsg);
+        }
       }
     } catch (error) {
       clearInterval(stepInterval);
       console.error('Summary error:', error);
-      showSummaryError(error.message || 'Failed to load summary');
+      // Handle network/API errors more gracefully
+      if (error.message?.includes('500')) {
+        showSummaryError('📖 This book hasn\'t been indexed yet. The AI summary will be available once the book content is processed.');
+      } else {
+        showSummaryError(error.message || 'Failed to load summary. Please try again.');
+      }
     }
   };
 
