@@ -3080,10 +3080,10 @@ window.viewBookFromChat = async (bookId) => {
     if (result.success) {
       const r = result.result;
       $('#resultConfidence').textContent = r.confidence + '%';
-      $('#resultBookName').textContent = r.bookName || 'Unknown Book';
-      $('#resultPageNumber').textContent = r.pageNumber ? `Page ${r.pageNumber}` : '';
+      $('#resultBookName').textContent = r.identifiedTitle || r.bookName || 'Unknown Book';
+      $('#resultPageNumber').textContent = ''; // No page number in simplified version
       $('#resultMessage').textContent = r.message || '';
-      $('#resultExplanation').textContent = r.confidenceExplanation || r.excerptHighlight || '';
+      $('#resultExplanation').textContent = r.reasoning || '';
 
       // Confidence color
       const confEl = $('#resultConfidence');
@@ -3104,17 +3104,63 @@ window.viewBookFromChat = async (bookId) => {
             <strong>${result.agentInsights.ocr?.agent || '🖼️ OCR Agent'}</strong>
             Extracted ${result.agentInsights.ocr?.wordCount || 0} words from image
           </div>
-          ${result.agentInsights.processing?.key_phrases ? `
           <div class="agent-insight-item">
-            <strong>${result.agentInsights.processing?.agent || '🧹 Processing Agent'}</strong>
-            Key phrases: ${result.agentInsights.processing.key_phrases?.slice(0, 5).join(', ')}
+            <strong>${result.agentInsights.identification?.agent || '📚 Book Identifier Agent'}</strong>
+            Identified: "${r.identifiedTitle}" by ${r.identifiedAuthor || 'Unknown'}
           </div>
-          ` : ''}
           <div class="agent-insight-item">
-            <strong>${result.agentInsights.search?.agent || '🔍 Search Agent'}</strong>
-            Found ${result.agentInsights.search?.matchCount || 0} potential matches
+            <strong>${result.agentInsights.database?.agent || '🗄️ Database Agent'}</strong>
+            ${result.found ? '✅ Book found in our store!' : '❌ Book not available in our store'}
           </div>
         `;
+      }
+
+      // Show book card with buy button if found in database
+      if (result.found && r.book) {
+        const bookCard = document.createElement('div');
+        bookCard.className = 'search-result-book-card';
+        bookCard.innerHTML = `
+          <div style="display: flex; gap: 16px; margin-top: 20px; padding: 16px; background: var(--panel); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <img src="${r.book.cover_image || 'https://via.placeholder.com/80x120?text=Book'}" alt="${r.book.title}" style="width: 80px; height: 120px; object-fit: cover; border-radius: 8px;">
+            <div style="flex: 1;">
+              <h3 style="margin: 0 0 4px 0; font-size: 16px; color: var(--txt);">${r.book.title}</h3>
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--muted);">by ${r.book.author}</p>
+              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 18px; font-weight: 600; color: var(--accent);">₹${r.book.price}</span>
+                ${r.book.rental_price ? `<span style="font-size: 13px; color: var(--muted);">or rent ₹${r.book.rental_price}</span>` : ''}
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn primary search-buy-btn" data-book-id="${r.book.id}" style="flex: 1; padding: 8px 16px; font-size: 13px;">
+                  🛒 Add to Cart
+                </button>
+                <button class="btn ghost search-view-btn" data-book-id="${r.book.id}" style="padding: 8px 16px; font-size: 13px;">
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Remove any existing book card
+        const existingCard = resultDiv.querySelector('.search-result-book-card');
+        if (existingCard) existingCard.remove();
+
+        insightsDiv?.after(bookCard);
+
+        // Add event listeners
+        bookCard.querySelector('.search-buy-btn')?.addEventListener('click', () => {
+          addToCart(r.book.id);
+          toast('Added to cart!', 'success');
+        });
+
+        bookCard.querySelector('.search-view-btn')?.addEventListener('click', () => {
+          showSection('book');
+          loadBookDetails(r.book.id);
+        });
+      } else {
+        // Remove any existing book card if book not found
+        const existingCard = resultDiv.querySelector('.search-result-book-card');
+        if (existingCard) existingCard.remove();
       }
     } else {
       $('#resultConfidence').textContent = '0%';
@@ -3124,6 +3170,10 @@ window.viewBookFromChat = async (bookId) => {
       $('#resultMessage').textContent = result.error || 'Could not identify the book';
       $('#resultExplanation').textContent = 'Try uploading a clearer image with more text visible.';
       $('#resultAgentInsights').innerHTML = '';
+
+      // Remove any existing book card
+      const existingCard = resultDiv.querySelector('.search-result-book-card');
+      if (existingCard) existingCard.remove();
     }
 
     // Add try again button
