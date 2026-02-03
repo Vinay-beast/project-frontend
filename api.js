@@ -478,40 +478,6 @@
         return await GET(`/recommendations/similar/${bookId}`);
     }
 
-    // ============================================
-    // READING ASSISTANT (Smart Summaries)
-    // ============================================
-
-    // Get full book summary (requires ownership)
-    async function getBookSummary(token, bookId) {
-        return await GET(`/reading-assistant/summary/${bookId}`, { token, timeoutMs: 120000 }); // 2 min timeout for AI generation
-    }
-
-    // Get quick summary (faster, less detailed)
-    async function getQuickBookSummary(token, bookId) {
-        return await GET(`/reading-assistant/quick-summary/${bookId}`, { token, timeoutMs: 60000 });
-    }
-
-    // Check if user has access to book summary
-    async function checkSummaryAccess(token, bookId) {
-        return await GET(`/reading-assistant/check-access/${bookId}`, { token });
-    }
-
-    // Get user's reading progress for all books
-    async function getReadingProgress(token) {
-        return await GET('/reading-assistant/progress', { token });
-    }
-
-    // Update reading progress for a book
-    async function updateReadingProgress(token, bookId, progressPercent, currentPage) {
-        return await PUT(`/reading-assistant/progress/${bookId}`, { progressPercent, currentPage }, { token });
-    }
-
-    // Get reading assistant status
-    async function getReadingAssistantStatus() {
-        return await GET('/reading-assistant/status');
-    }
-
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -531,10 +497,6 @@
         getBookReviews, getBulkRatings, getMyReview, canReviewBook, submitReview, deleteReview,
         searchGoogleBooks, getGoogleBookDetails, importGoogleBook, bulkImportGoogleBooks,
         chatRecommendation, getPersonalizedRecommendations, getSimilarBooks,
-        // Reading Assistant
-        getBookSummary, getQuickBookSummary, checkSummaryAccess,
-        getReadingProgress, updateReadingProgress, getReadingAssistantStatus,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();
-

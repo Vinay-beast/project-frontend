@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -16,7 +17,9 @@
 
   <!-- Safe fallback so sections can be hidden even if CSS/JS race -->
   <style>
-    .hidden { display: none !important; }
+    .hidden {
+      display: none !important;
+    }
   </style>
 
   <!-- Backend base URL (adjust port if needed) -->
@@ -27,732 +30,639 @@
     // window.API_BASE_URL = "http://127.0.0.1:5000/api";
   </script>
 </head>
+
 <body>
-<header>
-  <div class="nav">
-    <div class="brand"><div class="logo"></div> BookNook</div>
-    <button class="navbtn" data-nav="home">Home</button>
-    <button class="navbtn" data-nav="catalog">Catalog</button>
-    <button class="navbtn" data-nav="orders">Orders</button>
-    <button class="navbtn" data-nav="profile">Profile</button>
-    <div class="spacer"></div>
-    <button id="btnNotifications" class="btn ghost small" title="Gift Notifications">
-      🔔 <span id="navNotificationBadge" class="notification-count hidden">0</span>
-    </button>
-    <button id="btnReset" class="btn ghost small">Reset Demo</button>
-    <button id="btnAdmin" class="btn ghost small">Admin Login</button>
-    <span id="navAvatar" class="avatar-sm hidden"></span>
-    <span id="navUser" class="tag hidden"></span>
-    <button id="btnLogin" class="btn">Login</button>
-    <button id="btnLogout" class="btn bad hidden">Logout</button>
-    <button id="btnCart" class="btn primary">Cart <span id="cartCount" class="kbd">0</span></button>
-  </div>
-</header>
-
-<main>
-  <section id="loginSection" class="hidden grid">
-    <div class="panel">
-      <h1>Sign in</h1>
-      <form id="formLogin" class="grid" autocomplete="off">
-        <div><label>Email</label><input type="email" name="email" required /></div>
-        <div><label>Password</label><input type="password" name="password" required /></div>
-        <div class="row">
-          <button class="btn" type="submit">Login</button>
-          <button id="switchToRegister" type="button" class="btn ghost">Create account</button>
-        </div>
-      </form> <div class="divider"></div>
-      <button type="button" class="google-signin-btn">
-        <span class="google-icon"></span>
-        Sign in with Google
+  <header>
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"></div> BookNook
+      </div>
+      <button class="navbtn" data-nav="home">Home</button>
+      <button class="navbtn" data-nav="catalog">Catalog</button>
+      <button class="navbtn" data-nav="orders">Orders</button>
+      <button class="navbtn" data-nav="profile">Profile</button>
+      <div class="spacer"></div>
+      <button id="btnNotifications" class="btn ghost small" title="Gift Notifications">
+        🔔 <span id="navNotificationBadge" class="notification-count hidden">0</span>
       </button>
-      
-      <p class="small muted">Tip: Create an account if you don't have one.</p>
+      <button id="btnReset" class="btn ghost small">Reset Demo</button>
+      <button id="btnAdmin" class="btn ghost small">Admin Login</button>
+      <span id="navAvatar" class="avatar-sm hidden"></span>
+      <span id="navUser" class="tag hidden"></span>
+      <button id="btnLogin" class="btn">Login</button>
+      <button id="btnLogout" class="btn bad hidden">Logout</button>
+      <button id="btnCart" class="btn primary">Cart <span id="cartCount" class="kbd">0</span></button>
     </div>
-  </section>
+  </header>
 
-  <section id="registerSection" class="hidden grid">
-    <div class="panel">
-      <h1>Create account</h1>
-      <form id="formRegister" class="grid" autocomplete="off">
-        <div class="row">
-          <div><label>Full name</label><input name="name" required /></div>
+  <main>
+    <section id="loginSection" class="hidden grid">
+      <div class="panel">
+        <h1>Sign in</h1>
+        <form id="formLogin" class="grid" autocomplete="off">
           <div><label>Email</label><input type="email" name="email" required /></div>
-        </div>
-        <div class="row">
-          <div><label>Password</label><input type="password" name="password" minlength="6" required /></div>
-          <div><label>Phone</label><input name="phone" /></div>
-        </div>
-        <div><label>About you</label><textarea name="bio" rows="2"></textarea></div>
-        <div class="row">
-          <button class="btn primary" type="submit">Register</button>
-          <button id="switchToLogin" type="button" class="btn ghost">Back to login</button>
-        </div>
-      </form> <div class="divider"></div>
-      <button type="button" class="google-signin-btn">
-        <span class="google-icon"></span>
-        Sign in with Google
-      </button>
-      
-    </div>
-  </section>
-
-  <!-- Admin Login Modal -->
-  <div id="adminLoginModal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Admin Login</h2>
-        <span id="closeAdminModal" class="close">&times;</span>
-      </div>
-      <form id="formAdminLogin" class="grid">
-        <div>
-          <label>Admin Email</label>
-          <input type="email" id="adminEmail" name="email" required placeholder="Enter admin email" />
-        </div>
-        <div>
-          <label>Admin Password</label>
-          <input type="password" id="adminPassword" name="password" required placeholder="Enter admin password" />
-        </div>
-        <div class="row">
-          <button type="submit" class="btn primary">Login as Admin</button>
-          <button type="button" id="cancelAdminLogin" class="btn ghost">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Admin Panel (hidden by default) -->
-  <section id="adminPanel" class="hidden grid two">
-    <div class="panel">
-      <div class="admin-header">
-        <h1>📊 Admin Dashboard</h1>
-        <div class="admin-welcome">
-          <span class="admin-status">● Online</span>
-          <span id="adminWelcomeName">Welcome, Admin</span>
-        </div>
-      </div>
-
-      <!-- Admin tabs -->
-      <div class="pillbar admin-nav" style="margin-bottom:20px">
-        <button id="adminViewDashboard" class="btn primary">📊 Overview</button>
-        <button id="adminViewOrders" class="btn">📦 Orders</button>
-        <button id="adminViewUsers" class="btn">👥 Users</button>
-        <button id="adminViewBooks" class="btn">📚 Books</button>
-        <button id="adminViewGoogleBooks" class="btn">🔍 Import Books</button>
-        <button id="adminViewAnalytics" class="btn">📈 Analytics</button>
-        <button id="adminLogout" class="btn bad">🚪 Logout</button>
-      </div>
-
-      <!-- Search bar for admin content -->
-      <div id="adminSearchBar" class="searchbar hidden" style="margin-bottom:16px">
-        <input type="text" id="adminSearch" placeholder="Search..." />
-        <button class="btn ghost">🔍</button>
-      </div>
-
-      <!-- Content rendered by JS -->
-      <div id="adminMain" style="margin-top:12px"></div>
-    </div>
-
-    <div class="panel">
-      <h2>📝 Add / Edit Book</h2>
-      <form id="adminBookForm" class="grid">
-        <div><label>Title</label><input name="title" required /></div>
-        <div><label>Author</label><input name="author" required /></div>
-        <div class="row3">
-          <div><label>Price (₹)</label><input name="price" inputmode="decimal" placeholder="0.00" /></div>
-          <div><label>Stock</label><input name="stock" inputmode="numeric" placeholder="0" /></div>
-          <div><label>Category</label><input name="category" placeholder="Fiction, Science, etc." /></div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Book Cover Image</label>
-            <input name="cover_image" type="file" accept="image/*" />
-            <small class="muted">Upload JPG, PNG, or WebP image</small>
-          </div>
-          <div>
-            <label>Book Content (PDF)</label>
-            <input name="book_content" type="file" accept=".pdf,.epub" />
-            <small class="muted">Upload PDF or EPUB file</small>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Page Count</label>
-            <input name="page_count" inputmode="numeric" placeholder="0" />
-          </div>
-          <div>
-            <label>Book Sample (Optional)</label>
-            <input name="book_sample" type="file" accept=".pdf,.epub" />
-            <small class="muted">Upload sample pages for preview</small>
-          </div>
-        </div>
-        <div><label>Description</label><textarea name="description" rows="4" placeholder="Enter book description..."></textarea></div>
-        <div class="row">
-          <button class="btn primary" type="submit">💾 Save Book</button>
-          <button id="adminBookCancel" type="button" class="btn ghost">🔄 Reset</button>
-        </div>
-      </form>
-      
-      <!-- Book Image Preview -->
-      <div id="bookImagePreview" class="book-preview hidden">
-        <h3>📷 Preview</h3>
-        <img id="previewImg" src="" alt="Book preview" style="max-width: 200px; border-radius: 8px; border: 1px solid var(--muted);" />
-      </div>
-    </div>
-  </section>
-
-  <!-- Home -->
-  <section id="homeSection" class="hidden grid">
-    <div class="panel">
-      <h1>Welcome to BookNook</h1>
-      <p class="muted">Buy to own. Rent (digital). Gift by email (digital). Covers and profile photos included.</p>
-      <div class="pillbar">
-        <span class="tag">Shipping & ETA only for Buy</span>
-        <span class="tag">No address/ship for Rent & Gift</span>
-        <span class="tag">COD + ₹10 (Buy only)</span>
-        <span class="tag">Your Library</span>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Your Library</h2>
-      <div id="libraryOwned" class="grid"></div>
-      <div class="hr"></div>
-      <h2>Rented</h2>
-      <div id="libraryRented" class="grid"></div>
-      <div class="hr"></div>
-      <h2>Gifts <span id="giftNotificationBadge" class="badge hidden">•</span></h2>
-      <div id="libraryGifts" class="grid"></div>
-      <div class="hr"></div>
-      <h2>❤️ Wishlist <span id="wishlistCount" class="tag small">0</span></h2>
-      <div id="libraryWishlist" class="grid"></div>
-      <p class="small muted">Purchased books are always available. Rentals are digital access until their due date. Gifts are books received from others. Wishlist shows books you saved for later.</p>
-    </div>
-
-    <div class="panel">
-      <div class="pillbar" style="justify-content:space-between;align-items:center">
-        <h2 style="margin:0">All Books</h2>
-        <span class="small muted">Browse and buy directly</span>
-      </div>
-      <div id="homeBookGrid" class="cards"></div>
-    </div>
-  </section>
-
-  <!-- Catalog -->
-  <section id="catalogSection" class="hidden grid">
-    <div class="panel">
-      <div class="searchbar">
-        <input id="searchInput" placeholder="Search by title or author..." />
-        <button id="searchBtn" class="btn">Search</button>
-        <button id="clearSearchBtn" class="btn ghost">Clear</button>
-      </div>
-    </div>
-    <div id="bookGrid" class="cards"></div>
-  </section>
-
-  <!-- Book details modal -->
-  <div id="bookModal" class="modal" role="dialog" aria-modal="true">
-    <div class="content panel">
-      <div id="bmCover" class="cover-lg"></div>
-      <div class="pillbar">
-        <span id="bmAuthor" class="tag small"></span>
-        <span id="bmStock" class="tag small"></span>
-        <span id="bmRating" class="tag small rating-tag">⭐ -- (0 reviews)</span>
-      </div>
-      <h1 id="bmTitle"></h1>
-      <p id="bmDesc" class="muted"></p>
-      <p class="price" id="bmPrice"></p>
-      <div class="row">
-        <button id="bmBuy" class="btn primary">Buy</button>
-        <button id="bmRent" class="btn">Rent</button>
-      </div>
-      <div style="margin-top:8px">
-        <button id="bmGift" class="btn">Gift</button>
-        <button id="bmAddCart" class="btn ghost">Add to Cart</button>
-      </div>
-      
-      <!-- Reviews Section -->
-      <div class="hr"></div>
-      <div class="reviews-section">
-        <h2>⭐ Reviews & Ratings</h2>
-        
-        <!-- Write Review Form (for verified purchasers) -->
-        <div id="writeReviewForm" class="write-review hidden">
-          <h3 id="reviewFormTitle">Write a Review</h3>
-          <div class="star-rating-input">
-            <span class="star-label">Your Rating:</span>
-            <div class="stars-input" id="starsInput">
-              <span class="star" data-rating="1">☆</span>
-              <span class="star" data-rating="2">☆</span>
-              <span class="star" data-rating="3">☆</span>
-              <span class="star" data-rating="4">☆</span>
-              <span class="star" data-rating="5">☆</span>
-            </div>
-            <span id="ratingText" class="rating-text"></span>
-          </div>
-          <textarea id="reviewTextInput" placeholder="Share your thoughts about this book (optional)..." rows="3"></textarea>
+          <div><label>Password</label><input type="password" name="password" required /></div>
           <div class="row">
-            <button id="submitReviewBtn" class="btn primary">Submit Review</button>
-            <button id="deleteReviewBtn" class="btn bad hidden">Delete My Review</button>
+            <button class="btn" type="submit">Login</button>
+            <button id="switchToRegister" type="button" class="btn ghost">Create account</button>
           </div>
-        </div>
-        <p id="loginToReview" class="muted hidden">Please <a href="#" data-login-prompt>login</a> to write a review.</p>
-        <p id="purchaseToReview" class="muted hidden">📚 Purchase, rent, or receive this book as a gift to write a review.</p>
-        
-        <!-- Reviews List -->
-        <div id="reviewsList" class="reviews-list">
-          <p class="muted">Loading reviews...</p>
-        </div>
+        </form>
+        <div class="divider"></div>
+        <button type="button" class="google-signin-btn">
+          <span class="google-icon"></span>
+          Sign in with Google
+        </button>
+
+        <p class="small muted">Tip: Create an account if you don't have one.</p>
       </div>
-      
-      <div class="hr"></div>
-      <div class="right">
-        <button id="bmClose" class="btn bad">Close</button>
+    </section>
+
+    <section id="registerSection" class="hidden grid">
+      <div class="panel">
+        <h1>Create account</h1>
+        <form id="formRegister" class="grid" autocomplete="off">
+          <div class="row">
+            <div><label>Full name</label><input name="name" required /></div>
+            <div><label>Email</label><input type="email" name="email" required /></div>
+          </div>
+          <div class="row">
+            <div><label>Password</label><input type="password" name="password" minlength="6" required /></div>
+            <div><label>Phone</label><input name="phone" /></div>
+          </div>
+          <div><label>About you</label><textarea name="bio" rows="2"></textarea></div>
+          <div class="row">
+            <button class="btn primary" type="submit">Register</button>
+            <button id="switchToLogin" type="button" class="btn ghost">Back to login</button>
+          </div>
+        </form>
+        <div class="divider"></div>
+        <button type="button" class="google-signin-btn">
+          <span class="google-icon"></span>
+          Sign in with Google
+        </button>
+
+      </div>
+    </section>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Admin Login</h2>
+          <span id="closeAdminModal" class="close">&times;</span>
+        </div>
+        <form id="formAdminLogin" class="grid">
+          <div>
+            <label>Admin Email</label>
+            <input type="email" id="adminEmail" name="email" required placeholder="Enter admin email" />
+          </div>
+          <div>
+            <label>Admin Password</label>
+            <input type="password" id="adminPassword" name="password" required placeholder="Enter admin password" />
+          </div>
+          <div class="row">
+            <button type="submit" class="btn primary">Login as Admin</button>
+            <button type="button" id="cancelAdminLogin" class="btn ghost">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
-  </div>
 
-  <!-- Checkout -->
-  <section id="checkoutSection" class="hidden grid two">
-    <div class="panel">
-      <h1>Checkout</h1>
-      <div id="ckItems"></div>
-      <div class="hr"></div>
+    <!-- Admin Panel (hidden by default) -->
+    <section id="adminPanel" class="hidden grid two">
+      <div class="panel">
+        <div class="admin-header">
+          <h1>📊 Admin Dashboard</h1>
+          <div class="admin-welcome">
+            <span class="admin-status">● Online</span>
+            <span id="adminWelcomeName">Welcome, Admin</span>
+          </div>
+        </div>
 
-      <h2>Fulfilment</h2>
-      <div class="row">
-        <div>
-          <label>Mode</label>
-          <select id="ckMode">
-            <option value="buy">Buy</option>
-            <option value="rent">Rent</option>
-            <option value="gift">Gift</option>
-          </select>
+        <!-- Admin tabs -->
+        <div class="pillbar admin-nav" style="margin-bottom:20px">
+          <button id="adminViewDashboard" class="btn primary">📊 Overview</button>
+          <button id="adminViewOrders" class="btn">📦 Orders</button>
+          <button id="adminViewUsers" class="btn">👥 Users</button>
+          <button id="adminViewBooks" class="btn">📚 Books</button>
+          <button id="adminViewGoogleBooks" class="btn">🔍 Import Books</button>
+          <button id="adminViewAnalytics" class="btn">📈 Analytics</button>
+          <button id="adminLogout" class="btn bad">🚪 Logout</button>
         </div>
-        <div id="rentBlock" class="hidden">
-          <label>Rental period</label>
-          <select id="ckRental">
-            <option value="30">30 days</option>
-            <option value="60">60 days</option>
-          </select>
+
+        <!-- Search bar for admin content -->
+        <div id="adminSearchBar" class="searchbar hidden" style="margin-bottom:16px">
+          <input type="text" id="adminSearch" placeholder="Search..." />
+          <button class="btn ghost">🔍</button>
         </div>
-        <div id="giftBlock" class="hidden">
-          <label>Recipient email</label>
-          <input id="ckGiftEmail" type="email" placeholder="friend@example.com" />
+
+        <!-- Content rendered by JS -->
+        <div id="adminMain" style="margin-top:12px"></div>
+      </div>
+
+      <div class="panel">
+        <h2>📝 Add / Edit Book</h2>
+        <form id="adminBookForm" class="grid">
+          <div><label>Title</label><input name="title" required /></div>
+          <div><label>Author</label><input name="author" required /></div>
+          <div class="row3">
+            <div><label>Price (₹)</label><input name="price" inputmode="decimal" placeholder="0.00" /></div>
+            <div><label>Stock</label><input name="stock" inputmode="numeric" placeholder="0" /></div>
+            <div><label>Category</label><input name="category" placeholder="Fiction, Science, etc." /></div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Book Cover Image</label>
+              <input name="cover_image" type="file" accept="image/*" />
+              <small class="muted">Upload JPG, PNG, or WebP image</small>
+            </div>
+            <div>
+              <label>Book Content (PDF)</label>
+              <input name="book_content" type="file" accept=".pdf,.epub" />
+              <small class="muted">Upload PDF or EPUB file</small>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Page Count</label>
+              <input name="page_count" inputmode="numeric" placeholder="0" />
+            </div>
+            <div>
+              <label>Book Sample (Optional)</label>
+              <input name="book_sample" type="file" accept=".pdf,.epub" />
+              <small class="muted">Upload sample pages for preview</small>
+            </div>
+          </div>
+          <div><label>Description</label><textarea name="description" rows="4"
+              placeholder="Enter book description..."></textarea></div>
+          <div class="row">
+            <button class="btn primary" type="submit">💾 Save Book</button>
+            <button id="adminBookCancel" type="button" class="btn ghost">🔄 Reset</button>
+          </div>
+        </form>
+
+        <!-- Book Image Preview -->
+        <div id="bookImagePreview" class="book-preview hidden">
+          <h3>📷 Preview</h3>
+          <img id="previewImg" src="" alt="Book preview"
+            style="max-width: 200px; border-radius: 8px; border: 1px solid var(--muted);" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Home -->
+    <section id="homeSection" class="hidden grid">
+      <div class="panel">
+        <h1>Welcome to BookNook</h1>
+        <p class="muted">Buy to own. Rent (digital). Gift by email (digital). Covers and profile photos included.</p>
+        <div class="pillbar">
+          <span class="tag">Shipping & ETA only for Buy</span>
+          <span class="tag">No address/ship for Rent & Gift</span>
+          <span class="tag">COD + ₹10 (Buy only)</span>
+          <span class="tag">Your Library</span>
         </div>
       </div>
 
-      <div class="hr"></div>
-      <div id="shippingWrap">
-        <h2>Shipping</h2>
+      <div class="panel">
+        <h2>Your Library</h2>
+        <div id="libraryOwned" class="grid"></div>
+        <div class="hr"></div>
+        <h2>Rented</h2>
+        <div id="libraryRented" class="grid"></div>
+        <div class="hr"></div>
+        <h2>Gifts <span id="giftNotificationBadge" class="badge hidden">•</span></h2>
+        <div id="libraryGifts" class="grid"></div>
+        <div class="hr"></div>
+        <h2>❤️ Wishlist <span id="wishlistCount" class="tag small">0</span></h2>
+        <div id="libraryWishlist" class="grid"></div>
+        <p class="small muted">Purchased books are always available. Rentals are digital access until their due date.
+          Gifts are books received from others. Wishlist shows books you saved for later.</p>
+      </div>
+
+      <div class="panel">
+        <div class="pillbar" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0">All Books</h2>
+          <span class="small muted">Browse and buy directly</span>
+        </div>
+        <div id="homeBookGrid" class="cards"></div>
+      </div>
+    </section>
+
+    <!-- Catalog -->
+    <section id="catalogSection" class="hidden grid">
+      <div class="panel">
+        <div class="searchbar">
+          <input id="searchInput" placeholder="Search by title or author..." />
+          <button id="searchBtn" class="btn">Search</button>
+          <button id="clearSearchBtn" class="btn ghost">Clear</button>
+        </div>
+      </div>
+      <div id="bookGrid" class="cards"></div>
+    </section>
+
+    <!-- Book details modal -->
+    <div id="bookModal" class="modal" role="dialog" aria-modal="true">
+      <div class="content panel">
+        <div id="bmCover" class="cover-lg"></div>
+        <div class="pillbar">
+          <span id="bmAuthor" class="tag small"></span>
+          <span id="bmStock" class="tag small"></span>
+          <span id="bmRating" class="tag small rating-tag">⭐ -- (0 reviews)</span>
+        </div>
+        <h1 id="bmTitle"></h1>
+        <p id="bmDesc" class="muted"></p>
+        <p class="price" id="bmPrice"></p>
+        <div class="row">
+          <button id="bmBuy" class="btn primary">Buy</button>
+          <button id="bmRent" class="btn">Rent</button>
+        </div>
+        <div style="margin-top:8px">
+          <button id="bmGift" class="btn">Gift</button>
+          <button id="bmAddCart" class="btn ghost">Add to Cart</button>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="hr"></div>
+        <div class="reviews-section">
+          <h2>⭐ Reviews & Ratings</h2>
+
+          <!-- Write Review Form (for verified purchasers) -->
+          <div id="writeReviewForm" class="write-review hidden">
+            <h3 id="reviewFormTitle">Write a Review</h3>
+            <div class="star-rating-input">
+              <span class="star-label">Your Rating:</span>
+              <div class="stars-input" id="starsInput">
+                <span class="star" data-rating="1">☆</span>
+                <span class="star" data-rating="2">☆</span>
+                <span class="star" data-rating="3">☆</span>
+                <span class="star" data-rating="4">☆</span>
+                <span class="star" data-rating="5">☆</span>
+              </div>
+              <span id="ratingText" class="rating-text"></span>
+            </div>
+            <textarea id="reviewTextInput" placeholder="Share your thoughts about this book (optional)..."
+              rows="3"></textarea>
+            <div class="row">
+              <button id="submitReviewBtn" class="btn primary">Submit Review</button>
+              <button id="deleteReviewBtn" class="btn bad hidden">Delete My Review</button>
+            </div>
+          </div>
+          <p id="loginToReview" class="muted hidden">Please <a href="#" data-login-prompt>login</a> to write a review.
+          </p>
+          <p id="purchaseToReview" class="muted hidden">📚 Purchase, rent, or receive this book as a gift to write a
+            review.</p>
+
+          <!-- Reviews List -->
+          <div id="reviewsList" class="reviews-list">
+            <p class="muted">Loading reviews...</p>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div class="right">
+          <button id="bmClose" class="btn bad">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkout -->
+    <section id="checkoutSection" class="hidden grid two">
+      <div class="panel">
+        <h1>Checkout</h1>
+        <div id="ckItems"></div>
+        <div class="hr"></div>
+
+        <h2>Fulfilment</h2>
         <div class="row">
           <div>
-            <label>Saved addresses</label>
-            <select id="ckSavedAddr"></select>
+            <label>Mode</label>
+            <select id="ckMode">
+              <option value="buy">Buy</option>
+              <option value="rent">Rent</option>
+              <option value="gift">Gift</option>
+            </select>
           </div>
+          <div id="rentBlock" class="hidden">
+            <label>Rental period</label>
+            <select id="ckRental">
+              <option value="30">30 days</option>
+              <option value="60">60 days</option>
+            </select>
+          </div>
+          <div id="giftBlock" class="hidden">
+            <label>Recipient email</label>
+            <input id="ckGiftEmail" type="email" placeholder="friend@example.com" />
+          </div>
+        </div>
+
+        <div class="hr"></div>
+        <div id="shippingWrap">
+          <h2>Shipping</h2>
+          <div class="row">
+            <div>
+              <label>Saved addresses</label>
+              <select id="ckSavedAddr"></select>
+            </div>
+            <div>
+              <label>Shipping speed</label>
+              <select id="ckSpeed">
+                <option value="standard">Standard (₹30)</option>
+                <option value="express">Express (₹70)</option>
+                <option value="priority">Priority (₹120)</option>
+              </select>
+            </div>
+          </div>
+          <details style="margin-top:8px">
+            <summary class="small">Add new address</summary>
+            <div class="grid" style="margin-top:8px" id="ckNewAddr">
+              <div class="row">
+                <div><label>Label</label><input data-addr="label" placeholder="Home" /></div>
+                <div><label>Recipient</label><input data-addr="recipient" /></div>
+              </div>
+              <div><label>Street</label><input data-addr="street" /></div>
+              <div class="row3">
+                <div><label>City</label><input data-addr="city" /></div>
+                <div><label>State</label><input data-addr="state" /></div>
+                <div><label>PIN</label><input data-addr="zip" /></div>
+              </div>
+              <button class="btn" id="btnSaveNewAddr" type="button">Save address</button>
+            </div>
+          </details>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Payment</h2>
+        <div class="row">
           <div>
-            <label>Shipping speed</label>
-            <select id="ckSpeed">
-              <option value="standard">Standard (₹30)</option>
-              <option value="express">Express (₹70)</option>
-              <option value="priority">Priority (₹120)</option>
+            <label>Method</label>
+            <select id="ckPayMethod">
+              <option value="razorpay">Online Payment (Cards, UPI, Wallets)</option>
+              <option value="cod">Cash on Delivery (+₹10)</option>
             </select>
           </div>
         </div>
-        <details style="margin-top:8px">
-          <summary class="small">Add new address</summary>
-          <div class="grid" style="margin-top:8px" id="ckNewAddr">
+
+        <div class="hr"></div>
+        <div id="ckSummary"></div>
+        <div class="right">
+          <button class="btn primary" id="btnPay">Pay now</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Order notes</h2>
+        <textarea id="ckNotes" rows="6" placeholder="Any special delivery notes?"></textarea>
+        <div class="hr"></div>
+        <h2>Policy</h2>
+        <p class="small muted">Buy = physical delivery with shipping & ETA. Rent and Gift are digital: no address, no
+          shipping, no COD.</p>
+      </div>
+    </section>
+
+    <!-- Orders -->
+    <section id="ordersSection" class="hidden">
+      <div class="panel">
+        <h1>Order history</h1>
+        <div id="ordersList"></div>
+      </div>
+    </section>
+
+    <!-- Profile -->
+    <section id="profileSection" class="hidden grid two">
+      <div class="panel">
+        <h1>Profile</h1>
+        <div id="profileView"></div>
+        <div id="profileEdit" class="hidden">
+          <div class="row">
+            <div><label>Name</label><input id="peName" /></div>
+            <div><label>Phone</label><input id="pePhone" /></div>
+          </div>
+          <div><label>Bio</label><textarea id="peBio" rows="2"></textarea></div>
+
+          <div class="hr"></div>
+          <h2>Change profile picture</h2>
+          <div class="row">
+            <div>
+              <label>Upload image</label>
+              <input type="file" id="pePicFile" accept="image/*" />
+            </div>
+            <div>
+              <label>Or image URL</label>
+              <input type="url" id="pePicUrl" placeholder="https://..." />
+            </div>
+          </div>
+          <div class="mt-8">
+            <div class="avatar-lg" id="pePicPreview"></div>
+          </div>
+
+          <div class="pillbar mt-8">
+            <button id="peSave" class="btn primary">Save</button>
+            <button id="peCancel" class="btn ghost">Cancel</button>
+          </div>
+        </div>
+        <div class="password-section">
+          <div class="hr"></div>
+          <h2>Change password</h2>
+          <div class="grid">
             <div class="row">
-              <div><label>Label</label><input data-addr="label" placeholder="Home" /></div>
-              <div><label>Recipient</label><input data-addr="recipient" /></div>
+              <div><label>Current password</label><input type="password" id="cpCurrent"></div>
+              <div><label>New password</label><input type="password" id="cpNew"></div>
             </div>
-            <div><label>Street</label><input data-addr="street" /></div>
-            <div class="row3">
-              <div><label>City</label><input data-addr="city" /></div>
-              <div><label>State</label><input data-addr="state" /></div>
-              <div><label>PIN</label><input data-addr="zip" /></div>
+            <div class="row">
+              <div><label>Confirm new password</label><input type="password" id="cpConfirm"></div>
+              <div class="right"><button id="cpSave" class="btn">Update password</button></div>
             </div>
-            <button class="btn" id="btnSaveNewAddr" type="button">Save address</button>
           </div>
-        </details>
+        </div>
       </div>
+      <div class="panel">
+        <h1>Addresses & Cards</h1>
+        <h2>Addresses</h2>
+        <div id="addrList" class="grid"></div>
+        <form id="formAddress" class="grid" style="margin-top:8px">
+          <div class="row">
+            <div><label>Label</label><input name="label" placeholder="Home / Office" required /></div>
+            <div><label>Recipient</label><input name="recipient" required /></div>
+          </div>
+          <div><label>Street</label><input name="street" required /></div>
+          <div class="row3">
+            <div><label>City</label><input name="city" required /></div>
+            <div><label>State</label><input name="state" required /></div>
+            <div><label>PIN</label><input name="zip" required /></div>
+          </div>
+          <button class="btn primary" type="submit">Add address</button>
+        </form>
+      </div>
+    </section>
+  </main>
 
-      <div class="hr"></div>
-      <h2>Payment</h2>
+  <!-- Cart drawer -->
+  <div id="cartDrawer" class="drawer" role="dialog" aria-modal="true">
+    <header>
+      <div class="pillbar" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Your Cart</h2>
+        <button id="cartClose" class="btn bad small">Close</button>
+      </div>
+    </header>
+    <div class="body">
+      <div id="cartItems"></div>
+    </div>
+    <div class="foot">
       <div class="row">
-        <div>
-          <label>Method</label>
-          <select id="ckPayMethod">
-            <option value="razorpay">Online Payment (Cards, UPI, Wallets)</option>
-            <option value="cod">Cash on Delivery (+₹10)</option>
-          </select>
+        <div><span class="muted">Subtotal</span>
+          <div id="cartSubtotal" class="price">₹0.00</div>
+        </div>
+        <div class="right">
+          <button id="cartToCheckout" class="btn primary">Go to checkout</button>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- Reader Modal -->
+  <div id="readerModal" class="modal" role="dialog" aria-modal="true">
+    <div class="content panel" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <h2 id="readerTitle">Book Reader</h2>
+      <div class="reader-page">
+        <div id="readerBody">Loading...</div>
+      </div>
       <div class="hr"></div>
-      <div id="ckSummary"></div>
-      <div class="right">
-        <button class="btn primary" id="btnPay">Pay now</button>
+      <div class="right"><button id="readerClose" class="btn bad">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Notification Dropdown Modal -->
+  <div id="notificationModal" class="modal">
+    <div class="modal-content notification-dropdown">
+      <div class="modal-header">
+        <h3>Gift Notifications</h3>
+        <button id="notificationClose" class="btn ghost small">×</button>
+      </div>
+      <div id="notificationList" class="notification-list">
+        <p class="muted">Loading notifications...</p>
       </div>
     </div>
+  </div>
 
-    <div class="panel">
-      <h2>Order notes</h2>
-      <textarea id="ckNotes" rows="6" placeholder="Any special delivery notes?"></textarea>
-      <div class="hr"></div>
-      <h2>Policy</h2>
-      <p class="small muted">Buy = physical delivery with shipping & ETA. Rent and Gift are digital: no address, no shipping, no COD.</p>
-    </div>
-  </section>
+  <div id="toast"></div>
 
-  <!-- Orders -->
-  <section id="ordersSection" class="hidden">
-    <div class="panel">
-      <h1>Order history</h1>
-      <div id="ordersList"></div>
-    </div>
-  </section>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvMzzv81adkAQwBwDXYPUUO1yu3QrKy34",
+      authDomain: "booknook-3c7c4.firebaseapp.com",
+      projectId: "booknook-3c7c4",
+      storageBucket: "booknook-3c7c4.appspot.com",
+      messagingSenderId: "877893321467",
+      appId: "1:877893321467:web:c5c631d70a7b980850665e",
+      measurementId: "G-8NFBLJNF8P"
+    };
 
-  <!-- Profile -->
-  <section id="profileSection" class="hidden grid two">
-    <div class="panel">
-      <h1>Profile</h1>
-      <div id="profileView"></div>
-      <div id="profileEdit" class="hidden">
-        <div class="row">
-          <div><label>Name</label><input id="peName"/></div>
-          <div><label>Phone</label><input id="pePhone"/></div>
-        </div>
-        <div><label>Bio</label><textarea id="peBio" rows="2"></textarea></div>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
 
-        <div class="hr"></div>
-        <h2>Change profile picture</h2>
-        <div class="row">
+  <!-- AI Chat Assistant Widget -->
+  <div id="aiChatWidget" class="ai-chat-widget">
+    <button id="aiChatToggle" class="ai-chat-toggle" title="AI Book Assistant">
+      🤖
+    </button>
+    <div id="aiChatWindow" class="ai-chat-window hidden">
+      <div class="ai-chat-header">
+        <div class="ai-chat-title">
+          <span class="ai-avatar">🤖</span>
           <div>
-            <label>Upload image</label>
-            <input type="file" id="pePicFile" accept="image/*" />
+            <strong>BookNook AI</strong>
+            <span class="ai-status">● Online</span>
           </div>
+        </div>
+        <button id="aiChatClose" class="ai-chat-close">×</button>
+      </div>
+      <div id="aiChatMessages" class="ai-chat-messages">
+        <div class="ai-message bot">
+          <div class="ai-message-content">
+            Hi! I'm your AI book assistant. Tell me what kind of book you're looking for!
+            <br><br>
+            Try: <em>"I want a short thriller under ₹300"</em> or <em>"Show me inspiring business books"</em>
+          </div>
+        </div>
+      </div>
+      <div class="ai-chat-input">
+        <input type="text" id="aiChatInput" placeholder="Describe what you want to read..." />
+        <button id="aiChatSend" class="btn primary">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Book Search by Image Widget -->
+  <div id="bookSearchWidget" class="book-search-widget">
+    <button id="bookSearchToggle" class="book-search-toggle" title="Find Book by Image">
+      📸
+    </button>
+    <div id="bookSearchWindow" class="book-search-window hidden">
+      <div class="book-search-header">
+        <div class="book-search-title">
+          <span class="search-avatar">🔍</span>
           <div>
-            <label>Or image URL</label>
-            <input type="url" id="pePicUrl" placeholder="https://..." />
+            <strong>Book Finder AI</strong>
+            <span class="ai-status">● 5 Agents Ready</span>
           </div>
         </div>
-        <div class="mt-8">
-          <div class="avatar-lg" id="pePicPreview"></div>
-        </div>
-
-        <div class="pillbar mt-8">
-          <button id="peSave" class="btn primary">Save</button>
-          <button id="peCancel" class="btn ghost">Cancel</button>
-        </div>
+        <button id="bookSearchClose" class="book-search-close">×</button>
       </div>
-      <div class="password-section">
-        <div class="hr"></div>
-        <h2>Change password</h2>
-        <div class="grid">
-          <div class="row">
-            <div><label>Current password</label><input type="password" id="cpCurrent"></div>
-            <div><label>New password</label><input type="password" id="cpNew"></div>
-          </div>
-          <div class="row">
-            <div><label>Confirm new password</label><input type="password" id="cpConfirm"></div>
-            <div class="right"><button id="cpSave" class="btn">Update password</button></div>
-          </div>
+      <div class="book-search-content">
+        <div class="book-search-upload-area" id="bookSearchDropZone">
+          <div class="upload-icon">📄</div>
+          <p><strong>Upload a book page</strong></p>
+          <p class="small muted">Drag & drop or click to upload</p>
+          <p class="small muted">Our AI will identify which book it's from!</p>
+          <input type="file" id="bookSearchInput" accept="image/*" hidden />
         </div>
-      </div>
-    </div>
-    <div class="panel">
-      <h1>Addresses & Cards</h1>
-      <h2>Addresses</h2>
-      <div id="addrList" class="grid"></div>
-      <form id="formAddress" class="grid" style="margin-top:8px">
-        <div class="row">
-          <div><label>Label</label><input name="label" placeholder="Home / Office" required /></div>
-          <div><label>Recipient</label><input name="recipient" required /></div>
+        <div id="bookSearchPreview" class="book-search-preview hidden">
+          <img id="bookSearchImage" src="" alt="Uploaded image" />
+          <button id="bookSearchClear" class="btn ghost small">✕ Clear</button>
         </div>
-        <div><label>Street</label><input name="street" required /></div>
-        <div class="row3">
-          <div><label>City</label><input name="city" required /></div>
-          <div><label>State</label><input name="state" required /></div>
-          <div><label>PIN</label><input name="zip" required /></div>
-        </div>
-        <button class="btn primary" type="submit">Add address</button>
-      </form>
-    </div>
-  </section>
-</main>
-
-<!-- Cart drawer -->
-<div id="cartDrawer" class="drawer" role="dialog" aria-modal="true">
-  <header>
-    <div class="pillbar" style="justify-content:space-between;align-items:center">
-      <h2 style="margin:0">Your Cart</h2>
-      <button id="cartClose" class="btn bad small">Close</button>
-    </div>
-  </header>
-  <div class="body">
-    <div id="cartItems"></div>
-  </div>
-  <div class="foot">
-    <div class="row">
-      <div><span class="muted">Subtotal</span><div id="cartSubtotal" class="price">₹0.00</div></div>
-      <div class="right">
-        <button id="cartToCheckout" class="btn primary">Go to checkout</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Reader Modal -->
-<div id="readerModal" class="modal" role="dialog" aria-modal="true">
-  <div class="content panel" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
-    <h2 id="readerTitle">Book Reader</h2>
-    <div class="reader-page">
-      <div id="readerBody">Loading...</div>
-    </div>
-    <div class="hr"></div>
-    <div class="right"><button id="readerClose" class="btn bad">Close</button></div>
-  </div>
-</div>
-
-<!-- Notification Dropdown Modal -->
-<div id="notificationModal" class="modal">
-  <div class="modal-content notification-dropdown">
-    <div class="modal-header">
-      <h3>Gift Notifications</h3>
-      <button id="notificationClose" class="btn ghost small">×</button>
-    </div>
-    <div id="notificationList" class="notification-list">
-      <p class="muted">Loading notifications...</p>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
-<script>
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyCvMzzv81adkAQwBwDXYPUUO1yu3QrKy34",
-    authDomain: "booknook-3c7c4.firebaseapp.com",
-    projectId: "booknook-3c7c4",
-    storageBucket: "booknook-3c7c4.appspot.com",
-    messagingSenderId: "877893321467",
-    appId: "1:877893321467:web:c5c631d70a7b980850665e",
-    measurementId: "G-8NFBLJNF8P"
-  };
-
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-</script>
-
-<!-- AI Chat Assistant Widget -->
-<div id="aiChatWidget" class="ai-chat-widget">
-  <button id="aiChatToggle" class="ai-chat-toggle" title="AI Book Assistant">
-    🤖
-  </button>
-  <div id="aiChatWindow" class="ai-chat-window hidden">
-    <div class="ai-chat-header">
-      <div class="ai-chat-title">
-        <span class="ai-avatar">🤖</span>
-        <div>
-          <strong>BookNook AI</strong>
-          <span class="ai-status">● Online</span>
-        </div>
-      </div>
-      <button id="aiChatClose" class="ai-chat-close">×</button>
-    </div>
-    <div id="aiChatMessages" class="ai-chat-messages">
-      <div class="ai-message bot">
-        <div class="ai-message-content">
-          Hi! I'm your AI book assistant. Tell me what kind of book you're looking for!
-          <br><br>
-          Try: <em>"I want a short thriller under ₹300"</em> or <em>"Show me inspiring business books"</em>
-        </div>
-      </div>
-    </div>
-    <div class="ai-chat-input">
-      <input type="text" id="aiChatInput" placeholder="Describe what you want to read..." />
-      <button id="aiChatSend" class="btn primary">Send</button>
-    </div>
-  </div>
-</div>
-
-<!-- Book Search by Image Widget -->
-<div id="bookSearchWidget" class="book-search-widget">
-  <button id="bookSearchToggle" class="book-search-toggle" title="Find Book by Image">
-    📸
-  </button>
-  <div id="bookSearchWindow" class="book-search-window hidden">
-    <div class="book-search-header">
-      <div class="book-search-title">
-        <span class="search-avatar">🔍</span>
-        <div>
-          <strong>Book Finder AI</strong>
-          <span class="ai-status">● 5 Agents Ready</span>
-        </div>
-      </div>
-      <button id="bookSearchClose" class="book-search-close">×</button>
-    </div>
-    <div class="book-search-content">
-      <div class="book-search-upload-area" id="bookSearchDropZone">
-        <div class="upload-icon">📄</div>
-        <p><strong>Upload a book page</strong></p>
-        <p class="small muted">Drag & drop or click to upload</p>
-        <p class="small muted">Our AI will identify which book it's from!</p>
-        <input type="file" id="bookSearchInput" accept="image/*" hidden />
-      </div>
-      <div id="bookSearchPreview" class="book-search-preview hidden">
-        <img id="bookSearchImage" src="" alt="Uploaded image" />
-        <button id="bookSearchClear" class="btn ghost small">✕ Clear</button>
-      </div>
-      <button id="bookSearchSubmit" class="btn primary book-search-submit hidden">
-        🔍 Find This Book
-      </button>
-      <div id="bookSearchLoading" class="book-search-loading hidden">
-        <div class="agent-progress">
-          <div class="agent-step" data-agent="ocr">🖼️ OCR Agent extracting text...</div>
-          <div class="agent-step" data-agent="processing">🧹 Processing Agent analyzing...</div>
-          <div class="agent-step" data-agent="search">🔍 Search Agent querying index...</div>
-          <div class="agent-step" data-agent="ranking">📊 Ranking Agent scoring matches...</div>
-          <div class="agent-step" data-agent="response">🤖 Response Agent generating result...</div>
-        </div>
-      </div>
-      <div id="bookSearchResult" class="book-search-result hidden">
-        <div class="result-card">
-          <div class="result-confidence">
-            <span id="resultConfidence">94%</span>
-            <span class="confidence-label">Confidence</span>
-          </div>
-          <div class="result-details">
-            <h3 id="resultBookName">Book Name</h3>
-            <p id="resultPageNumber" class="result-page">Page 47</p>
-            <p id="resultMessage" class="result-message"></p>
+        <button id="bookSearchSubmit" class="btn primary book-search-submit hidden">
+          🔍 Find This Book
+        </button>
+        <div id="bookSearchLoading" class="book-search-loading hidden">
+          <div class="agent-progress">
+            <div class="agent-step" data-agent="ocr">🖼️ OCR Agent extracting text...</div>
+            <div class="agent-step" data-agent="processing">🧹 Processing Agent analyzing...</div>
+            <div class="agent-step" data-agent="search">🔍 Search Agent querying index...</div>
+            <div class="agent-step" data-agent="ranking">📊 Ranking Agent scoring matches...</div>
+            <div class="agent-step" data-agent="response">🤖 Response Agent generating result...</div>
           </div>
         </div>
-        <div class="result-explanation">
-          <h4>🤖 How I found it:</h4>
-          <p id="resultExplanation"></p>
+        <div id="bookSearchResult" class="book-search-result hidden">
+          <div class="result-card">
+            <div class="result-confidence">
+              <span id="resultConfidence">94%</span>
+              <span class="confidence-label">Confidence</span>
+            </div>
+            <div class="result-details">
+              <h3 id="resultBookName">Book Name</h3>
+              <p id="resultPageNumber" class="result-page">Page 47</p>
+              <p id="resultMessage" class="result-message"></p>
+            </div>
+          </div>
+          <div class="result-explanation">
+            <h4>🤖 How I found it:</h4>
+            <p id="resultExplanation"></p>
+          </div>
+          <div id="resultAgentInsights" class="agent-insights"></div>
         </div>
-        <div id="resultAgentInsights" class="agent-insights"></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Book Summary Modal -->
-<div id="summaryModal" class="modal hidden">
-  <div class="modal-content summary-modal">
-    <div class="modal-header">
-      <h2>📖 <span id="summaryBookTitle">Book Summary</span></h2>
-      <button id="summaryClose" class="btn ghost">✕</button>
-    </div>
-    
-    <!-- Loading State -->
-    <div id="summaryLoading" class="summary-loading hidden">
-      <div class="summary-spinner"></div>
-      <p>🤖 AI Agents are analyzing this book...</p>
-      <div class="agent-progress">
-        <div class="agent-step" data-agent="retrieve">📖 Content Retriever fetching book...</div>
-        <div class="agent-step" data-agent="summary">📝 Summary Generator creating summary...</div>
-        <div class="agent-step" data-agent="keypoints">💡 Key Points Extractor finding insights...</div>
-        <div class="agent-step" data-agent="metadata">📊 Metadata Analyzer calculating difficulty...</div>
-      </div>
-    </div>
-    
-    <!-- Summary Content -->
-    <div id="summaryContent" class="summary-content hidden">
-      <!-- Tabs -->
-      <div class="summary-tabs">
-        <button class="summary-tab active" data-tab="overview">📝 Overview</button>
-        <button class="summary-tab" data-tab="keypoints">💡 Key Points</button>
-        <button class="summary-tab" data-tab="insights">🤖 AI Insights</button>
-      </div>
-      
-      <!-- Overview Tab -->
-      <div id="tabOverview" class="summary-tab-content active">
-        <div class="summary-meta">
-          <span class="tag" id="summaryDifficulty">Intermediate</span>
-          <span class="tag" id="summaryReadingTime">~4 hours</span>
-          <span id="summaryCached" class="tag small hidden">⚡ Cached</span>
-        </div>
-        
-        <div class="summary-section">
-          <h3>📖 Summary</h3>
-          <p id="summarySummaryText">Loading...</p>
-        </div>
-        
-        <div class="summary-section">
-          <h3>🎯 Central Theme</h3>
-          <p id="summaryCentralTheme">Loading...</p>
-        </div>
-        
-        <div class="summary-section">
-          <h3>👥 Target Audience</h3>
-          <p id="summaryTargetAudience">Loading...</p>
-        </div>
-        
-        <div id="summaryPrerequisites" class="summary-section hidden">
-          <h3>📚 Prerequisites</h3>
-          <div class="tag-list" id="summaryPrereqList"></div>
-        </div>
-      </div>
-      
-      <!-- Key Points Tab -->
-      <div id="tabKeypoints" class="summary-tab-content hidden">
-        <div class="summary-section">
-          <h3>💡 Key Takeaways</h3>
-          <ul id="summaryKeyTakeaways" class="summary-list"></ul>
-        </div>
-        
-        <div class="summary-section">
-          <h3>💭 Memorable Ideas</h3>
-          <ul id="summaryMemorableIdeas" class="summary-list"></ul>
-        </div>
-        
-        <div class="summary-section">
-          <h3>🧠 Main Concepts</h3>
-          <div class="tag-list" id="summaryMainConcepts"></div>
-        </div>
-        
-        <div class="summary-section">
-          <h3>🛠️ Practical Applications</h3>
-          <ul id="summaryPracticalApps" class="summary-list"></ul>
-        </div>
-      </div>
-      
-      <!-- AI Insights Tab -->
-      <div id="tabInsights" class="summary-tab-content hidden">
-        <div class="summary-section">
-          <h3>🤖 Multi-Agent Analysis</h3>
-          <p class="small muted">This summary was generated by our AI agents working together:</p>
-          <div id="summaryAgentInsights" class="agent-insights-list"></div>
-        </div>
-        
-        <div class="summary-section">
-          <h3>🏷️ Genre Tags</h3>
-          <div class="tag-list" id="summaryGenreTags"></div>
-        </div>
-        
-        <div id="summaryProcessingTime" class="summary-section">
-          <p class="small muted">⏱️ Generated in <span id="summaryTimeMs">0</span>ms</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Error State -->
-    <div id="summaryError" class="summary-error hidden">
-      <p>❌ <span id="summaryErrorText">Failed to generate summary</span></p>
-      <button id="summaryRetry" class="btn">🔄 Try Again</button>
-    </div>
-  </div>
-</div>
-
-<!-- Scripts: API first, then your app logic -->
-<script src="api.js"></script>
-<script src="pdf-reader.js"></script>
-<script src="razorpay-integration.js"></script>
-<script src="app.js"></script>
+  <!-- Scripts: API first, then your app logic -->
+  <script src="api.js"></script>
+  <script src="pdf-reader.js"></script>
+  <script src="razorpay-integration.js"></script>
+  <script src="app.js"></script>
 </body>
+
 </html>

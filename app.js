@@ -1037,8 +1037,7 @@ async function renderLibrary() {
         <div class="pillbar"><span class="tag small">Owned</span><span class="tag small">${b.author || ''}</span></div>
         <h3>${b.title}</h3>
         <div class="row">
-          <button class="btn" data-read="${b.id}" data-title="${b.title}">📖 Read</button>
-          <button class="btn summary-btn" data-summary="${b.id}" data-title="${b.title}">🤖 Summary</button>
+          <button class="btn" data-read="${b.id}" data-title="${b.title}">Read</button>
         </div>
       </div>`;
     }));
@@ -1049,10 +1048,7 @@ async function renderLibrary() {
         <div class="pillbar"><span class="tag small">${active ? 'Rental (Active)' : 'Rental (Expired)'}</span><span class="tag small">${b.author || ''}</span></div>
         <h3>${b.title}</h3>
         <p class="small muted">Due: ${rb.rental_end ? new Date(rb.rental_end).toLocaleDateString() : '-'}</p>
-        <div class="row">
-          <button class="btn ${active ? '' : 'ghost'}" data-read="${active ? b.id : ''}" data-title="${b.title}" ${active ? '' : 'disabled'}>📖 Read</button>
-          ${active ? `<button class="btn summary-btn" data-summary="${b.id}" data-title="${b.title}">🤖 Summary</button>` : ''}
-        </div>
+        <button class="btn ${active ? '' : 'ghost'}" data-read="${active ? b.id : ''}" data-title="${b.title}" ${active ? '' : 'disabled'}>Read</button>
       </div>`;
     }));
 
@@ -1071,10 +1067,7 @@ async function renderLibrary() {
         <h3>${b.title || g.title}</h3>
         <p class="small muted">Received: ${g.created_at ? new Date(g.created_at).toLocaleDateString() : '-'}</p>
         ${isClaimed ?
-          `<div class="row">
-            <button class="btn" data-read="${g.book_id}" data-title="${b.title || g.title}">📖 Read</button>
-            <button class="btn summary-btn" data-summary="${g.book_id}" data-title="${b.title || g.title}">🤖 Summary</button>
-          </div>` :
+          `<button class="btn" data-read="${g.book_id}" data-title="${b.title || g.title}">Read</button>` :
           `<button class="btn primary" data-claim-gift="${g.id}">Add to Library</button>`
         }
       </div>`;
@@ -1104,17 +1097,6 @@ async function renderLibrary() {
       if (!btn.hasAttribute('disabled')) {
         btn.onclick = () => openReader(btn.dataset.title, btn.dataset.read);
       }
-    });
-
-    // Handle Summary button clicks
-    onAll('#libraryOwned [data-summary], #libraryRented [data-summary], #libraryGifts [data-summary]', (btn) => {
-      btn.onclick = () => {
-        if (typeof openSummaryModal === 'function') {
-          openSummaryModal(btn.dataset.summary, btn.dataset.title);
-        } else {
-          toast('Summary feature loading...', 'info');
-        }
-      };
     });
 
     // Handle gift claiming
@@ -3167,223 +3149,5 @@ window.viewBookFromChat = async (bookId) => {
       });
       resultDiv.appendChild(retryBtn);
     }
-  }
-})();
-
-// ============================================
-// BOOK SUMMARY MODAL FUNCTIONALITY
-// ============================================
-(function initBookSummary() {
-  'use strict';
-
-  const modal = $('#summaryModal');
-  const closeBtn = $('#summaryClose');
-  const loadingDiv = $('#summaryLoading');
-  const contentDiv = $('#summaryContent');
-  const errorDiv = $('#summaryError');
-  const retryBtn = $('#summaryRetry');
-
-  if (!modal) return;
-
-  let currentBookId = null;
-  let currentBookTitle = null;
-
-  // Close modal
-  closeBtn?.addEventListener('click', closeSummaryModal);
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) closeSummaryModal();
-  });
-
-  function closeSummaryModal() {
-    modal.classList.add('hidden');
-    resetSummaryModal();
-  }
-
-  function resetSummaryModal() {
-    loadingDiv?.classList.add('hidden');
-    contentDiv?.classList.add('hidden');
-    errorDiv?.classList.add('hidden');
-    loadingDiv?.querySelectorAll('.agent-step').forEach(s => {
-      s.classList.remove('active', 'done');
-    });
-  }
-
-  // Tab switching
-  $$('.summary-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabId = tab.dataset.tab;
-      $$('.summary-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      $$('.summary-tab-content').forEach(c => c.classList.add('hidden'));
-      $(`#tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`)?.classList.remove('hidden');
-    });
-  });
-
-  // Retry button
-  retryBtn?.addEventListener('click', () => {
-    if (currentBookId && currentBookTitle) {
-      openSummaryModal(currentBookId, currentBookTitle);
-    }
-  });
-
-  // Open summary modal
-  window.openSummaryModal = async function (bookId, bookTitle) {
-    currentBookId = bookId;
-    currentBookTitle = bookTitle;
-
-    modal.classList.remove('hidden');
-    $('#summaryBookTitle').textContent = bookTitle;
-
-    resetSummaryModal();
-    loadingDiv?.classList.remove('hidden');
-
-    // Animate agent steps
-    const steps = loadingDiv?.querySelectorAll('.agent-step');
-    const agentOrder = ['retrieve', 'summary', 'keypoints', 'metadata'];
-
-    let stepIndex = 0;
-    const animateSteps = () => {
-      if (stepIndex < agentOrder.length) {
-        steps?.forEach(s => s.classList.remove('active'));
-        const currentStep = loadingDiv?.querySelector(`[data-agent="${agentOrder[stepIndex]}"]`);
-        currentStep?.classList.add('active');
-        // Mark previous as done
-        for (let i = 0; i < stepIndex; i++) {
-          loadingDiv?.querySelector(`[data-agent="${agentOrder[i]}"]`)?.classList.add('done');
-        }
-        stepIndex++;
-      }
-    };
-
-    animateSteps();
-    const stepInterval = setInterval(animateSteps, 2500);
-
-    try {
-      const result = await Api.getBookSummary(AUTH.token, bookId);
-      clearInterval(stepInterval);
-
-      if (result.success) {
-        displaySummary(result);
-      } else {
-        // Check for specific error types
-        const errorMsg = result.error || 'Failed to generate summary';
-        if (errorMsg.includes('not found in search index') || errorMsg.includes('not indexed')) {
-          showSummaryError('📖 This book hasn\'t been indexed yet. The AI summary will be available once the book content is processed by our system.');
-        } else if (errorMsg.includes('Service unavailable')) {
-          showSummaryError('🔧 AI Summary service is temporarily unavailable. Please try again later.');
-        } else {
-          showSummaryError(errorMsg);
-        }
-      }
-    } catch (error) {
-      clearInterval(stepInterval);
-      console.error('Summary error:', error);
-      // Handle network/API errors more gracefully
-      if (error.message?.includes('500')) {
-        showSummaryError('📖 This book hasn\'t been indexed yet. The AI summary will be available once the book content is processed.');
-      } else {
-        showSummaryError(error.message || 'Failed to load summary. Please try again.');
-      }
-    }
-  };
-
-  function displaySummary(data) {
-    loadingDiv?.classList.add('hidden');
-    errorDiv?.classList.add('hidden');
-    contentDiv?.classList.remove('hidden');
-
-    // Overview tab
-    $('#summarySummaryText').textContent = data.summary || 'No summary available';
-    $('#summaryCentralTheme').textContent = data.centralTheme || 'Not identified';
-    $('#summaryTargetAudience').textContent = data.targetAudience || 'General readers';
-
-    // Difficulty and reading time
-    $('#summaryDifficulty').textContent = (data.difficultyLevel || 'intermediate').charAt(0).toUpperCase() +
-      (data.difficultyLevel || 'intermediate').slice(1);
-    $('#summaryReadingTime').textContent = data.estimatedReadingHours
-      ? `~${data.estimatedReadingHours} hours`
-      : 'Varies';
-
-    // Cached indicator
-    if (data.cached) {
-      $('#summaryCached')?.classList.remove('hidden');
-    } else {
-      $('#summaryCached')?.classList.add('hidden');
-    }
-
-    // Prerequisites
-    const prereqSection = $('#summaryPrerequisites');
-    const prereqList = $('#summaryPrereqList');
-    if (data.prerequisites && data.prerequisites.length > 0) {
-      prereqSection?.classList.remove('hidden');
-      prereqList.innerHTML = data.prerequisites.map(p => `<span class="tag">${p}</span>`).join('');
-    } else {
-      prereqSection?.classList.add('hidden');
-    }
-
-    // Key Points tab
-    renderList('#summaryKeyTakeaways', data.keyTakeaways);
-    renderList('#summaryMemorableIdeas', data.memorableIdeas);
-    renderList('#summaryPracticalApps', data.practicalApplications);
-
-    const conceptsDiv = $('#summaryMainConcepts');
-    if (conceptsDiv) {
-      conceptsDiv.innerHTML = (data.mainConcepts || []).map(c => `<span class="tag">${c}</span>`).join('');
-    }
-
-    // AI Insights tab
-    const genreTagsDiv = $('#summaryGenreTags');
-    if (genreTagsDiv) {
-      genreTagsDiv.innerHTML = (data.genreTags || []).map(t => `<span class="tag">${t}</span>`).join('');
-    }
-
-    $('#summaryTimeMs').textContent = data.processingTimeMs || 0;
-
-    // Agent insights
-    const insightsDiv = $('#summaryAgentInsights');
-    if (insightsDiv && data.agentInsights) {
-      const insights = data.agentInsights;
-      insightsDiv.innerHTML = Object.entries(insights).map(([key, value]) => {
-        if (!value || !value.agent) return '';
-        return `
-          <div class="agent-insight-card">
-            <div class="agent-name">${value.agent}</div>
-            <div class="agent-output">${getAgentSummary(key, value)}</div>
-          </div>
-        `;
-      }).join('');
-    }
-  }
-
-  function renderList(selector, items) {
-    const el = $(selector);
-    if (!el) return;
-    if (!items || items.length === 0) {
-      el.innerHTML = '<li class="muted">No items found</li>';
-      return;
-    }
-    el.innerHTML = items.map(item => `<li>${item}</li>`).join('');
-  }
-
-  function getAgentSummary(key, value) {
-    switch (key) {
-      case 'contentRetriever':
-        return `Retrieved ${value.chunksRetrieved || 0} content chunks (${value.totalCharacters || 0} characters)`;
-      case 'summaryGenerator':
-        return value.summary ? 'Generated comprehensive summary' : 'Summary generated';
-      case 'keyPointsExtractor':
-        return `Extracted ${(value.key_takeaways || []).length} takeaways`;
-      case 'metadataAnalyzer':
-        return `Difficulty: ${value.difficulty_level || 'unknown'}, Est. reading: ${value.estimated_reading_hours || '?'}h`;
-      default:
-        return 'Analysis complete';
-    }
-  }
-
-  function showSummaryError(message) {
-    loadingDiv?.classList.add('hidden');
-    contentDiv?.classList.add('hidden');
-    errorDiv?.classList.remove('hidden');
-    $('#summaryErrorText').textContent = message;
   }
 })();
