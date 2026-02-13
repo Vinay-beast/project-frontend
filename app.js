@@ -3254,6 +3254,21 @@ window.viewBookFromChat = async (bookId) => {
         // Show success message with pricing details
         const pricingDetails = result.pricing || {};
         const deliveryInfo = result.deliveryInfo || '';
+        const paymentInfo = result.paymentInfo || '';
+        const paymentMethod = result.paymentMethod || 'online';
+        const isCOD = paymentMethod === 'cod';
+
+        // Build pricing breakdown
+        let pricingBreakdown = '';
+        if (pricingDetails.bookPrice) {
+          pricingBreakdown += `<div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px"><span>Book Price:</span><span>₹${pricingDetails.finalPrice}</span></div>`;
+        }
+        if (pricingDetails.shippingFee > 0) {
+          pricingBreakdown += `<div style="display:flex;justify-content:space-between;font-size:12px;margin-top:2px"><span>Shipping:</span><span>₹${pricingDetails.shippingFee}</span></div>`;
+        }
+        if (pricingDetails.codFee > 0) {
+          pricingBreakdown += `<div style="display:flex;justify-content:space-between;font-size:12px;margin-top:2px"><span>COD Fee:</span><span>₹${pricingDetails.codFee}</span></div>`;
+        }
 
         shoppingMessage.innerHTML = `
           <div style="display:flex;align-items:start;gap:12px">
@@ -3270,7 +3285,9 @@ window.viewBookFromChat = async (bookId) => {
                     <p style="margin:0;font-size:13px;color:var(--muted)">${result.book.author}</p>
                     ${pricingDetails.rentalDays ? `<p style="margin:4px 0 0 0;font-size:12px;color:var(--accent)">📅 Rental: ${pricingDetails.rentalDays} days</p>` : ''}
                     ${deliveryInfo ? `<p style="margin:4px 0 0 0;font-size:12px;color:var(--accent)">🚚 ${deliveryInfo}</p>` : ''}
+                    ${paymentInfo ? `<p style="margin:4px 0 0 0;font-size:12px;color:var(--accent)">💳 ${paymentInfo}</p>` : ''}
                     ${result.orderData?.gift_email ? `<p style="margin:4px 0 0 0;font-size:12px;color:var(--accent)">🎁 To: ${result.orderData.gift_email}</p>` : ''}
+                    ${pricingBreakdown}
                     <p style="margin:8px 0 0 0;font-size:14px;font-weight:600;color:#fff">Total: ₹${pricingDetails.total}</p>
                   </div>
                 </div>
@@ -3279,12 +3296,16 @@ window.viewBookFromChat = async (bookId) => {
           </div>
         `;
 
-        // Show payment button
+        // Show payment/order button
         shoppingAction.classList.remove('hidden');
+
+        const buttonText = isCOD ? `📦 Place Order (₹${pricingDetails.total})` : `💳 Proceed to Payment (₹${pricingDetails.total})`;
+        const buttonId = isCOD ? 'placeOrderCOD' : 'proceedToPayment';
+
         shoppingAction.innerHTML = `
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn primary" id="proceedToPayment" style="flex:1">
-              💳 Proceed to Payment (₹${pricingDetails.total})
+            <button class="btn primary" id="${buttonId}" style="flex:1">
+              ${buttonText}
             </button>
             <button class="btn ghost" id="cancelOrder">
               ❌ Cancel
@@ -3295,104 +3316,142 @@ window.viewBookFromChat = async (bookId) => {
         // Store order data for payment
         const orderDataForPayment = result.orderData;
 
-        // Add event listeners
-        $('#proceedToPayment')?.addEventListener('click', async () => {
-          try {
-            // Disable button
-            const payBtn = $('#proceedToPayment');
-            if (payBtn) {
-              payBtn.disabled = true;
-              payBtn.textContent = 'Creating order...';
-            }
-
-            // STEP 1: Create the order in database
-            const orderResponse = await Api.placeOrder(AUTH.token, orderDataForPayment);
-            const createdOrder = orderResponse.order;
-
-            if (!createdOrder || !createdOrder.id) {
-              throw new Error('Failed to create order');
-            }
-
-            if (payBtn) payBtn.textContent = 'Opening payment...';
-
-            // STEP 2: Create Razorpay payment order
-            const paymentOrder = await Api.apiRequest('/payments/create-order', {
-              method: 'POST',
-              body: {
-                orderId: createdOrder.id,
-                amount: pricingDetails.total,
-                currency: 'INR'
-              },
-              token: AUTH.token
-            });
-
-            // STEP 3: Open Razorpay checkout
-            const options = {
-              key: paymentOrder.key,
-              amount: paymentOrder.amount,
-              currency: paymentOrder.currency,
-              order_id: paymentOrder.orderId,
-              name: 'BookNook',
-              description: `${result.action} - ${result.book.title}`,
-              handler: async function (response) {
-                try {
-                  // Verify payment
-                  await Api.apiRequest('/payments/verify', {
-                    method: 'POST',
-                    body: {
-                      razorpay_order_id: response.razorpay_order_id,
-                      razorpay_payment_id: response.razorpay_payment_id,
-                      razorpay_signature: response.razorpay_signature,
-                      booknook_order_id: createdOrder.id
-                    },
-                    token: AUTH.token
-                  });
-
-                  toast('Payment successful! 🎉', 'success');
-                  shoppingInput.value = '';
-                  shoppingResponse.classList.add('hidden');
-
-                  // Refresh library if on home section
-                  if (!$('#homeSection').classList.contains('hidden')) {
-                    await renderLibrary();
-                  }
-                } catch (err) {
-                  toast('Payment verification failed', 'error');
-                  console.error(err);
-                }
-              },
-              modal: {
-                ondismiss: () => {
-                  toast('Payment cancelled', 'info');
-                  if (payBtn) {
-                    payBtn.disabled = false;
-                    payBtn.textContent = `💳 Proceed to Payment (₹${pricingDetails.total})`;
-                  }
-                }
-              },
-              prefill: {
-                name: AUTH.user?.name || '',
-                email: AUTH.user?.email || ''
-              },
-              theme: {
-                color: '#6366f1'
+        // Handle COD orders differently
+        if (isCOD) {
+          $('#placeOrderCOD')?.addEventListener('click', async () => {
+            try {
+              const orderBtn = $('#placeOrderCOD');
+              if (orderBtn) {
+                orderBtn.disabled = true;
+                orderBtn.textContent = 'Placing order...';
               }
-            };
 
-            const rzp = new Razorpay(options);
-            rzp.open();
+              // Create COD order directly (no Razorpay needed)
+              const orderResponse = await Api.placeOrder(AUTH.token, orderDataForPayment);
 
-          } catch (err) {
-            toast(err.message || 'Failed to process order', 'error');
-            console.error(err);
-            const payBtn = $('#proceedToPayment');
-            if (payBtn) {
-              payBtn.disabled = false;
-              payBtn.textContent = `💳 Proceed to Payment (₹${pricingDetails.total})`;
+              if (orderResponse.success) {
+                toast('COD Order placed successfully! 🎉', 'success');
+                shoppingInput.value = '';
+                shoppingResponse.classList.add('hidden');
+
+                // Refresh library
+                if (!$('#homeSection').classList.contains('hidden')) {
+                  await renderLibrary();
+                }
+              } else {
+                throw new Error(orderResponse.message || 'Failed to place order');
+              }
+            } catch (err) {
+              toast(err.message || 'Failed to place COD order', 'error');
+              console.error(err);
+              const orderBtn = $('#placeOrderCOD');
+              if (orderBtn) {
+                orderBtn.disabled = false;
+                orderBtn.textContent = `📦 Place Order (₹${pricingDetails.total})`;
+              }
             }
-          }
-        });
+          });
+        } else {
+          // Handle online payment with Razorpay
+          $('#proceedToPayment')?.addEventListener('click', async () => {
+            try {
+              // Disable button
+              const payBtn = $('#proceedToPayment');
+              if (payBtn) {
+                payBtn.disabled = true;
+                payBtn.textContent = 'Creating order...';
+              }
 
+              // STEP 1: Create the order in database
+              const orderResponse = await Api.placeOrder(AUTH.token, orderDataForPayment);
+              const createdOrder = orderResponse.order;
+
+              if (!createdOrder || !createdOrder.id) {
+                throw new Error('Failed to create order');
+              }
+
+              if (payBtn) payBtn.textContent = 'Opening payment...';
+
+              // STEP 2: Create Razorpay payment order
+              const paymentOrder = await Api.apiRequest('/payments/create-order', {
+                method: 'POST',
+                body: {
+                  orderId: createdOrder.id,
+                  amount: pricingDetails.total,
+                  currency: 'INR'
+                },
+                token: AUTH.token
+              });
+
+              // STEP 3: Open Razorpay checkout
+              const options = {
+                key: paymentOrder.key,
+                amount: paymentOrder.amount,
+                currency: paymentOrder.currency,
+                order_id: paymentOrder.orderId,
+                name: 'BookNook',
+                description: `${result.action} - ${result.book.title}`,
+                handler: async function (response) {
+                  try {
+                    // Verify payment
+                    await Api.apiRequest('/payments/verify', {
+                      method: 'POST',
+                      body: {
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        booknook_order_id: createdOrder.id
+                      },
+                      token: AUTH.token
+                    });
+
+                    toast('Payment successful! 🎉', 'success');
+                    shoppingInput.value = '';
+                    shoppingResponse.classList.add('hidden');
+
+                    // Refresh library if on home section
+                    if (!$('#homeSection').classList.contains('hidden')) {
+                      await renderLibrary();
+                    }
+                  } catch (err) {
+                    toast('Payment verification failed', 'error');
+                    console.error(err);
+                  }
+                },
+                modal: {
+                  ondismiss: () => {
+                    toast('Payment cancelled', 'info');
+                    if (payBtn) {
+                      payBtn.disabled = false;
+                      payBtn.textContent = `💳 Proceed to Payment (₹${pricingDetails.total})`;
+                    }
+                  }
+                },
+                prefill: {
+                  name: AUTH.user?.name || '',
+                  email: AUTH.user?.email || ''
+                },
+                theme: {
+                  color: '#6366f1'
+                }
+              };
+
+              const rzp = new Razorpay(options);
+              rzp.open();
+
+            } catch (err) {
+              toast(err.message || 'Failed to process order', 'error');
+              console.error(err);
+              const payBtn = $('#proceedToPayment');
+              if (payBtn) {
+                payBtn.disabled = false;
+                payBtn.textContent = `💳 Proceed to Payment (₹${pricingDetails.total})`;
+              }
+            }
+          });
+        }
+
+        // Cancel button handler (common for both COD and online payment)
         $('#cancelOrder')?.addEventListener('click', () => {
           shoppingInput.value = '';
           shoppingResponse.classList.add('hidden');
