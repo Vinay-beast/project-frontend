@@ -1458,10 +1458,8 @@ async function renderProfile() {
     const profileView = $('#profileView'); if (!profileView) return;
 
     // Check if user signed up with Google (Google users have has_password = 0)
-    // Fallback: Also check if the user was created recently and profile_pic looks like a Google URL
-    const isGoogleUser = u.has_password === 0 ||
-      (u.has_password === undefined && u.profile_pic && u.profile_pic.includes('googleusercontent.com'));
-    console.log('Is Google user:', isGoogleUser, 'has_password:', u.has_password, 'profile_pic:', u.profile_pic);
+    const isGoogleUser = u.has_password === 0;
+    console.log('Is Google user:', isGoogleUser, 'has_password:', u.has_password);
 
     profileView.innerHTML = `
       <div class="profile-head">
