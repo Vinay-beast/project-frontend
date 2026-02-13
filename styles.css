@@ -2993,3 +2993,419 @@ details[open] summary {
         font-size: 24px;
     }
 }
+
+/* ========================================== */
+/* BOOTSTRAP 5 THEME ENHANCEMENTS            */
+/* ========================================== */
+
+/* Make Bootstrap components work with dark theme */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    background: linear-gradient(135deg, #7c8dee 0%, #8b5bb8 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(248, 113, 113, 0.3);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(248, 113, 113, 0.4);
+}
+
+.btn-outline-primary {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.btn-outline-primary:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* Bootstrap cards with dark theme */
+.card {
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border-color: rgba(167, 139, 250, 0.3);
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+.card-body {
+    color: var(--text);
+}
+
+.card-footer {
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--sub);
+}
+
+/* Bootstrap forms with dark theme */
+.form-control,
+.form-select {
+    background: var(--soft);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border-radius: 8px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: var(--soft);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 0.25rem rgba(167, 139, 250, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--sub);
+}
+
+.form-label {
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* Bootstrap badges with dark theme */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+}
+
+.badge.bg-primary {
+    background: var(--accent) !important;
+}
+
+.badge.bg-success {
+    background: var(--good) !important;
+}
+
+.badge.bg-warning {
+    background: var(--warn) !important;
+    color: #000 !important;
+}
+
+.badge.bg-danger {
+    background: var(--bad) !important;
+}
+
+/* Bootstrap alerts with dark theme */
+.alert {
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alert-success {
+    background: rgba(52, 211, 153, 0.15);
+    border-color: rgba(52, 211, 153, 0.3);
+    color: var(--good);
+}
+
+.alert-warning {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.3);
+    color: var(--warn);
+}
+
+.alert-danger {
+    background: rgba(248, 113, 113, 0.15);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--bad);
+}
+
+.alert-info {
+    background: rgba(34, 211, 238, 0.15);
+    border-color: rgba(34, 211, 238, 0.3);
+    color: var(--brand);
+}
+
+/* Bootstrap modals with dark theme */
+.modal-content {
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+.modal-body {
+    color: var(--text);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-backdrop {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.btn-close {
+    filter: invert(1);
+    opacity: 0.5;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+/* Bootstrap nav tabs with dark theme */
+.nav-tabs {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-tabs .nav-link {
+    color: var(--sub);
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--accent);
+    background: transparent;
+    border-bottom-color: var(--accent);
+}
+
+/* Bootstrap list groups with dark theme */
+.list-group-item {
+    background: var(--soft);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+.list-group-item:hover {
+    background: var(--panel);
+}
+
+.list-group-item.active {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Bootstrap dropdowns with dark theme */
+.dropdown-menu {
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown-item {
+    color: var(--text);
+}
+
+.dropdown-item:hover {
+    background: var(--soft);
+    color: var(--accent);
+}
+
+.dropdown-divider {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Bootstrap pagination with dark theme */
+.pagination .page-link {
+    background: var(--soft);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+.pagination .page-link:hover {
+    background: var(--panel);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Bootstrap tooltips with dark theme */
+.tooltip-inner {
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+.tooltip.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: var(--panel);
+}
+
+.tooltip.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: var(--panel);
+}
+
+.tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: var(--panel);
+}
+
+.tooltip.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: var(--panel);
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced transitions for all interactive elements */
+button,
+a,
+.card,
+.btn,
+input,
+select,
+textarea {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Improved focus states */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Loading spinner with Bootstrap */
+.spinner-border {
+    border-color: var(--accent);
+    border-right-color: transparent;
+}
+
+/* Progress bars with dark theme */
+.progress {
+    background: var(--soft);
+    border-radius: 8px;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--brand) 0%, var(--accent) 100%);
+}
+
+/* Improved scrollbar for Bootstrap components */
+.modal-body::-webkit-scrollbar,
+.dropdown-menu::-webkit-scrollbar,
+.list-group::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track,
+.dropdown-menu::-webkit-scrollbar-track,
+.list-group::-webkit-scrollbar-track {
+    background: var(--soft);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb,
+.dropdown-menu::-webkit-scrollbar-thumb,
+.list-group::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover,
+.dropdown-menu::-webkit-scrollbar-thumb:hover,
+.list-group::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* Glassmorphism effect for special cards */
+.glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Improved animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-in {
+    animation: slideInUp 0.4s ease-out;
+}
+
+/* Better responsive utilities */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Print styles */
+@media print {
+
+    header,
+    .btn,
+    .navbtn {
+        display: none !important;
+    }
+
+    .card {
+        break-inside: avoid;
+    }
+}
