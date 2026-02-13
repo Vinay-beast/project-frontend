@@ -1452,14 +1452,15 @@ async function renderProfile() {
 
     // Debug: Check what we're receiving from the backend
     console.log('Profile user object:', u);
-    console.log('Has password field:', u.has_password);
+    console.log('Has password field:', u.has_password, 'Type:', typeof u.has_password);
 
     const pfUrl = u.profile_pic ? `${u.profile_pic}?v=${Date.now()}` : '';
     const profileView = $('#profileView'); if (!profileView) return;
 
     // Check if user signed up with Google (Google users have has_password = 0)
-    const isGoogleUser = u.has_password === 0;
-    console.log('Is Google user:', isGoogleUser, 'has_password:', u.has_password);
+    // Using Number() to safely convert to number for comparison
+    const isGoogleUser = Number(u.has_password) === 0;
+    console.log('Is Google user:', isGoogleUser, 'has_password:', u.has_password, 'as number:', Number(u.has_password));
 
     profileView.innerHTML = `
       <div class="profile-head">
