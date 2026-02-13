@@ -625,7 +625,7 @@ main {
 .cards {
     display: grid;
     gap: var(--space-lg);
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
 }
 
 /* Enhanced Cards */
@@ -766,20 +766,23 @@ textarea:focus {
 select {
     background:
         rgba(30, 37, 56, 0.6),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37'><path d='M4 6l4 4 4-4'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23d4af37'><path d='M2 4 L6 8 L10 4' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
     padding-right: 40px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 select:hover {
     background:
         rgba(30, 37, 56, 0.7),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37'><path d='M4 6l4 4 4-4'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23d4af37'><path d='M2 4 L6 8 L10 4' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
 }
 
 select:focus {
     background:
         rgba(30, 37, 56, 0.8),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37'><path d='M4 6l4 4 4-4'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23d4af37'><path d='M2 4 L6 8 L10 4' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
 }
 
 /* Dark dropdown options */
@@ -1136,8 +1139,8 @@ input[type=number] {
 .drawer {
     position: fixed;
     top: 0;
-    right: -420px;
-    width: 360px;
+    right: -480px;
+    width: 450px;
     max-width: 90vw;
     height: 100%;
     background: rgba(10, 14, 26, 0.95);

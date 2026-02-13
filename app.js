@@ -44,14 +44,14 @@ function setHeaderMode(mode) {
   if (mode === 'hidden') { header.style.display = 'none'; return; }
   header.style.display = '';
 
-  const allButtons = ['.navbtn', '#btnReset', '#btnLogin', '#btnLogout', '#btnCart', '#navAvatar', '#navUser', '#cartCount', '#btnAdmin', '#btnNotifications'];
+  const allButtons = ['.navbtn', '#btnReset', '#btnLogin', '#btnLogout', '#btnCart', '#navAvatar', '#navUser', '#cartCount', '#btnNotifications'];
   allButtons.forEach(sel => $$(sel).forEach(el => el.classList.add('hidden')));
 
   if (mode === 'login') {
-    // On login page: only show admin button
-    $$('#btnAdmin').forEach(el => el.classList.remove('hidden'));
+    // On login page: show login button
+    $$('#btnLogin').forEach(el => el.classList.remove('hidden'));
   } else {
-    // After login: show main navigation without login/admin/reset buttons
+    // After login: show main navigation without login/reset buttons
     $$('.navbtn').forEach(el => el.classList.remove('hidden'));
     $$('#btnCart').forEach(el => el.classList.remove('hidden'));
     $$('#btnLogout').forEach(el => el.classList.remove('hidden'));
@@ -59,9 +59,8 @@ function setHeaderMode(mode) {
     $$('#navUser').forEach(el => el.classList.remove('hidden'));
     $$('#btnNotifications').forEach(el => el.classList.remove('hidden'));
     $$('#cartCount').forEach(el => el.classList.remove('hidden'));
-    // Hide: login, admin, reset buttons when logged in
+    // Hide: login, reset buttons when logged in
     $$('#btnLogin').forEach(el => el.classList.add('hidden'));
-    $$('#btnAdmin').forEach(el => el.classList.add('hidden'));
     $$('#btnReset').forEach(el => el.classList.add('hidden'));
   }
 }
@@ -148,22 +147,14 @@ on('#formLogin', 'submit', async (e) => {
   try {
     const out = await Api.login({ email: data.email, password: data.password });
     saveToken(out.token); AUTH.user = out.user;
-
-    console.log('Login response:', out);
-    console.log('AUTH.user:', AUTH.user);
-    console.log('is_admin value:', AUTH.user?.is_admin);
-    console.log('is_admin type:', typeof AUTH.user?.is_admin);
-
     toast('Logged in');
     await renderNav();
     if (AUTH.user?.is_admin) {
-      console.log('Redirecting to admin panel');
       localStorage.setItem('isAdminMode', 'true');
       setHeaderMode('hidden');
       setActiveNav('admin');
       showSection('adminPanel');
     } else {
-      console.log('Redirecting to home section');
       localStorage.removeItem('isAdminMode');
       setActiveNav('home');
       showSection('homeSection');
@@ -324,84 +315,7 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-// ---------- Admin quick-login + logout ----------
-const btnAdmin = $('#btnAdmin');
-const adminLoginModal = $('#adminLoginModal');
-const closeAdminModal = $('#closeAdminModal');
-const cancelAdminLogin = $('#cancelAdminLogin');
-const formAdminLogin = $('#formAdminLogin');
-
-// Show admin login modal
-if (btnAdmin) btnAdmin.addEventListener('click', () => {
-  adminLoginModal.classList.remove('hidden');
-  adminLoginModal.classList.add('show');
-  $('#adminEmail').focus();
-});
-
-// Close modal handlers
-if (closeAdminModal) closeAdminModal.addEventListener('click', () => {
-  adminLoginModal.classList.add('hidden');
-  adminLoginModal.classList.remove('show');
-});
-
-if (cancelAdminLogin) cancelAdminLogin.addEventListener('click', () => {
-  adminLoginModal.classList.add('hidden');
-  adminLoginModal.classList.remove('show');
-});
-
-// Close modal when clicking outside
-adminLoginModal?.addEventListener('click', (e) => {
-  if (e.target === adminLoginModal) {
-    adminLoginModal.classList.add('hidden');
-    adminLoginModal.classList.remove('show');
-  }
-});
-
-// Handle admin login form submission
-if (formAdminLogin) formAdminLogin.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const email = $('#adminEmail').value.trim();
-  const password = $('#adminPassword').value.trim();
-
-  if (!email || !password) {
-    toast('Please fill in all fields');
-    return;
-  }
-
-  try {
-    const out = await Api.login({ email, password });
-    if (!out.user || !out.user.is_admin) {
-      toast('Not an admin account');
-      Api.clearAuthToken();
-      return;
-    }
-
-    saveToken(out.token);
-    AUTH.user = out.user;
-
-    // Store admin state in localStorage
-    localStorage.setItem('isAdminMode', 'true');
-
-    toast('Admin signed in successfully!');
-    await renderNav();
-
-    // Close the modal
-    adminLoginModal.classList.add('hidden');
-    adminLoginModal.classList.remove('show');
-
-    // Clear form
-    formAdminLogin.reset();
-
-    // Show admin panel
-    setHeaderMode('hidden');
-    setActiveNav('admin');
-    showSection('adminPanel');
-  } catch (err) {
-    console.error(err);
-    toast(err?.message || 'Admin login failed');
-  }
-});
+// ---------- Admin logout ----------
 const adminLogoutBtn = $('#adminLogout'); if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', () => { saveToken(null); AUTH.user = null; Api.clearAuthToken(); localStorage.removeItem('isAdminMode'); toast('Admin logged out'); renderNav(); showSection('loginSection'); });
 
 // ---------- Health check ----------
@@ -943,7 +857,7 @@ async function renderCheckout(presetMode = null) {
         if (mode === 'gift') { const ge = $('#ckGiftEmail')?.value.trim() || ''; if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ge)) { toast('Enter a valid gift email'); return; } }
         let shipping_address_id = null, shipping_speed = null;
         if (lastSummary2.needsShipping) { shipping_address_id = $('#ckSavedAddr')?.value || null; if (!shipping_address_id) { toast('Select or add an address'); return; } shipping_speed = lastSummary2.shipKey; }
-        const orderData = { mode, items: CART.map(ci => ({ book_id: ci.bookId, quantity: ci.qty })), shipping_address_id, shipping_speed, payment_method: lastSummary2.payMethod, notes: $('#ckNotes')?.value || null, rental_duration: mode === 'rent' ? lastSummary2.rentalDays : null, gift_email: mode === 'gift' ? ($('#ckGiftEmail')?.value || '').trim() : null, shipping_fee: lastSummary2.shipFee, cod_fee: lastSummary2.codFee, delivery_eta: lastSummary2.deliveryEtaISO || null };
+        const orderData = { mode, items: CART.map(ci => ({ book_id: ci.bookId, quantity: ci.qty })), shipping_address_id, shipping_speed, payment_method: lastSummary2.payMethod, rental_duration: mode === 'rent' ? lastSummary2.rentalDays : null, gift_email: mode === 'gift' ? ($('#ckGiftEmail')?.value || '').trim() : null, shipping_fee: lastSummary2.shipFee, cod_fee: lastSummary2.codFee, delivery_eta: lastSummary2.deliveryEtaISO || null };
 
         if (btnPay.disabled) return;
         btnPay.disabled = true;
@@ -2656,24 +2570,17 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
       try {
         AUTH.user = await Api.getProfile(AUTH.token);
 
-        // Double-check admin status and localStorage consistency
+        // Check if user is admin
         const isActualAdmin = AUTH.user?.is_admin;
 
-        if (isActualAdmin && wasAdminMode) {
-          // Valid admin session, restore admin view
+        if (isActualAdmin) {
+          // Admin user always goes to admin panel
           localStorage.setItem('isAdminMode', 'true');
           setHeaderMode('hidden');
           setActiveNav('admin');
-          // Restore the last viewed admin panel section (handled by showSection now)
           showSection('adminPanel');
-        } else if (isActualAdmin && !wasAdminMode) {
-          // Admin user but wasn't in admin mode, show normal view
-          localStorage.removeItem('isAdminMode');
-          setHeaderMode('full');
-          setActiveNav('home');
-          showSection('homeSection');
         } else {
-          // Not admin or invalid session
+          // Regular user goes to home
           localStorage.removeItem('isAdminMode');
           setHeaderMode('full');
           setActiveNav('home');

@@ -51,7 +51,6 @@
         🔔 <span id="navNotificationBadge" class="notification-count hidden">0</span>
       </button>
       <button id="btnReset" class="btn ghost small hidden">Reset Demo</button>
-      <button id="btnAdmin" class="btn ghost small hidden">Admin Login</button>
       <span id="navAvatar" class="avatar-sm hidden"></span>
       <span id="navUser" class="tag hidden"></span>
       <button id="btnLogin" class="btn">Login</button>
@@ -109,29 +108,6 @@
     </section>
 
     <!-- Admin Login Modal -->
-    <div id="adminLoginModal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Admin Login</h2>
-          <span id="closeAdminModal" class="close">&times;</span>
-        </div>
-        <form id="formAdminLogin" class="grid">
-          <div>
-            <label>Admin Email</label>
-            <input type="email" id="adminEmail" name="email" required placeholder="Enter admin email" />
-          </div>
-          <div>
-            <label>Admin Password</label>
-            <input type="password" id="adminPassword" name="password" required placeholder="Enter admin password" />
-          </div>
-          <div class="row">
-            <button type="submit" class="btn primary">Login as Admin</button>
-            <button type="button" id="cancelAdminLogin" class="btn ghost">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <!-- Admin Panel (hidden by default) -->
     <section id="adminPanel" class="hidden">
       <div class="panel">
@@ -384,10 +360,6 @@
           <div id="giftBlock" class="hidden">
             <label>Recipient email</label>
             <input id="ckGiftEmail" type="email" placeholder="friend@example.com" />
-            <div style="margin-top:12px">
-              <label>Gift Message (optional)</label>
-              <textarea id="ckNotes" rows="3" placeholder="Add a personal message for the gift recipient..."></textarea>
-            </div>
           </div>
         </div>
 
