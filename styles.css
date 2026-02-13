@@ -1444,6 +1444,15 @@ input[type=number] {
     transform: translateY(-8px);
 }
 
+/* Ensure all buttons in book cards have consistent sizing */
+.book-card .row .btn {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .book-cover {
     width: 100%;
     aspect-ratio: 3 / 4;

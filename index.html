@@ -50,8 +50,8 @@
       <button id="btnNotifications" class="btn ghost small" title="Gift Notifications">
         🔔 <span id="navNotificationBadge" class="notification-count hidden">0</span>
       </button>
-      <button id="btnReset" class="btn ghost small">Reset Demo</button>
-      <button id="btnAdmin" class="btn ghost small">Admin Login</button>
+      <button id="btnReset" class="btn ghost small hidden">Reset Demo</button>
+      <button id="btnAdmin" class="btn ghost small hidden">Admin Login</button>
       <span id="navAvatar" class="avatar-sm hidden"></span>
       <span id="navUser" class="tag hidden"></span>
       <button id="btnLogin" class="btn">Login</button>
@@ -94,7 +94,6 @@
             <div><label>Password</label><input type="password" name="password" minlength="6" required /></div>
             <div><label>Phone</label><input name="phone" /></div>
           </div>
-          <div><label>About you</label><textarea name="bio" rows="2"></textarea></div>
           <div class="row">
             <button class="btn primary" type="submit">Register</button>
             <button id="switchToLogin" type="button" class="btn ghost">Back to login</button>
@@ -359,8 +358,8 @@
     </div>
 
     <!-- Checkout -->
-    <section id="checkoutSection" class="hidden grid two">
-      <div class="panel">
+    <section id="checkoutSection" class="hidden">
+      <div class="panel" style="max-width: 800px; margin: 0 auto;">
         <h1>Checkout</h1>
         <div id="ckItems"></div>
         <div class="hr"></div>
@@ -445,14 +444,6 @@
           <button class="btn primary" id="btnPay">Pay now</button>
         </div>
       </div>
-
-
-      <div class="panel">
-        <div class="hr"></div>
-        <h2>Policy</h2>
-        <p class="small muted">Buy = physical delivery with shipping & ETA. Rent and Gift are digital: no address, no
-          shipping, no COD.</p>
-      </div>
     </section>
 
     <!-- Orders -->
@@ -473,7 +464,6 @@
             <div><label>Name</label><input id="peName" required minlength="2" maxlength="100" /></div>
             <div><label>Phone</label><input id="pePhone" type="tel" pattern="[0-9]{10}" placeholder="10-digit number" title="Please enter a 10-digit phone number" /></div>
           </div>
-          <div><label>Bio</label><textarea id="peBio" rows="2" maxlength="500"></textarea></div>
 
           <div class="hr"></div>
           <h2>Change profile picture</h2>

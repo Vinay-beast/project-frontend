@@ -1472,7 +1472,6 @@ async function renderProfile() {
           <div><span class="muted">Name</span><div>${u.name || ''}</div></div>
           <div><span class="muted">Email</span><div>${u.email || ''}</div></div>
           <div><span class="muted">Phone</span><div>${u.phone || '-'}</div></div>
-          <div><span class="muted">Bio</span><div>${u.bio || '-'}</div></div>
           <div><span class="muted">Account Type</span><div>${isGoogleUser ? '🔗 Google Account' : '📧 Email Account'}</div></div>
         </div>
       </div>
@@ -1480,7 +1479,7 @@ async function renderProfile() {
     `;
     on('#peStart', 'click', () => {
       $('#profileView')?.classList.add('hidden'); $('#profileEdit')?.classList.remove('hidden');
-      $('#peName') && ($('#peName').value = u.name || ''); $('#pePhone') && ($('#pePhone').value = u.phone || ''); $('#peBio') && ($('#peBio').value = u.bio || '');
+      $('#peName') && ($('#peName').value = u.name || ''); $('#pePhone') && ($('#pePhone').value = u.phone || '');
       const preview = $('#pePicPreview'); if (preview) preview.style.backgroundImage = u.profile_pic ? `url("${u.profile_pic}?v=${Date.now()}")` : '';
     });
 
@@ -1491,14 +1490,13 @@ async function renderProfile() {
     on('#peSave', 'click', async () => {
       const name = $('#peName')?.value.trim(); if (!name) { toast('Name is required'); return; }
       const phone = $('#pePhone')?.value.trim();
-      const bio = $('#peBio')?.value.trim();
       let profilePicUrl = AUTH.user?.profile_pic || '';
 
       const picFile = $('#pePicFile')?.files?.[0] || null;
       if (picFile) {
         // Upload with user data since backend requires name
         try {
-          const userData = { name, phone, bio };
+          const userData = { name, phone };
           const result = await Api.uploadProfilePic(AUTH.token, picFile, userData);
           toast('Profile updated', 'success');
           $('#profileEdit')?.classList.add('hidden');
@@ -1518,7 +1516,7 @@ async function renderProfile() {
       }
 
       // Update profile without file upload
-      const body = { name, phone, bio, profile_pic: profilePicUrl };
+      const body = { name, phone, profile_pic: profilePicUrl };
       try {
         await Api.updateProfile(AUTH.token, body);
         toast('Profile updated', 'success');
@@ -2641,10 +2639,8 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
           localStorage.setItem('isAdminMode', 'true');
           setHeaderMode('hidden');
           setActiveNav('admin');
-          // Restore the last viewed admin panel section
-          const savedView = localStorage.getItem('adminView') || 'dashboard';
+          // Restore the last viewed admin panel section (handled by showSection now)
           showSection('adminPanel');
-          await renderAdminPanel(savedView);
         } else if (isActualAdmin && !wasAdminMode) {
           // Admin user but wasn't in admin mode, show normal view
           localStorage.removeItem('isAdminMode');
