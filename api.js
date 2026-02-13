@@ -142,6 +142,7 @@
             phone: raw.phone || "",
             bio: raw.bio || "",
             profile_pic: raw.profile_pic || "",
+            has_password: raw.has_password,
             addresses: Array.isArray(raw.addresses) ? raw.addresses : [],
             cards: Array.isArray(raw.cards) ? raw.cards : [],
             is_admin: !!raw.is_admin
