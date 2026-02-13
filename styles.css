@@ -766,7 +766,7 @@ textarea:focus {
 select {
     background:
         rgba(30, 37, 56, 0.6),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23d4af37'><path d='M2 4 L6 8 L10 4' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5 L7 10 L11 5' stroke='%23fbbf24' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
     padding-right: 40px;
     appearance: none;
     -webkit-appearance: none;
@@ -776,13 +776,13 @@ select {
 select:hover {
     background:
         rgba(30, 37, 56, 0.7),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23d4af37'><path d='M2 4 L6 8 L10 4' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5 L7 10 L11 5' stroke='%23fbbf24' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
 }
 
 select:focus {
     background:
         rgba(30, 37, 56, 0.8),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%23d4af37'><path d='M2 4 L6 8 L10 4' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5 L7 10 L11 5' stroke='%23fbbf24' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
 }
 
 /* Dark dropdown options */
@@ -837,6 +837,7 @@ input[type=number] {
     display: grid;
     gap: 10px;
     grid-template-columns: 1fr 1fr;
+    align-items: stretch;
 }
 
 .row3 {
@@ -1442,6 +1443,7 @@ input[type=number] {
     flex-direction: column;
     gap: var(--space-md);
     transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
 }
 
 .book-card:hover {
@@ -1456,9 +1458,16 @@ input[type=number] {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 24px;
+    padding: 12px 16px !important;
     font-size: 0.9rem;
     box-sizing: border-box;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.book-card .row .btn.primary,
+.book-card .row .btn.ghost {
+    padding: 12px 16px !important;
 }
 
 .book-cover {
