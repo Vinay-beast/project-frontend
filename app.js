@@ -130,9 +130,12 @@ on('#formRegister', 'submit', async (e) => {
     saveToken(out.token); AUTH.user = out.user; toast('Registered & signed in');
     await renderNav();
     if (AUTH.user?.is_admin) {
+      localStorage.setItem('isAdminMode', 'true');
+      setHeaderMode('hidden');
       setActiveNav('admin');
       showSection('adminPanel');
     } else {
+      localStorage.removeItem('isAdminMode');
       setActiveNav('home');
       showSection('homeSection');
     }
@@ -144,12 +147,24 @@ on('#formLogin', 'submit', async (e) => {
   const data = Object.fromEntries(new FormData(e.target).entries());
   try {
     const out = await Api.login({ email: data.email, password: data.password });
-    saveToken(out.token); AUTH.user = out.user; toast('Logged in');
+    saveToken(out.token); AUTH.user = out.user;
+
+    console.log('Login response:', out);
+    console.log('AUTH.user:', AUTH.user);
+    console.log('is_admin value:', AUTH.user?.is_admin);
+    console.log('is_admin type:', typeof AUTH.user?.is_admin);
+
+    toast('Logged in');
     await renderNav();
     if (AUTH.user?.is_admin) {
+      console.log('Redirecting to admin panel');
+      localStorage.setItem('isAdminMode', 'true');
+      setHeaderMode('hidden');
       setActiveNav('admin');
       showSection('adminPanel');
     } else {
+      console.log('Redirecting to home section');
+      localStorage.removeItem('isAdminMode');
       setActiveNav('home');
       showSection('homeSection');
     }
