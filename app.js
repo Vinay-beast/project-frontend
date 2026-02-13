@@ -3329,7 +3329,7 @@ window.viewBookFromChat = async (bookId) => {
               // Create COD order directly (no Razorpay needed)
               const orderResponse = await Api.placeOrder(AUTH.token, orderDataForPayment);
 
-              if (orderResponse.success) {
+              if (orderResponse.order) {
                 toast('COD Order placed successfully! 🎉', 'success');
                 shoppingInput.value = '';
                 shoppingResponse.classList.add('hidden');
