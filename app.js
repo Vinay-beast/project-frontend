@@ -44,14 +44,13 @@ function setHeaderMode(mode) {
   if (mode === 'hidden') { header.style.display = 'none'; return; }
   header.style.display = '';
 
-  const allButtons = ['.navbtn', '#btnReset', '#btnLogin', '#btnLogout', '#btnCart', '#navAvatar', '#navUser', '#cartCount', '#btnNotifications'];
+  const allButtons = ['.navbtn', '#btnReset', '#btnLogout', '#btnCart', '#navAvatar', '#navUser', '#cartCount', '#btnNotifications'];
   allButtons.forEach(sel => $$(sel).forEach(el => el.classList.add('hidden')));
 
   if (mode === 'login') {
-    // On login page: show login button
-    $$('#btnLogin').forEach(el => el.classList.remove('hidden'));
+    // On login page: minimal UI
   } else {
-    // After login: show main navigation without login/reset buttons
+    // After login: show main navigation without reset button
     $$('.navbtn').forEach(el => el.classList.remove('hidden'));
     $$('#btnCart').forEach(el => el.classList.remove('hidden'));
     $$('#btnLogout').forEach(el => el.classList.remove('hidden'));
@@ -59,8 +58,7 @@ function setHeaderMode(mode) {
     $$('#navUser').forEach(el => el.classList.remove('hidden'));
     $$('#btnNotifications').forEach(el => el.classList.remove('hidden'));
     $$('#cartCount').forEach(el => el.classList.remove('hidden'));
-    // Hide: login, reset buttons when logged in
-    $$('#btnLogin').forEach(el => el.classList.add('hidden'));
+    // Hide: reset button when logged in
     $$('#btnReset').forEach(el => el.classList.add('hidden'));
   }
 }
@@ -162,8 +160,7 @@ on('#formLogin', 'submit', async (e) => {
   } catch (err) { console.error(err); toast(err?.message || 'Login failed'); }
 });
 
-// Login/Logout header buttons
-const btnLoginEl = $('#btnLogin'); if (btnLoginEl) btnLoginEl.onclick = () => { setActiveNav('login'); showSection('loginSection'); };
+// Logout header button
 const btnLogoutEl = $('#btnLogout'); if (btnLogoutEl) btnLogoutEl.onclick = () => { saveToken(null); AUTH.user = null; localStorage.removeItem('isAdminMode'); toast('Logged out'); renderNav(); setActiveNav('login'); showSection('loginSection'); };
 
 // Google sign-in (if used)
@@ -216,14 +213,14 @@ async function renderNav() {
     saveToken(null); AUTH.user = null;
   }
 
-  const navUser = $('#navUser'), btnLogin = $('#btnLogin'), btnLogout = $('#btnLogout'), av = $('#navAvatar');
+  const navUser = $('#navUser'), btnLogout = $('#btnLogout'), av = $('#navAvatar');
   const navHomeBtn = $$('[data-nav="home"]')?.[0] || null;
   const navOrdersBtn = $$('[data-nav="orders"]')?.[0] || null;
   const navProfileBtn = $$('[data-nav="profile"]')?.[0] || null;
   const navCatalogBtn = $$('[data-nav="catalog"]')?.[0] || null;
 
   if (AUTH.user) {
-    if (btnLogin) btnLogin.classList.add('hidden');
+
     if (btnLogout) btnLogout.classList.remove('hidden');
 
     if (navUser) { navUser.textContent = AUTH.user.name || 'User'; navUser.classList.remove('hidden'); }
@@ -262,7 +259,6 @@ async function renderNav() {
       }, 100); // Small delay to ensure DOM is ready
     }
   } else {
-    if (btnLogin) btnLogin.classList.remove('hidden');
     if (btnLogout) btnLogout.classList.add('hidden');
     if (navUser) navUser.classList.add('hidden');
     if (av) av.classList.add('hidden');

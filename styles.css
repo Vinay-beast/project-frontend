@@ -766,7 +766,7 @@ textarea:focus {
 select {
     background:
         rgba(30, 37, 56, 0.6),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5 L7 10 L11 5' stroke='%23fbbf24' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path d='M3 6 L8 11 L13 6' stroke='%23fde047' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
     padding-right: 40px;
     appearance: none;
     -webkit-appearance: none;
@@ -776,13 +776,13 @@ select {
 select:hover {
     background:
         rgba(30, 37, 56, 0.7),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5 L7 10 L11 5' stroke='%23fbbf24' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path d='M3 6 L8 11 L13 6' stroke='%23fde047' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
 }
 
 select:focus {
     background:
         rgba(30, 37, 56, 0.8),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5 L7 10 L11 5' stroke='%23fbbf24' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path d='M3 6 L8 11 L13 6' stroke='%23fde047' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
 }
 
 /* Dark dropdown options */
@@ -1450,6 +1450,14 @@ input[type=number] {
     transform: translateY(-8px);
 }
 
+/* Ensure rows in book cards have equal-width columns */
+.book-card .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: stretch;
+}
+
 /* Ensure all buttons in book cards have consistent sizing */
 .book-card .row .btn {
     width: 100%;
@@ -1463,6 +1471,7 @@ input[type=number] {
     box-sizing: border-box;
     line-height: 1.2;
     white-space: nowrap;
+    flex: 1;
 }
 
 .book-card .row .btn.primary,
