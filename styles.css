@@ -129,6 +129,7 @@ header {
     border-bottom: 1px solid rgba(212, 175, 55, 0.2);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     will-change: transform;
+    transition: opacity 0.2s ease-in-out;
 }
 
 .nav {
@@ -1448,9 +1449,13 @@ input[type=number] {
 .book-card .row .btn {
     width: 100%;
     min-height: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
 }
 
 .book-cover {

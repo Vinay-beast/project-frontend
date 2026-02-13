@@ -264,6 +264,10 @@ async function renderNav() {
   }
 
   renderCartIcon();
+
+  // Show header after initialization complete (prevents flash)
+  const header = document.querySelector('header');
+  if (header) header.style.opacity = '1';
 }
 
 // Switch between login and register
@@ -806,13 +810,15 @@ async function renderCartDrawer() {
               <div><span class="muted small">Unit</span><div class="price">${money(i.book.price)}</div></div>
               <div>
                 <span class="muted small">Qty</span>
-                <div class="pillbar">
+                <div class="pillbar" style="gap: 8px;">
                   <button class="btn small" data-incdec="-|${i.book.id}">-</button>
                   <span class="kbd" id="qty_${i.book.id}">${i.qty}</span>
                   <button class="btn small" data-incdec="+|${i.book.id}">+</button>
-                  <button class="btn bad small" data-rem="${i.book.id}">Remove</button>
                 </div>
               </div>
+            </div>
+            <div style="margin-top: 8px;">
+              <button class="btn bad small" data-rem="${i.book.id}">Remove</button>
             </div>
           </div>
         </div>
@@ -2045,7 +2051,7 @@ async function renderAdminOrders(main) {
                 <td><strong>₹${grandTotal.toFixed(2)}</strong></td>
                 <td><span class="status-badge ${o.payment_method === 'card' ? 'completed' : 'pending'}">${(o.payment_method || 'unknown').toUpperCase()}</span></td>
                 <td>${new Date(o.created_at || '').toLocaleDateString()}</td>
-                <td><span class="status-badge ${o.status === 'completed' ? 'completed' : 'pending'}">${o.status || 'PENDING'}</span></td>
+                <td><span class="status-badge ${(o.status || 'pending').toLowerCase() === 'delivered' ? 'delivered' : (o.status || 'pending').toLowerCase() === 'cancelled' ? 'cancelled' : 'pending'}">${(o.status || 'PENDING').toUpperCase()}</span></td>
               </tr>
             `;
     }).join('')}
@@ -2624,6 +2630,10 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
 // ---------- Init ----------
 (async function init() {
   try {
+    // Immediately hide header elements to prevent flash during initialization
+    const header = document.querySelector('header');
+    if (header) header.style.opacity = '0';
+
     // Check if we were in admin mode before refresh
     const wasAdminMode = localStorage.getItem('isAdminMode') === 'true';
 
