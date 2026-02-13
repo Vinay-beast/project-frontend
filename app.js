@@ -114,7 +114,10 @@ async function showSection(id) {
     if (id === 'checkoutSection') { await renderCheckout(); }
     if (id === 'ordersSection') { await renderOrders(); }
     if (id === 'profileSection') { await renderProfile(); }
-    if (id === 'adminPanel') { await renderAdminPanel(); }
+    if (id === 'adminPanel') {
+      const savedView = localStorage.getItem('adminView') || 'dashboard';
+      await renderAdminPanel(savedView);
+    }
   } catch (err) { console.error('showSection error:', err); toast('UI error — see console'); }
 }
 
@@ -850,13 +853,12 @@ async function renderCheckout(presetMode = null) {
     `).join('') : '<p class="muted">No items. Add from catalog.</p>';
 
     const ckMode = $('#ckMode'); if (!ckMode) return; if (presetMode) ckMode.value = presetMode;
-    const rentBlock = $('#rentBlock'), giftBlock = $('#giftBlock'), shippingWrap = $('#shippingWrap'), notesPanel = $('#notesPanel');
+    const rentBlock = $('#rentBlock'), giftBlock = $('#giftBlock'), shippingWrap = $('#shippingWrap');
     const refreshBlocks = () => {
       const mode = ckMode.value; const isRent = mode === 'rent'; const isGift = mode === 'gift'; const needsShipping = mode === 'buy';
       if (rentBlock) rentBlock.classList.toggle('hidden', !isRent);
       if (giftBlock) giftBlock.classList.toggle('hidden', !isGift);
       if (shippingWrap) shippingWrap.classList.toggle('hidden', !needsShipping);
-      if (notesPanel) notesPanel.classList.toggle('hidden', !isGift);
       const paySel = $('#ckPayMethod');
       if (paySel) { const codOpt = Array.from(paySel.options).find(o => o.value === 'cod'); if (codOpt) codOpt.disabled = !needsShipping; if (!needsShipping && paySel.value === 'cod') paySel.value = 'razorpay'; }
       computeSummary();
@@ -1602,6 +1604,9 @@ async function renderProfile() {
 // ---------- Admin panel renderer ----------
 async function renderAdminPanel(view = 'dashboard') {
   try {
+    // Save current admin view to localStorage for refresh persistence
+    localStorage.setItem('adminView', view);
+
     if (!AUTH.token) { toast('Login as admin'); setActiveNav('login'); showSection('loginSection'); return; }
     if (!AUTH.user) { try { AUTH.user = await Api.getProfile(AUTH.token); } catch { saveToken(null); AUTH.user = null; toast('Admin session invalid'); setActiveNav('login'); showSection('loginSection'); return; } }
     if (!AUTH.user.is_admin) { toast('Access denied'); return; }
@@ -2087,7 +2092,7 @@ async function renderAdminUsers(main) {
               <td>${u.email}</td>
               <td>${u.phone || 'N/A'}</td>
               <td><span class="status-badge ${u.is_admin ? 'completed' : 'pending'}">${u.is_admin ? 'ADMIN' : 'USER'}</span></td>
-              <td>${new Date(u.created_at || '').toLocaleDateString()}</td>
+              <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -2102,7 +2107,7 @@ async function renderAdminUsers(main) {
 // Admin Books View
 async function renderAdminBooks(main) {
   try {
-    const raw = await Api.getBooks().catch(() => ({ books: [] }));
+    const raw = await Api.getBooks(1, 500).catch(() => ({ books: [] }));
     const books = Array.isArray(raw) ? raw : (raw.books || []);
 
     if (!books.length) {
@@ -2636,7 +2641,10 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
           localStorage.setItem('isAdminMode', 'true');
           setHeaderMode('hidden');
           setActiveNav('admin');
+          // Restore the last viewed admin panel section
+          const savedView = localStorage.getItem('adminView') || 'dashboard';
           showSection('adminPanel');
+          await renderAdminPanel(savedView);
         } else if (isActualAdmin && !wasAdminMode) {
           // Admin user but wasn't in admin mode, show normal view
           localStorage.removeItem('isAdminMode');

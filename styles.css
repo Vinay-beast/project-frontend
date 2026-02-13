@@ -852,6 +852,7 @@ input[type=number] {
     display: flex;
     gap: var(--space-sm);
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .tag {
@@ -1841,19 +1842,23 @@ input[type=number] {
     text-transform: uppercase;
 }
 
-.status-badge.completed {
-    background: rgba(52, 211, 153, 0.2);
-    color: var(--good);
+.status-badge.completed,
+.status-badge.delivered {
+    background: rgba(34, 197, 94, 0.25);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.4);
 }
 
 .status-badge.pending {
-    background: rgba(251, 191, 36, 0.2);
-    color: var(--warn);
+    background: rgba(234, 179, 8, 0.25);
+    color: #eab308;
+    border: 1px solid rgba(234, 179, 8, 0.4);
 }
 
 .status-badge.cancelled {
-    background: rgba(248, 113, 113, 0.2);
-    color: var(--bad);
+    background: rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
 /* Book Preview */
