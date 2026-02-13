@@ -516,7 +516,7 @@ async function renderHomeCatalog() {
           <button class="btn primary" data-home-buy="${b.id}">Buy</button>
           <button class="btn" data-home-rent="${b.id}">Rent</button>
         </div>
-        <div style="margin-top:8px">
+        <div class="row" style="margin-top:8px">
           <button class="btn" data-home-gift="${b.id}">Gift</button>
           <button class="btn ghost" data-home-addcart="${b.id}">Add to Cart</button>
         </div>
@@ -556,7 +556,7 @@ async function renderCatalog(filter = '') {
           <button class="btn primary" data-buy="${b.id}">Buy</button>
           <button class="btn" data-rent="${b.id}">Rent</button>
         </div>
-        <div style="margin-top:8px">
+        <div class="row" style="margin-top:8px">
           <button class="btn" data-gift="${b.id}">Gift</button>
           <button class="btn ghost" data-addcart="${b.id}">Add to Cart</button>
         </div>
@@ -850,12 +850,13 @@ async function renderCheckout(presetMode = null) {
     `).join('') : '<p class="muted">No items. Add from catalog.</p>';
 
     const ckMode = $('#ckMode'); if (!ckMode) return; if (presetMode) ckMode.value = presetMode;
-    const rentBlock = $('#rentBlock'), giftBlock = $('#giftBlock'), shippingWrap = $('#shippingWrap');
+    const rentBlock = $('#rentBlock'), giftBlock = $('#giftBlock'), shippingWrap = $('#shippingWrap'), notesPanel = $('#notesPanel');
     const refreshBlocks = () => {
       const mode = ckMode.value; const isRent = mode === 'rent'; const isGift = mode === 'gift'; const needsShipping = mode === 'buy';
       if (rentBlock) rentBlock.classList.toggle('hidden', !isRent);
       if (giftBlock) giftBlock.classList.toggle('hidden', !isGift);
       if (shippingWrap) shippingWrap.classList.toggle('hidden', !needsShipping);
+      if (notesPanel) notesPanel.classList.toggle('hidden', !isGift);
       const paySel = $('#ckPayMethod');
       if (paySel) { const codOpt = Array.from(paySel.options).find(o => o.value === 'cod'); if (codOpt) codOpt.disabled = !needsShipping; if (!needsShipping && paySel.value === 'cod') paySel.value = 'razorpay'; }
       computeSummary();
@@ -2441,6 +2442,16 @@ on('#adminViewUsers', 'click', () => renderAdminPanel('users'));
 on('#adminViewBooks', 'click', () => renderAdminPanel('books'));
 on('#adminViewGoogleBooks', 'click', () => renderAdminPanel('googleBooks'));
 on('#adminViewAnalytics', 'click', () => renderAdminPanel('analytics'));
+on('#adminToggleBookForm', 'click', () => {
+  const formPanel = $('#adminBookFormPanel');
+  const btn = $('#adminToggleBookForm');
+  if (formPanel) {
+    formPanel.classList.toggle('hidden');
+    if (btn) {
+      btn.textContent = formPanel.classList.contains('hidden') ? '📝 Add/Edit Book' : '✕ Close Form';
+    }
+  }
+});
 
 // Book management functions
 window.editBook = async (bookId) => {
@@ -3022,7 +3033,7 @@ window.viewBookFromChat = async (bookId) => {
 
     // Animate agent steps
     const steps = loadingDiv?.querySelectorAll('.agent-step');
-    const agentNames = ['ocr', 'processing', 'search', 'ranking', 'response'];
+    const agentNames = ['ocr', 'identification', 'database', 'response'];
 
     let currentStep = 0;
     const stepInterval = setInterval(() => {

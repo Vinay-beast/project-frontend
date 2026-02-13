@@ -134,7 +134,7 @@
     </div>
 
     <!-- Admin Panel (hidden by default) -->
-    <section id="adminPanel" class="hidden grid two">
+    <section id="adminPanel" class="hidden">
       <div class="panel">
         <div class="admin-header">
           <h1>📊 Admin Dashboard</h1>
@@ -152,6 +152,7 @@
           <button id="adminViewBooks" class="btn">📚 Books</button>
           <button id="adminViewGoogleBooks" class="btn">🔍 Import Books</button>
           <button id="adminViewAnalytics" class="btn">📈 Analytics</button>
+          <button id="adminToggleBookForm" class="btn">📝 Add/Edit Book</button>
           <button id="adminLogout" class="btn bad">🚪 Logout</button>
         </div>
 
@@ -165,7 +166,7 @@
         <div id="adminMain" style="margin-top:12px"></div>
       </div>
 
-      <div class="panel">
+      <div id="adminBookFormPanel" class="panel hidden" style="margin-top:20px">
         <h2>📝 Add / Edit Book</h2>
         <form id="adminBookForm" class="grid">
           <div><label>Title</label><input name="title" required /></div>
@@ -441,9 +442,12 @@
         </div>
       </div>
 
+      <div id="notesPanel" class="panel">
+        <h2>Gift Message</h2>
+        <textarea id="ckNotes" rows="3" placeholder="Add a personal message for the gift recipient..."></textarea>
+      </div>
+
       <div class="panel">
-        <h2>Order notes</h2>
-        <textarea id="ckNotes" rows="6" placeholder="Any special delivery notes?"></textarea>
         <div class="hr"></div>
         <h2>Policy</h2>
         <p class="small muted">Buy = physical delivery with shipping & ETA. Rent and Gift are digital: no address, no
@@ -466,10 +470,10 @@
         <div id="profileView"></div>
         <div id="profileEdit" class="hidden">
           <div class="row">
-            <div><label>Name</label><input id="peName" /></div>
-            <div><label>Phone</label><input id="pePhone" /></div>
+            <div><label>Name</label><input id="peName" required minlength="2" maxlength="100" /></div>
+            <div><label>Phone</label><input id="pePhone" type="tel" pattern="[0-9]{10}" placeholder="10-digit number" title="Please enter a 10-digit phone number" /></div>
           </div>
-          <div><label>Bio</label><textarea id="peBio" rows="2"></textarea></div>
+          <div><label>Bio</label><textarea id="peBio" rows="2" maxlength="500"></textarea></div>
 
           <div class="hr"></div>
           <h2>Change profile picture</h2>
@@ -497,11 +501,11 @@
           <h2>Change password</h2>
           <div class="grid">
             <div class="row">
-              <div><label>Current password</label><input type="password" id="cpCurrent"></div>
-              <div><label>New password</label><input type="password" id="cpNew"></div>
+              <div><label>Current password</label><input type="password" id="cpCurrent" required minlength="6" /></div>
+              <div><label>New password</label><input type="password" id="cpNew" required minlength="6" /></div>
             </div>
             <div class="row">
-              <div><label>Confirm new password</label><input type="password" id="cpConfirm"></div>
+              <div><label>Confirm new password</label><input type="password" id="cpConfirm" required minlength="6" /></div>
               <div class="right"><button id="cpSave" class="btn">Update password</button></div>
             </div>
           </div>
@@ -513,14 +517,14 @@
         <div id="addrList" class="grid"></div>
         <form id="formAddress" class="grid" style="margin-top:8px">
           <div class="row">
-            <div><label>Label</label><input name="label" placeholder="Home / Office" required /></div>
-            <div><label>Recipient</label><input name="recipient" required /></div>
+            <div><label>Label</label><input name="label" placeholder="Home / Office" required minlength="2" maxlength="50" /></div>
+            <div><label>Recipient</label><input name="recipient" required minlength="2" maxlength="100" /></div>
           </div>
-          <div><label>Street</label><input name="street" required /></div>
+          <div><label>Street</label><input name="street" required minlength="5" maxlength="200" /></div>
           <div class="row3">
-            <div><label>City</label><input name="city" required /></div>
-            <div><label>State</label><input name="state" required /></div>
-            <div><label>PIN</label><input name="zip" required /></div>
+            <div><label>City</label><input name="city" required minlength="2" maxlength="100" /></div>
+            <div><label>State</label><input name="state" required minlength="2" maxlength="100" /></div>
+            <div><label>PIN</label><input name="zip" required pattern="[0-9]{6}" placeholder="6-digit PIN" title="Please enter a 6-digit PIN code" /></div>
           </div>
           <button class="btn primary" type="submit">Add address</button>
         </form>
@@ -639,7 +643,7 @@
           <span class="search-avatar">🔍</span>
           <div>
             <strong>Book Finder AI</strong>
-            <span class="ai-status">● 5 Agents Ready</span>
+            <span class="ai-status">● 4 Agents Ready</span>
           </div>
         </div>
         <button id="bookSearchClose" class="book-search-close">×</button>

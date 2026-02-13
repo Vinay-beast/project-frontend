@@ -624,7 +624,7 @@ main {
 .cards {
     display: grid;
     gap: var(--space-lg);
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }
 
 /* Enhanced Cards */
@@ -1421,6 +1421,14 @@ input[type=number] {
 .kbd:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Cart count badge with better contrast */
+#btnCart #cartCount {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--brand);
+    color: var(--brand);
+    font-weight: 700;
 }
 
 /* ===== Book covers, thumbnails, and avatars ===== */
@@ -3002,6 +3010,7 @@ details[open] summary {
 .book-search-preview {
     position: relative;
     text-align: center;
+    padding-top: 40px;
 }
 
 .book-search-preview img {
@@ -3013,8 +3022,9 @@ details[open] summary {
 
 #bookSearchClear {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 0;
+    right: 0;
+    z-index: 10;
 }
 
 .book-search-submit {
