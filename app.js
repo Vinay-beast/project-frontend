@@ -3201,3 +3201,247 @@ window.viewBookFromChat = async (bookId) => {
     }
   }
 })();
+
+// ============================================
+// 🤖 AI SHOPPING AGENT
+// ============================================
+(function initShoppingAgent() {
+  const shoppingInput = $('#shoppingAgentInput');
+  const shoppingBtn = $('#shoppingAgentBtn');
+  const shoppingResponse = $('#shoppingAgentResponse');
+  const shoppingMessage = $('#shoppingAgentMessage');
+  const shoppingAction = $('#shoppingAgentAction');
+
+  if (!shoppingBtn || !shoppingInput) return;
+
+  // Handle suggestion buttons
+  document.addEventListener('click', (e) => {
+    if (e.target.matches('.shopping-suggestion')) {
+      const query = e.target.dataset.query;
+      if (shoppingInput) shoppingInput.value = query;
+      shoppingBtn?.click();
+    }
+  });
+
+  // Handle shopping query submission
+  async function processShoppingQuery() {
+    const query = shoppingInput?.value?.trim();
+    if (!query) {
+      toast('Please enter a shopping query', 'error');
+      return;
+    }
+
+    if (!AUTH.token) {
+      toast('Please login first', 'error');
+      setActiveNav('login');
+      showSection('loginSection');
+      return;
+    }
+
+    try {
+      // Show loading state
+      shoppingBtn.disabled = true;
+      shoppingBtn.textContent = 'Processing...';
+      shoppingResponse?.classList.add('hidden');
+
+      // Call shopping agent API
+      const result = await Api.processShoppingQuery(AUTH.token, query);
+
+      // Show response
+      shoppingResponse?.classList.remove('hidden');
+
+      if (result.success) {
+        // Show success message with pricing details
+        const pricingDetails = result.pricing || {};
+        const deliveryInfo = result.deliveryInfo || '';
+
+        shoppingMessage.innerHTML = `
+          <div style="display:flex;align-items:start;gap:12px">
+            <div style="font-size:32px">✅</div>
+            <div style="flex:1">
+              <p style="margin:0;font-weight:600;color:var(--accent)">${result.message}</p>
+              <div style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.3);border-radius:6px">
+                <div style="display:flex;gap:12px;align-items:center">
+                  <img src="${result.book.image_url || 'https://via.placeholder.com/60x90'}" 
+                       alt="${result.book.title}" 
+                       style="width:60px;height:90px;object-fit:cover;border-radius:4px">
+                  <div style="flex:1">
+                    <h4 style="margin:0 0 4px 0;font-size:15px">${result.book.title}</h4>
+                    <p style="margin:0;font-size:13px;color:var(--muted)">${result.book.author}</p>
+                    ${pricingDetails.rentalDays ? `<p style="margin:4px 0 0 0;font-size:12px;color:var(--accent)">📅 Rental: ${pricingDetails.rentalDays} days</p>` : ''}
+                    ${deliveryInfo ? `<p style="margin:4px 0 0 0;font-size:12px;color:var(--accent)">🚚 ${deliveryInfo}</p>` : ''}
+                    ${result.orderData?.gift_email ? `<p style="margin:4px 0 0 0;font-size:12px;color:var(--accent)">🎁 To: ${result.orderData.gift_email}</p>` : ''}
+                    <p style="margin:8px 0 0 0;font-size:14px;font-weight:600;color:#fff">Total: ₹${pricingDetails.total}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Show payment button
+        shoppingAction.classList.remove('hidden');
+        shoppingAction.innerHTML = `
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn primary" id="proceedToPayment" style="flex:1">
+              💳 Proceed to Payment (₹${pricingDetails.total})
+            </button>
+            <button class="btn ghost" id="cancelOrder">
+              ❌ Cancel
+            </button>
+          </div>
+        `;
+
+        // Store order data for payment
+        const orderDataForPayment = result.orderData;
+
+        // Add event listeners
+        $('#proceedToPayment')?.addEventListener('click', async () => {
+          try {
+            // Disable button
+            const payBtn = $('#proceedToPayment');
+            if (payBtn) {
+              payBtn.disabled = true;
+              payBtn.textContent = 'Creating order...';
+            }
+
+            // STEP 1: Create the order in database
+            const orderResponse = await Api.placeOrder(AUTH.token, orderDataForPayment);
+            const createdOrder = orderResponse.order;
+
+            if (!createdOrder || !createdOrder.id) {
+              throw new Error('Failed to create order');
+            }
+
+            if (payBtn) payBtn.textContent = 'Opening payment...';
+
+            // STEP 2: Create Razorpay payment order
+            const paymentOrder = await Api.apiRequest('/payments/create-order', {
+              method: 'POST',
+              body: {
+                orderId: createdOrder.id,
+                amount: pricingDetails.total,
+                currency: 'INR'
+              },
+              token: AUTH.token
+            });
+
+            // STEP 3: Open Razorpay checkout
+            const options = {
+              key: paymentOrder.key,
+              amount: paymentOrder.amount,
+              currency: paymentOrder.currency,
+              order_id: paymentOrder.orderId,
+              name: 'BookNook',
+              description: `${result.action} - ${result.book.title}`,
+              handler: async function (response) {
+                try {
+                  // Verify payment
+                  await Api.apiRequest('/payments/verify', {
+                    method: 'POST',
+                    body: {
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_signature: response.razorpay_signature,
+                      booknook_order_id: createdOrder.id
+                    },
+                    token: AUTH.token
+                  });
+
+                  toast('Payment successful! 🎉', 'success');
+                  shoppingInput.value = '';
+                  shoppingResponse.classList.add('hidden');
+
+                  // Refresh library if on home section
+                  if (!$('#homeSection').classList.contains('hidden')) {
+                    await renderLibrary();
+                  }
+                } catch (err) {
+                  toast('Payment verification failed', 'error');
+                  console.error(err);
+                }
+              },
+              modal: {
+                ondismiss: () => {
+                  toast('Payment cancelled', 'info');
+                  if (payBtn) {
+                    payBtn.disabled = false;
+                    payBtn.textContent = `💳 Proceed to Payment (₹${pricingDetails.total})`;
+                  }
+                }
+              },
+              prefill: {
+                name: AUTH.user?.name || '',
+                email: AUTH.user?.email || ''
+              },
+              theme: {
+                color: '#6366f1'
+              }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+
+          } catch (err) {
+            toast(err.message || 'Failed to process order', 'error');
+            console.error(err);
+            const payBtn = $('#proceedToPayment');
+            if (payBtn) {
+              payBtn.disabled = false;
+              payBtn.textContent = `💳 Proceed to Payment (₹${pricingDetails.total})`;
+            }
+          }
+        });
+
+        $('#cancelOrder')?.addEventListener('click', () => {
+          shoppingInput.value = '';
+          shoppingResponse.classList.add('hidden');
+          toast('Cancelled', 'info');
+        });
+
+      } else {
+        // Show error message
+        shoppingMessage.innerHTML = `
+          <div style="display:flex;align-items:start;gap:12px">
+            <div style="font-size:32px">❌</div>
+            <div style="flex:1">
+              <p style="margin:0;font-weight:600">${result.message}</p>
+              ${result.suggestion ? `<p style="margin:8px 0 0 0;font-size:13px;color:var(--muted)">${result.suggestion}</p>` : ''}
+              ${result.book ? `
+                <div style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.3);border-radius:6px">
+                  <p style="margin:0;font-size:13px"><strong>${result.book.title}</strong> by ${result.book.author}</p>
+                  <p style="margin:4px 0 0 0;font-size:13px;color:var(--muted)">Price: ₹${result.book.price}</p>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        shoppingAction.classList.add('hidden');
+      }
+
+    } catch (error) {
+      console.error('Shopping agent error:', error);
+      shoppingResponse?.classList.remove('hidden');
+      shoppingMessage.innerHTML = `
+        <div style="display:flex;align-items:start;gap:12px">
+          <div style="font-size:32px">❌</div>
+          <div>
+            <p style="margin:0;font-weight:600">Oops! Something went wrong</p>
+            <p style="margin:8px 0 0 0;font-size:13px;color:var(--muted)">${error.message || 'Please try again'}</p>
+          </div>
+        </div>
+      `;
+      shoppingAction?.classList.add('hidden');
+    } finally {
+      shoppingBtn.disabled = false;
+      shoppingBtn.textContent = 'Ask AI';
+    }
+  }
+
+  // Event listeners
+  shoppingBtn.addEventListener('click', processShoppingQuery);
+  shoppingInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') processShoppingQuery();
+  });
+})();
+

@@ -223,6 +223,33 @@
         </div>
       </div>
 
+      <!-- 🤖 AI Shopping Agent -->
+      <div class="panel" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3);">
+        <div class="pillbar" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0">🤖 AI Shopping Assistant</h2>
+          <span class="tag small">Try it!</span>
+        </div>
+        <p class="muted small" style="margin-top:8px">Tell me what you'd like in natural language!</p>
+        
+        <div id="shoppingAgentSuggestions" class="pillbar" style="margin-bottom:12px;flex-wrap:wrap;gap:6px">
+          <button class="btn ghost small shopping-suggestion" data-query="buy Clean Code book">💰 Buy</button>
+          <button class="btn ghost small shopping-suggestion" data-query="buy with express delivery">🚀 Express</button>
+          <button class="btn ghost small shopping-suggestion" data-query="rent Atomic Habits for 30 days">📅 Rent 30d</button>
+          <button class="btn ghost small shopping-suggestion" data-query="rent for 60 days">📅 Rent 60d</button>
+          <button class="btn ghost small shopping-suggestion" data-query="gift Sapiens to friend@example.com">🎁 Gift</button>
+        </div>
+
+        <div class="searchbar" style="margin-bottom:12px">
+          <input id="shoppingAgentInput" placeholder='Try: "buy Clean Code with express delivery" or "rent for 60 days"' />
+          <button id="shoppingAgentBtn" class="btn primary">Ask AI</button>
+        </div>
+
+        <div id="shoppingAgentResponse" class="hidden" style="padding:12px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.1)">
+          <div id="shoppingAgentMessage"></div>
+          <div id="shoppingAgentAction" class="hidden" style="margin-top:12px"></div>
+        </div>
+      </div>
+
       <div class="panel">
         <h2>Your Library</h2>
         <div id="libraryOwned" class="grid"></div>
@@ -476,8 +503,8 @@
         </div>
       </div>
       <div class="panel">
-        <h1>Addresses & Cards</h1>
-        <h2>Addresses</h2>
+        <h1>Shipping Addresses</h1>
+        <h2>Saved Addresses</h2>
         <div id="addrList" class="grid"></div>
         <form id="formAddress" class="grid" style="margin-top:8px">
           <div class="row">

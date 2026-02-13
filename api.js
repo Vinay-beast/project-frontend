@@ -478,6 +478,15 @@
         return await GET(`/recommendations/similar/${bookId}`);
     }
 
+    // Shopping Agent Functions
+    async function processShoppingQuery(token, query) {
+        return await POST('/shopping-agent/process', { query }, { token });
+    }
+
+    async function getShoppingSuggestions() {
+        return await GET('/shopping-agent/suggestions');
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -497,6 +506,7 @@
         getBookReviews, getBulkRatings, getMyReview, canReviewBook, submitReview, deleteReview,
         searchGoogleBooks, getGoogleBookDetails, importGoogleBook, bulkImportGoogleBooks,
         chatRecommendation, getPersonalizedRecommendations, getSimilarBooks,
+        processShoppingQuery, getShoppingSuggestions,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();
