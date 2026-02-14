@@ -192,14 +192,65 @@
 
     <!-- Home -->
     <section id="homeSection" class="hidden grid">
-      <div class="panel">
-        <h1>Welcome to BookNook</h1>
-        <p class="muted">Buy to own. Rent (digital). Gift by email (digital). Covers and profile photos included.</p>
-        <div class="pillbar">
-          <span class="tag">Shipping & ETA only for Buy</span>
-          <span class="tag">No address/ship for Rent & Gift</span>
-          <span class="tag">COD + ₹10 (Buy only)</span>
-          <span class="tag">Your Library</span>
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-content">
+          <div class="hero-badge">✨ Your Premium Digital Library</div>
+          <h1 class="hero-title">Welcome to BookNook</h1>
+          <p class="hero-subtitle">Discover, purchase, rent, or gift thousands of books. Your literary journey starts here.</p>
+          <div class="hero-features">
+            <div class="hero-feature">
+              <span class="hero-feature-icon">📚</span>
+              <div>
+                <strong>Buy & Own</strong>
+                <p>Keep forever in your library</p>
+              </div>
+            </div>
+            <div class="hero-feature">
+              <span class="hero-feature-icon">⏱️</span>
+              <div>
+                <strong>Rent Digitally</strong>
+                <p>30 or 60 day access</p>
+              </div>
+            </div>
+            <div class="hero-feature">
+              <span class="hero-feature-icon">🎁</span>
+              <div>
+                <strong>Send Gifts</strong>
+                <p>Email delivery instantly</p>
+              </div>
+            </div>
+            <div class="hero-feature">
+              <span class="hero-feature-icon">🚚</span>
+              <div>
+                <strong>Quick Delivery</strong>
+                <p>Express or standard shipping</p>
+              </div>
+            </div>
+          </div>
+          <div class="hero-cta">
+            <button class="btn primary large" onclick="document.querySelector('[data-nav=catalog]').click()">Browse Catalog</button>
+            <button class="btn ghost large" onclick="document.querySelector('#shoppingAgentInput').focus()">Ask AI Assistant</button>
+          </div>
+        </div>
+        <div class="hero-decoration">
+          <!-- SVG book illustration -->
+          <svg class="hero-svg" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="80" y="100" width="240" height="300" rx="8" fill="url(#bookGradient)" stroke="var(--brand-primary)" stroke-width="2"/>
+            <rect x="90" y="110" width="220" height="280" rx="4" fill="rgba(17, 24, 39, 0.6)"/>
+            <line x1="90" y1="150" x2="280" y2="150" stroke="var(--brand-primary)" stroke-width="1" opacity="0.3"/>
+            <line x1="90" y1="180" x2="250" y2="180" stroke="var(--text-muted)" stroke-width="1" opacity="0.2"/>
+            <line x1="90" y1="210" x2="270" y2="210" stroke="var(--text-muted)" stroke-width="1" opacity="0.2"/>
+            <line x1="90" y1="240" x2="240" y2="240" stroke="var(--text-muted)" stroke-width="1" opacity="0.2"/>
+            <circle cx="200" cy="320" r="30" fill="var(--brand-primary)" opacity="0.2"/>
+            <path d="M190 320 L198 328 L215 308" stroke="var(--brand-primary)" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <defs>
+              <linearGradient id="bookGradient" x1="80" y1="100" x2="320" y2="400">
+                <stop offset="0%" stop-color="rgba(212, 175, 55, 0.2)"/>
+                <stop offset="100%" stop-color="rgba(139, 21, 56, 0.2)"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
       </div>
 
@@ -246,10 +297,27 @@
           Gifts are books received from others. Wishlist shows books you saved for later.</p>
       </div>
 
+      <!-- Featured Books Section -->
+      <div class="panel featured-section">
+        <div class="section-header">
+          <div>
+            <span class="section-badge">⭐ Handpicked</span>
+            <h2 class="section-title">Featured This Month</h2>
+            <p class="section-subtitle">Curated selection of must-read books</p>
+          </div>
+          <button class="btn ghost small" onclick="document.querySelector('[data-nav=catalog]').click()">View All →</button>
+        </div>
+        <div id="featuredBookGrid" class="cards"></div>
+      </div>
+
       <div class="panel">
-        <div class="pillbar" style="justify-content:space-between;align-items:center">
-          <h2 style="margin:0">All Books</h2>
-          <span class="small muted">Browse and buy directly</span>
+        <div class="section-header">
+          <div>
+            <span class="section-badge">📚 Collection</span>
+            <h2 class="section-title">Browse Catalog</h2>
+            <p class="section-subtitle">Explore our complete library</p>
+          </div>
+          <button class="btn ghost small" onclick="document.querySelector('[data-nav=catalog]').click()">See More →</button>
         </div>
         <div id="homeBookGrid" class="cards"></div>
       </div>

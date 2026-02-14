@@ -106,7 +106,7 @@ async function showSection(id) {
       if (AUTH.user?.is_admin) setHeaderMode('hidden'); else setHeaderMode('full');
     }
 
-    if (id === 'homeSection') { await renderLibrary(); await renderHomeCatalog(); }
+    if (id === 'homeSection') { await renderLibrary(); await renderFeaturedBooks(); await renderHomeCatalog(); }
     if (id === 'catalogSection') { await renderCatalog(); }
     if (id === 'checkoutSection') { await renderCheckout(); }
     if (id === 'ordersSection') { await renderOrders(); }
@@ -322,6 +322,22 @@ let BOOK_CACHE = new Map();
 async function fetchBooks(page = 1, limit = 50) { const res = await Api.getBooks(page, limit); (res.books || []).forEach(b => BOOK_CACHE.set(String(b.id), b)); return res.books || []; }
 async function fetchBookById(id) { if (BOOK_CACHE.has(String(id))) return BOOK_CACHE.get(String(id)); const b = await Api.getBookById(id); BOOK_CACHE.set(String(b.id), b); return b; }
 
+// ---------- UI Helper: Empty States ----------
+function createEmptyState(icon, title, description, actionText = null, actionHandler = null) {
+  return `
+    <div class="empty-state">
+      <div class="empty-state-icon">${icon}</div>
+      <h3 class="empty-state-title">${title}</h3>
+      <p class="empty-state-description">${description}</p>
+      ${actionText && actionHandler ? `
+        <div class="empty-state-action">
+          <button class="btn primary" onclick="${actionHandler}">${actionText}</button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
 // ---------- Wishlist ----------
 let USER_WISHLIST = new Set();
 
@@ -375,7 +391,7 @@ async function renderWishlistSection() {
   try {
     const wishlist = await Api.getWishlist(AUTH.token);
     if (!wishlist.length) {
-      wishlistEl.innerHTML = '<p class="muted">No books in your wishlist yet. Click ❤️ on any book to save it for later.</p>';
+      wishlistEl.innerHTML = createEmptyState('❤️', 'Your Wishlist is Empty', 'Click the heart icon (❤️) on any book to save it for later.', 'Browse Catalog', "document.querySelector('[data-nav=catalog]').click()");
       return;
     }
 
@@ -423,6 +439,58 @@ function getRatingDisplay(bookId) {
   const r = BOOK_RATINGS[bookId];
   if (!r || !r.avgRating) return '';
   return `<span class="book-rating">⭐ ${r.avgRating}</span>`;
+}
+
+async function renderFeaturedBooks() {
+  try {
+    await loadWishlist();
+    // Fetch first 8 books sorted by highest rating or most popular
+    const books = await fetchBooks(1, 8);
+
+    // Load ratings for all books
+    const bookIds = books.map(b => b.id);
+    await loadBulkRatings(bookIds);
+
+    const grid = $('#featuredBookGrid');
+    if (!grid) return;
+
+    if (books.length === 0) {
+      grid.innerHTML = createEmptyState('✨', 'No Featured Books', 'Featured books will appear here soon.', null, null);
+      return;
+    }
+
+    grid.innerHTML = books.map(b => `
+      <div class="card book-card">
+        <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
+          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+        </div>
+        <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
+        <h2 class="home-book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
+        <p class="small muted">${(b.description || '').slice(0, 90)}...</p>
+        <p class="price">${money(b.price)}</p>
+        <div class="row">
+          <button class="btn primary" data-featured-buy="${b.id}">Buy</button>
+          <button class="btn" data-featured-rent="${b.id}">Rent</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" data-featured-gift="${b.id}">Gift</button>
+          <button class="btn ghost" data-featured-addcart="${b.id}">Add to Cart</button>
+        </div>
+      </div>
+    `).join('');
+
+    // Attach event handlers for featured books
+    onAll('#featuredBookGrid [data-featured-buy]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.featuredBuy, qty: 1 }], 'buy'));
+    onAll('#featuredBookGrid [data-featured-rent]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.featuredRent, qty: 1 }], 'rent'));
+    onAll('#featuredBookGrid [data-featured-gift]', el => el.onclick = () => startCheckout([{ bookId: el.dataset.featuredGift, qty: 1 }], 'gift'));
+    onAll('#featuredBookGrid [data-featured-addcart]', el => el.onclick = () => addToCart(el.dataset.featuredAddcart, 1));
+    onAll('#featuredBookGrid .home-book-title', el => el.onclick = () => openBookModal(el.dataset.book));
+    onAll('#featuredBookGrid [data-wishlist]', el => el.onclick = (e) => { e.stopPropagation(); toggleWishlist(el.dataset.wishlist); });
+  } catch (e) {
+    console.error('renderFeaturedBooks error', e);
+    const grid = $('#featuredBookGrid');
+    if (grid) grid.innerHTML = createEmptyState('⚠️', 'Failed to Load', 'Unable to load featured books. Please try again later.', null, null);
+  }
 }
 
 async function renderHomeCatalog() {
@@ -475,6 +543,14 @@ async function renderCatalog(filter = '') {
     await loadBulkRatings(bookIds);
 
     const grid = $('#bookGrid'); if (!grid) return;
+
+    if (books.length === 0) {
+      grid.innerHTML = q
+        ? createEmptyState('🔍', 'No Books Found', `We couldn't find any books matching "${q}". Try a different search term.`, 'Clear Search', "document.querySelector('#clearSearchBtn').click()")
+        : createEmptyState('📚', 'No Books Available', 'The catalog is currently empty. Please check back later.', null, null);
+      return;
+    }
+
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
         <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
@@ -889,7 +965,10 @@ async function renderOrders() {
     orders = Array.isArray(orders) ? orders : (orders.orders || []);
     orders = dedupeOrders(orders);
 
-    if (!orders.length) { $('#ordersList') && ($('#ordersList').innerHTML = '<p class="muted">No orders yet.</p>'); return; }
+    if (!orders.length) {
+      $('#ordersList') && ($('#ordersList').innerHTML = createEmptyState('📦', 'No Orders Yet', 'Your order history will appear here once you make a purchase.', 'Start Shopping', "document.querySelector('[data-nav=catalog]').click()"));
+      return;
+    }
 
     const shipMap = { standard: 30, express: 70, priority: 120 };
 
@@ -1020,9 +1099,18 @@ async function renderLibrary() {
     }
 
     const libraryOwnedEl = $('#libraryOwned'), libraryRentedEl = $('#libraryRented'), libraryGiftsEl = $('#libraryGifts');
-    if (libraryOwnedEl) libraryOwnedEl.innerHTML = ownedCards.join('') || '<p class="muted">No purchased books yet.</p>';
-    if (libraryRentedEl) libraryRentedEl.innerHTML = rentedCards.join('') || '<p class="muted">No rentals yet.</p>';
-    if (libraryGiftsEl) libraryGiftsEl.innerHTML = giftCards.join('') || '<p class="muted">No gifts received yet.</p>';
+    if (libraryOwnedEl) {
+      libraryOwnedEl.innerHTML = ownedCards.length > 0 ? ownedCards.join('') :
+        createEmptyState('📚', 'No Books Yet', 'Your purchased books will appear here. Start building your collection!', 'Browse Catalog', "document.querySelector('[data-nav=catalog]').click()");
+    }
+    if (libraryRentedEl) {
+      libraryRentedEl.innerHTML = rentedCards.length > 0 ? rentedCards.join('') :
+        createEmptyState('⏱️', 'No Active Rentals', 'Rent books for 30 or 60 days and enjoy digital access.', 'Browse Catalog', "document.querySelector('[data-nav=catalog]').click()");
+    }
+    if (libraryGiftsEl) {
+      libraryGiftsEl.innerHTML = giftCards.length > 0 ? giftCards.join('') :
+        createEmptyState('🎁', 'No Gifts Received', 'Books gifted to you by friends will appear here.', null, null);
+    }
 
     // Render wishlist section
     await renderWishlistSection();
