@@ -3939,9 +3939,9 @@ section>.panel:first-child h2 {
 }
 
 /* ---------- Checkout Page ---------- */
-/* Step indicator and two-column layout */
+/* Redesigned with single-column centered layout */
 .checkout-container {
-    max-width: 1200px;
+    max-width: 900px;
     margin: 0 auto;
     padding: var(--space-xl);
 }
@@ -4008,10 +4008,9 @@ section>.panel:first-child h2 {
 }
 
 .checkout-content {
-    display: grid;
-    grid-template-columns: 1fr 400px;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-xl);
-    align-items: start;
 }
 
 .checkout-main {
@@ -4077,10 +4076,11 @@ section>.panel:first-child h2 {
     margin-bottom: var(--space-md);
 }
 
-/* Order Summary Sidebar */
+/* Order Summary Card */
 .checkout-sidebar {
-    position: sticky;
-    top: var(--space-xl);
+    width: 100%;
+    order: -1;
+    /* Move summary to top */
 }
 
 .summary-card {
@@ -4088,14 +4088,19 @@ section>.panel:first-child h2 {
             rgba(212, 175, 55, 0.05) 0%,
             rgba(139, 21, 56, 0.03) 100%);
     border: 1px solid rgba(212, 175, 55, 0.15);
+    position: relative;
+}
+
+.summary-card #btnPay {
+    margin-top: var(--space-lg);
 }
 
 .trust-badges {
     display: flex;
     justify-content: space-around;
     gap: var(--space-sm);
-    margin-top: var(--space-xl);
-    padding-top: var(--space-xl);
+    margin-top: var(--space-lg);
+    padding-top: var(--space-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -4268,14 +4273,6 @@ section>.panel:first-child h2 {
 
     .auth-hero {
         display: none;
-    }
-
-    .checkout-content {
-        grid-template-columns: 1fr;
-    }
-
-    .checkout-sidebar {
-        position: static;
     }
 
     .profile-container {
