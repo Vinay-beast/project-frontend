@@ -59,50 +59,194 @@
   </header>
 
   <main>
-    <section id="loginSection" class="hidden grid">
-      <div class="panel">
-        <h1>Sign in</h1>
-        <form id="formLogin" class="grid" autocomplete="off">
-          <div><label>Email</label><input type="email" name="email" required /></div>
-          <div><label>Password</label><input type="password" name="password" required /></div>
-          <div class="row">
-            <button class="btn" type="submit">Login</button>
-            <button id="switchToRegister" type="button" class="btn ghost">Create account</button>
+    <!-- Login Page with Split-Screen Design -->
+    <section id="loginSection" class="hidden auth-section">
+      <div class="auth-container">
+        <!-- Left: Hero Illustration & Benefits -->
+        <div class="auth-hero">
+          <div class="auth-hero-content">
+            <div class="auth-brand">
+              <div class="logo"></div>
+              <h2>BookNook</h2>
+            </div>
+            <h1 class="auth-hero-title">Welcome back to your literary escape</h1>
+            <p class="auth-hero-subtitle">Access thousands of books, manage your library, and continue your reading journey.</p>
+            
+            <!-- SVG Illustration: Books and Reading -->
+            <div class="auth-illustration">
+              <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <!-- Book stack illustration -->
+                <rect x="80" y="180" width="80" height="100" fill="#d4af37" opacity="0.2" rx="4"/>
+                <rect x="90" y="160" width="80" height="100" fill="#8b1538" opacity="0.3" rx="4"/>
+                <rect x="100" y="140" width="80" height="100" fill="#d4af37" opacity="0.4" rx="4"/>
+                <circle cx="280" cy="100" r="60" fill="#d4af37" opacity="0.1"/>
+                <circle cx="280" cy="100" r="45" fill="#d4af37" opacity="0.15"/>
+                <!-- Reading person silhouette -->
+                <circle cx="280" cy="90" r="20" fill="#8b1538" opacity="0.3"/>
+                <rect x="260" y="110" width="40" height="60" fill="#8b1538" opacity="0.3" rx="8"/>
+              </svg>
+            </div>
+            
+            <!-- Benefits List -->
+            <div class="auth-benefits">
+              <div class="auth-benefit">
+                <span class="benefit-icon">📚</span>
+                <div>
+                  <h4>Vast Collection</h4>
+                  <p>Thousands of books across genres</p>
+                </div>
+              </div>
+              <div class="auth-benefit">
+                <span class="benefit-icon">🎁</span>
+                <div>
+                  <h4>Gift Books</h4>
+                  <p>Share the joy of reading with friends</p>
+                </div>
+              </div>
+              <div class="auth-benefit">
+                <span class="benefit-icon">📱</span>
+                <div>
+                  <h4>Read Anywhere</h4>
+                  <p>Access your library on any device</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
-        <div class="divider"></div>
-        <button type="button" class="google-signin-btn">
-          <span class="google-icon"></span>
-          Sign in with Google
-        </button>
-
-        <p class="small muted">Tip: Create an account if you don't have one.</p>
+        </div>
+        
+        <!-- Right: Login Form -->
+        <div class="auth-form-panel">
+          <div class="auth-form-content">
+            <div class="auth-form-header">
+              <h1>Sign in</h1>
+              <p class="muted">Welcome back! Please sign in to continue</p>
+            </div>
+            
+            <form id="formLogin" class="auth-form" autocomplete="off">
+              <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" name="email" placeholder="your@email.com" required />
+              </div>
+              <div class="form-group">
+                <label>🔒 Password</label>
+                <input type="password" name="password" placeholder="Enter your password" required />
+              </div>
+              <button class="btn primary btn-block" type="submit">Sign In</button>
+            </form>
+            
+            <div class="auth-divider">
+              <span>or continue with</span>
+            </div>
+            
+            <button type="button" class="google-signin-btn btn-block">
+              <span class="google-icon"></span>
+              Sign in with Google
+            </button>
+            
+            <div class="auth-footer">
+              <p>Don't have an account? <button id="switchToRegister" type="button" class="link-btn">Create one</button></p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="registerSection" class="hidden grid">
-      <div class="panel">
-        <h1>Create account</h1>
-        <form id="formRegister" class="grid" autocomplete="off">
-          <div class="row">
-            <div><label>Full name</label><input name="name" required /></div>
-            <div><label>Email</label><input type="email" name="email" required /></div>
+    <!-- Register Page with Split-Screen Design -->
+    <section id="registerSection" class="hidden auth-section">
+      <div class="auth-container">
+        <!-- Left: Hero Illustration & Benefits -->
+        <div class="auth-hero">
+          <div class="auth-hero-content">
+            <div class="auth-brand">
+              <div class="logo"></div>
+              <h2>BookNook</h2>
+            </div>
+            <h1 class="auth-hero-title">Start your reading adventure today</h1>
+            <p class="auth-hero-subtitle">Join thousands of readers discovering their next favorite book.</p>
+            
+            <!-- SVG Illustration: Open Book -->
+            <div class="auth-illustration">
+              <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <!-- Open book illustration -->
+                <path d="M100,150 Q200,120 300,150 L300,230 Q200,200 100,230 Z" fill="#d4af37" opacity="0.2"/>
+                <path d="M100,150 Q200,180 300,150 L300,230 Q200,260 100,230 Z" fill="#8b1538" opacity="0.2"/>
+                <line x1="200" y1="120" x2="200" y2="260" stroke="#d4af37" stroke-width="2" opacity="0.3"/>
+                <!-- Stars for decoration -->
+                <circle cx="150" cy="80" r="3" fill="#d4af37" opacity="0.6"/>
+                <circle cx="250" cy="70" r="4" fill="#d4af37" opacity="0.5"/>
+                <circle cx="320" cy="90" r="3" fill="#d4af37" opacity="0.7"/>
+              </svg>
+            </div>
+            
+            <!-- Benefits List -->
+            <div class="auth-benefits">
+              <div class="auth-benefit">
+                <span class="benefit-icon">🛒</span>
+                <div>
+                  <h4>Buy or Rent</h4>
+                  <p>Flexible options for every reader</p>
+                </div>
+              </div>
+              <div class="auth-benefit">
+                <span class="benefit-icon">💾</span>
+                <div>
+                  <h4>Cloud Library</h4>
+                  <p>Your books, always accessible</p>
+                </div>
+              </div>
+              <div class="auth-benefit">
+                <span class="benefit-icon">⚡</span>
+                <div>
+                  <h4>Instant Access</h4>
+                  <p>Start reading immediately</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="row">
-            <div><label>Password</label><input type="password" name="password" minlength="6" required /></div>
-            <div><label>Phone</label><input name="phone" /></div>
+        </div>
+        
+        <!-- Right: Register Form -->
+        <div class="auth-form-panel">
+          <div class="auth-form-content">
+            <div class="auth-form-header">
+              <h1>Create account</h1>
+              <p class="muted">Join BookNook and start your reading journey</p>
+            </div>
+            
+            <form id="formRegister" class="auth-form" autocomplete="off">
+              <div class="form-group">
+                <label>👤 Full Name</label>
+                <input name="name" placeholder="John Doe" required />
+              </div>
+              <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" name="email" placeholder="your@email.com" required />
+              </div>
+              <div class="form-group">
+                <label>🔒 Password</label>
+                <input type="password" name="password" placeholder="Choose a strong password" minlength="6" required />
+              </div>
+              <div class="form-group">
+                <label>📱 Phone (optional)</label>
+                <input name="phone" placeholder="10-digit number" />
+              </div>
+              <button class="btn primary btn-block" type="submit">Create Account</button>
+            </form>
+            
+            <div class="auth-divider">
+              <span>or continue with</span>
+            </div>
+            
+            <button type="button" class="google-signin-btn btn-block">
+              <span class="google-icon"></span>
+              Sign up with Google
+            </button>
+            
+            <div class="auth-footer">
+              <p>Already have an account? <button id="switchToLogin" type="button" class="link-btn">Sign in</button></p>
+            </div>
           </div>
-          <div class="row">
-            <button class="btn primary" type="submit">Register</button>
-            <button id="switchToLogin" type="button" class="btn ghost">Back to login</button>
-          </div>
-        </form>
-        <div class="divider"></div>
-        <button type="button" class="google-signin-btn">
-          <span class="google-icon"></span>
-          Sign in with Google
-        </button>
-
+        </div>
       </div>
     </section>
 
@@ -401,103 +545,171 @@
     </div>
 
     <!-- Checkout -->
-    <section id="checkoutSection" class="hidden">
-      <div class="panel" style="max-width: 800px; margin: 0 auto;">
-        <h1>Checkout</h1>
-        <div id="ckItems"></div>
-        <div class="hr"></div>
-
-        <h3 data-icon="fulfillment">Fulfilment</h3>
-        <div class="row">
-          <div>
-            <label>Mode</label>
-            <select id="ckMode">
-              <option value="buy">Buy</option>
-              <option value="rent">Rent</option>
-              <option value="gift">Gift</option>
-            </select>
+    <!-- Checkout Page with Step Indicator -->\n    <section id="checkoutSection" class="hidden">
+      <div class="checkout-container">
+        <!-- Step Progress Indicator -->\n        <div class="checkout-steps">
+          <div class="step active">
+            <div class="step-icon">🛒</div>
+            <div class="step-label">Cart Items</div>
           </div>
-          <div id="rentBlock" class="hidden">
-            <label>Rental period</label>
-            <select id="ckRental">
-              <option value="30">30 days</option>
-              <option value="60">60 days</option>
-            </select>
+          <div class="step-line"></div>
+          <div class="step">
+            <div class="step-icon">📦</div>
+            <div class="step-label">Delivery</div>
           </div>
-          <div id="giftBlock" class="hidden">
-            <label>Recipient email</label>
-            <input id="ckGiftEmail" type="email" placeholder="friend@example.com" />
+          <div class="step-line"></div>
+          <div class="step">
+            <div class="step-icon">💳</div>
+            <div class="step-label">Payment</div>
           </div>
         </div>
-
-        <div class="hr"></div>
-        <div id="shippingWrap">
-          <h3 data-icon="shipping">Shipping</h3>
-          <div class="row">
-            <div>
-              <label>Saved addresses</label>
-              <select id="ckSavedAddr"></select>
-            </div>
-            <div>
-              <label>Shipping speed</label>
-              <select id="ckSpeed">
-                <option value="standard">Standard (₹30)</option>
-                <option value="express">Express (₹70)</option>
-                <option value="priority">Priority (₹120)</option>
-              </select>
-            </div>
-          </div>
-          <details style="margin-top:8px">
-            <summary class="small">Add new address</summary>
-            <div class="grid" style="margin-top:8px" id="ckNewAddr">
-              <div class="row">
-                <div><label>Label</label><input data-addr="label" placeholder="Home" /></div>
-                <div><label>Recipient</label><input data-addr="recipient" /></div>
+        
+        <div class="checkout-content">
+          <!-- Left Column: Checkout Forms -->\n          <div class="checkout-main">
+            <div class="panel checkout-section">
+              <div class="section-icon-header">
+                <span class="section-icon">🛒</span>
+                <h2>Your Items</h2>
               </div>
-              <div><label>Street</label><input data-addr="street" /></div>
-              <div class="row3">
-                <div><label>City</label><input data-addr="city" /></div>
-                <div><label>State</label><input data-addr="state" /></div>
-                <div><label>PIN</label><input data-addr="zip" /></div>
-              </div>
-              <button class="btn" id="btnSaveNewAddr" type="button">Save address</button>
+              <div id="ckItems"></div>
             </div>
-          </details>
-        </div>
 
-        <div class="hr"></div>
-        <h3 data-icon="payment">Payment</h3>
-        <div class="row">
-          <div>
-            <label>Method</label>
-            <select id="ckPayMethod">
-              <option value="razorpay">Online Payment (Cards, UPI, Wallets)</option>
-              <option value="cod">Cash on Delivery (+₹10)</option>
-            </select>
+            <div class="panel checkout-section">
+              <div class="section-icon-header">
+                <span class="section-icon">📋</span>
+                <h2>Fulfilment Options</h2>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Mode</label>
+                  <select id="ckMode" class="select-with-icon">
+                    <option value="buy">🛍️ Buy</option>
+                    <option value="rent">📖 Rent</option>
+                    <option value="gift">🎁 Gift</option>
+                  </select>
+                </div>
+                <div id="rentBlock" class="form-group hidden">
+                  <label>Rental period</label>
+                  <select id="ckRental">
+                    <option value="30">30 days</option>
+                    <option value="60">60 days</option>
+                  </select>
+                </div>
+                <div id="giftBlock" class="form-group hidden">
+                  <label>Recipient email</label>
+                  <input id="ckGiftEmail" type="email" placeholder="friend@example.com" />
+                </div>
+              </div>
+            </div>
+
+            <div id="shippingWrap" class="panel checkout-section">
+              <div class="section-icon-header">
+                <span class="section-icon">🚚</span>
+                <h2>Shipping Details</h2>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Saved addresses</label>
+                  <select id="ckSavedAddr"></select>
+                </div>
+                <div class="form-group">
+                  <label>Shipping speed</label>
+                  <select id="ckSpeed">
+                    <option value="standard">🚶 Standard (₹30)</option>
+                    <option value="express">🚴 Express (₹70)</option>
+                    <option value="priority">✈️ Priority (₹120)</option>
+                  </select>
+                </div>
+              </div>
+              <details class="address-details">
+                <summary class="small">+ Add new address</summary>
+                <div class="grid" style="margin-top:12px" id="ckNewAddr">
+                  <div class="form-row">
+                    <div class="form-group"><label>Label</label><input data-addr="label" placeholder="Home" /></div>
+                    <div class="form-group"><label>Recipient</label><input data-addr="recipient" /></div>
+                  </div>
+                  <div class="form-group"><label>Street</label><input data-addr="street" /></div>
+                  <div class="form-row">
+                    <div class="form-group"><label>City</label><input data-addr="city" /></div>
+                    <div class="form-group"><label>State</label><input data-addr="state" /></div>
+                    <div class="form-group"><label>PIN</label><input data-addr="zip" /></div>
+                  </div>
+                  <button class="btn" id="btnSaveNewAddr" type="button">Save address</button>
+                </div>
+              </details>
+            </div>
+
+            <div class="panel checkout-section">
+              <div class="section-icon-header">
+                <span class="section-icon">💳</span>
+                <h2>Payment Method</h2>
+              </div>
+              <div class="form-group">
+                <label>Choose payment method</label>
+                <select id="ckPayMethod">
+                  <option value="razorpay">💳 Online Payment (Cards, UPI, Wallets)</option>
+                  <option value="cod">💵 Cash on Delivery (+₹10)</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div class="hr"></div>
-        <div id="ckSummary"></div>
-        <div class="right">
-          <button class="btn primary" id="btnPay">Pay now</button>
+          
+          <!-- Right Column: Order Summary Card -->\n          <div class="checkout-sidebar">
+            <div class="panel summary-card">
+              <div class="section-icon-header">
+                <span class="section-icon">📊</span>
+                <h2>Order Summary</h2>
+              </div>
+              <div id="ckSummary"></div>
+              <button class="btn primary btn-block" id="btnPay">💰 Proceed to Payment</button>
+              
+              <!-- Trust Badges -->\n              <div class="trust-badges">
+                <div class="trust-badge">
+                  <span>🔒</span>
+                  <small>Secure Payment</small>
+                </div>
+                <div class="trust-badge">
+                  <span>✅</span>
+                  <small>Safe Checkout</small>
+                </div>
+                <div class="trust-badge">
+                  <span>📦</span>
+                  <small>Fast Delivery</small>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Orders -->
+    <!-- Orders Page with Enhanced Layout -->
     <section id="ordersSection" class="hidden">
-      <div class="panel">
-        <h1>Order history</h1>
-        <div id="ordersList"></div>
+      <div class="orders-container">
+        <div class="panel">
+          <div class="page-header">
+            <div>
+              <h1>📦 Order History</h1>
+              <p class="muted">Track all your purchases and shipments</p>
+            </div>
+          </div>
+          <div id="ordersList"></div>
+        </div>
       </div>
     </section>
 
-    <!-- Profile -->
-    <section id="profileSection" class="hidden grid two">
-      <div class="panel">
-        <h1>Profile</h1>
-        <div id="profileView"></div>
+    <!-- Profile Page with Enhanced Layout -->
+    <section id="profileSection" class="hidden profile-page">
+      <div class="profile-container">
+        <div class="panel">
+          <div class="page-header">
+            <div>
+              <h1>👤 Your Profile</h1>
+              <p class="muted">Manage your account settings and preferences</p>
+            </div>
+          </div>
+          <div id="profileView"></div>
         <div id="profileEdit" class="hidden">
           <div class="row">
             <div><label>Name</label><input id="peName" required minlength="2" maxlength="100" /></div>
@@ -505,7 +717,10 @@
           </div>
 
           <div class="hr"></div>
-          <h2>Change profile picture</h2>
+          <div class="section-icon-header">
+            <span class="section-icon">📸</span>
+            <h2>Change profile picture</h2>
+          </div>
           <div class="row">
             <div>
               <label>Upload image</label>
@@ -527,7 +742,10 @@
         </div>
         <div class="password-section">
           <div class="hr"></div>
-          <h2>Change password</h2>
+          <div class="section-icon-header">
+            <span class="section-icon">🔐</span>
+            <h2>Change password</h2>
+          </div>
           <div class="grid">
             <div class="row">
               <div><label>Current password</label><input type="password" id="cpCurrent" required minlength="6" /></div>
@@ -541,7 +759,10 @@
         </div>
       </div>
       <div class="panel">
-        <h1>Shipping Addresses</h1>
+        <div class="section-icon-header">
+          <span class="section-icon">📍</span>
+          <h1>Shipping Addresses</h1>
+        </div>
         <h2>Saved Addresses</h2>
         <div id="addrList" class="grid"></div>
         <form id="formAddress" class="grid" style="margin-top:8px">
@@ -555,8 +776,9 @@
             <div><label>State</label><input name="state" required minlength="2" maxlength="100" /></div>
             <div><label>PIN</label><input name="zip" required pattern="[0-9]{6}" placeholder="6-digit PIN" title="Please enter a 6-digit PIN code" /></div>
           </div>
-          <button class="btn primary" type="submit">Add address</button>
+          <button class="btn primary" type="submit">+ Add address</button>
         </form>
+      </div>
       </div>
     </section>
   </main>

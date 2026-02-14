@@ -3684,290 +3684,651 @@ section>.panel:first-child h2 {
     }
 }
 
-/* ---------- Login/Register Page Enhancements ---------- */
-#loginSection .panel,
-#registerSection .panel {
-    max-width: 480px;
-    margin: 0 auto;
+/* ========================================
+   🎨 UI/UX ENHANCEMENTS
+   Premium design patterns for modern pages
+   ======================================== */
+
+/* ---------- Authentication Pages ---------- */
+/* Split-screen layout with hero illustration and form panel */
+.auth-section {
+    display: flex;
+    min-height: 100vh;
+    align-items: stretch;
+}
+
+.auth-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Left side: Hero with illustration */
+.auth-hero {
+    background: linear-gradient(135deg,
+            rgba(212, 175, 55, 0.08) 0%,
+            rgba(139, 21, 56, 0.06) 100%);
+    padding: var(--space-2xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
     overflow: hidden;
 }
 
-#loginSection .panel::before,
-#registerSection .panel::before {
+.auth-hero::before {
     content: '';
     position: absolute;
     top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
-    pointer-events: none;
-    animation: float 6s ease-in-out infinite;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle,
+            rgba(212, 175, 55, 0.1) 0%,
+            transparent 60%);
+    animation: float 20s ease-in-out infinite;
 }
 
-#loginSection h1,
-#registerSection h1 {
-    font-family: 'Playfair Display', Georgia, serif;
+.auth-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 500px;
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.auth-brand h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--brand-primary);
+    margin: 0;
+}
+
+.auth-hero-title {
+    font-family: 'Playfair Display', serif;
     font-size: 2.5rem;
     font-weight: 700;
-    margin-bottom: var(--space-md);
-    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
+    line-height: 1.2;
+    margin: 0 0 var(--space-md) 0;
+    background: linear-gradient(135deg, var(--text-primary), var(--brand-primary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
-#loginSection form,
-#registerSection form {
-    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.auth-hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-2xl);
 }
 
-#loginSection form>div>label,
-#registerSection form>div>label {
+/* SVG Illustration styling */
+.auth-illustration {
+    margin: var(--space-xl) 0;
+    opacity: 0.9;
+    animation: float 10s ease-in-out infinite;
+}
+
+.auth-illustration svg {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+}
+
+/* Benefits list */
+.auth-benefits {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-top: var(--space-2xl);
+}
+
+.auth-benefit {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.auth-benefit:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(212, 175, 55, 0.2);
+    transform: translateX(4px);
+}
+
+.benefit-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.auth-benefit h4 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
     font-weight: 600;
-    color: var(--brand-primary);
-    margin-bottom: var(--space-xs);
+    color: var(--text-primary);
+}
+
+.auth-benefit p {
+    margin: 0;
     font-size: 0.9rem;
-    letter-spacing: 0.3px;
+    color: var(--text-muted);
 }
 
-#loginSection form input,
-#registerSection form input {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#loginSection form input:focus,
-#registerSection form input:focus {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--brand-primary);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-}
-
-.google-signin-btn {
+/* Right side: Form panel */
+.auth-form-panel {
+    background: var(--bg-secondary);
+    padding: var(--space-2xl);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
+}
+
+.auth-form-content {
     width: 100%;
-    padding: 12px 24px;
-    background: rgba(255, 255, 255, 0.05);
+    max-width: 420px;
+}
+
+.auth-form-header {
+    margin-bottom: var(--space-xl);
+}
+
+.auth-form-header h1 {
+    font-size: 2rem;
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.auth-form-header p {
+    margin: 0;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius);
+    border-radius: 8px;
     color: var(--text-primary);
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
-.google-signin-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
 }
 
-.divider {
-    position: relative;
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: var(--space-xl) 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
     height: 1px;
     background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-footer {
+    margin-top: var(--space-xl);
+    text-align: center;
+}
+
+.auth-footer p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    color: var(--brand-primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    font-size: inherit;
+    transition: color 0.2s;
+}
+
+.link-btn:hover {
+    color: var(--brand-secondary);
+}
+
+/* ---------- Checkout Page ---------- */
+/* Step indicator and two-column layout */
+.checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-xl);
+}
+
+.checkout-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
+    padding: var(--space-xl);
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.step.active {
+    opacity: 1;
+}
+
+.step-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-icon {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.step.active .step-label {
+    color: var(--brand-primary);
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    max-width: 100px;
+}
+
+.checkout-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: var(--space-xl);
+    align-items: start;
+}
+
+.checkout-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.checkout-section {
+    animation: fadeInUp 0.5s ease;
+}
+
+.section-icon-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.section-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+    font-size: 1.3rem;
+}
+
+.section-icon-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+}
+
+.address-details {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.address-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--brand-primary);
+    list-style: none;
+}
+
+.address-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.address-details[open] summary {
+    margin-bottom: var(--space-md);
+}
+
+/* Order Summary Sidebar */
+.checkout-sidebar {
+    position: sticky;
+    top: var(--space-xl);
+}
+
+.summary-card {
+    background: linear-gradient(135deg,
+            rgba(212, 175, 55, 0.05) 0%,
+            rgba(139, 21, 56, 0.03) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.trust-badges {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--space-sm);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trust-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    text-align: center;
+}
+
+.trust-badge span {
+    font-size: 1.5rem;
+}
+
+.trust-badge small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* ---------- Orders Page ---------- */
+.orders-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--space-xl);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-xl);
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    margin: 0 0 var(--space-xs) 0;
+}
+
+.page-header p {
+    margin: 0;
+}
+
+/* Order cards - enhanced in JS rendering */
+.order-card {
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    border-color: rgba(212, 175, 55, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.order-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.order-status.pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.order-status.completed {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.order-status.cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ---------- Profile Page ---------- */
+.profile-page {
+    display: block;
+}
+
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--space-xl);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+
+.profile-head {
+    display: flex;
+    gap: var(--space-lg);
+    align-items: flex-start;
+    padding: var(--space-lg);
+    background: rgba(212, 175, 55, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.profile-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.profile-meta>div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.profile-meta .muted {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Stats cards for profile */
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
     margin: var(--space-lg) 0;
 }
 
-.divider::after {
-    content: 'OR';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--bg-primary);
-    padding: 0 var(--space-sm);
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-/* ---------- Checkout Page Enhancements ---------- */
-#checkoutSection .panel {
-    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#checkoutSection h1 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 2.5rem;
-    margin-bottom: var(--space-xl);
-    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-#checkoutSection h3 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.4rem;
-    color: var(--text-primary);
-    margin-bottom: var(--space-md);
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-}
-
-#checkoutSection h3::before {
-    font-size: 1.8rem;
-}
-
-#checkoutSection h3[data-icon="fulfillment"]::before {
-    content: '📦';
-}
-
-#checkoutSection h3[data-icon="shipping"]::before {
-    content: '🚚';
-}
-
-#checkoutSection h3[data-icon="payment"]::before {
-    content: '💳';
-}
-
-#checkoutSection .hr {
-    border: none;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.3) 50%, transparent 100%);
-    margin: var(--space-xl) 0;
-}
-
-#checkoutSection select,
-#checkoutSection input {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#checkoutSection select:focus,
-#checkoutSection input:focus {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--brand-primary);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-}
-
-#checkoutSection details summary {
-    cursor: pointer;
-    color: var(--brand-primary);
-    font-weight: 600;
-    padding: var(--space-sm);
-    border-radius: var(--radius);
-    transition: background 0.2s;
-}
-
-#checkoutSection details summary:hover {
-    background: rgba(212, 175, 55, 0.1);
-}
-
-#ckSummary {
-    background: rgba(212, 175, 55, 0.05);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    border-radius: var(--radius);
+.stat-card {
     padding: var(--space-lg);
-    margin-bottom: var(--space-md);
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+    transition: all 0.3s ease;
 }
 
-/* ---------- Profile Page Enhancements ---------- */
-#profileSection .panel {
-    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#profileSection h1 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 2rem;
-    margin-bottom: var(--space-lg);
-    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-#profileSection h2 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.4rem;
-    color: var(--text-primary);
-    margin: var(--space-lg) 0 var(--space-md) 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-}
-
-#profileSection h2::before {
-    font-size: 1.6rem;
-}
-
-.password-section h2::before {
-    content: '🔒';
-}
-
-#profileSection h2:has(+ .row > div > #pePicFile)::before {
-    content: '📸';
-}
-
-#profileSection .panel:nth-child(2) h1::after {
-    content: ' 📍';
-}
-
-#profileSection .panel:nth-child(2) h2::before {
-    content: '🏠';
-}
-
-#profileSection .hr {
-    border: none;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.3) 50%, transparent 100%);
-    margin: var(--space-xl) 0;
-}
-
-#profileSection input,
-#profileSection select {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#profileSection input:focus,
-#profileSection select:focus {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--brand-primary);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-}
-
-#addrList .card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    padding: var(--space-md);
-    border-radius: var(--radius);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#addrList .card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--brand-primary);
+.stat-card:hover {
+    border-color: rgba(212, 175, 55, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
 }
 
-.avatar-lg {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 3px solid var(--brand-primary);
-    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
-}
-
-/* ---------- Orders Page Enhancements ---------- */
-#ordersSection h1 {
-    font-family: 'Playfair Display', Georgia, serif;
+.stat-card .stat-value {
     font-size: 2rem;
-    margin-bottom: var(--space-lg);
-    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-weight: 700;
+    color: var(--brand-primary);
+    margin: var(--space-sm) 0;
+}
+
+.stat-card .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ---------- Responsive Design ---------- */
+@media (max-width: 1024px) {
+    .auth-container {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-hero {
+        display: none;
+    }
+
+    .checkout-content {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-sidebar {
+        position: static;
+    }
+
+    .profile-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .checkout-steps {
+        padding: var(--space-md);
+        gap: var(--space-sm);
+    }
+
+    .step-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.2rem;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+    }
+
+    .step-line {
+        max-width: 40px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-form-panel,
+    .orders-container,
+    .checkout-container,
+    .profile-container {
+        padding: var(--space-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .checkout-steps {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .step-line {
+        width: 2px;
+        height: 24px;
+        max-width: none;
+        margin: 0 auto;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
 }
