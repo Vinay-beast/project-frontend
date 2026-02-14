@@ -3683,3 +3683,291 @@ section>.panel:first-child h2 {
         padding: var(--space-sm);
     }
 }
+
+/* ---------- Login/Register Page Enhancements ---------- */
+#loginSection .panel,
+#registerSection .panel {
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+#loginSection .panel::before,
+#registerSection .panel::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+}
+
+#loginSection h1,
+#registerSection h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+#loginSection form,
+#registerSection form {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#loginSection form>div>label,
+#registerSection form>div>label {
+    font-weight: 600;
+    color: var(--brand-primary);
+    margin-bottom: var(--space-xs);
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
+}
+
+#loginSection form input,
+#registerSection form input {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#loginSection form input:focus,
+#registerSection form input:focus {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.google-signin-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.google-signin-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.divider {
+    position: relative;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: var(--space-lg) 0;
+}
+
+.divider::after {
+    content: 'OR';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-primary);
+    padding: 0 var(--space-sm);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ---------- Checkout Page Enhancements ---------- */
+#checkoutSection .panel {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#checkoutSection h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.5rem;
+    margin-bottom: var(--space-xl);
+    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+#checkoutSection h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.4rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+#checkoutSection h3::before {
+    font-size: 1.8rem;
+}
+
+#checkoutSection h3[data-icon="fulfillment"]::before {
+    content: '📦';
+}
+
+#checkoutSection h3[data-icon="shipping"]::before {
+    content: '🚚';
+}
+
+#checkoutSection h3[data-icon="payment"]::before {
+    content: '💳';
+}
+
+#checkoutSection .hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.3) 50%, transparent 100%);
+    margin: var(--space-xl) 0;
+}
+
+#checkoutSection select,
+#checkoutSection input {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#checkoutSection select:focus,
+#checkoutSection input:focus {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+#checkoutSection details summary {
+    cursor: pointer;
+    color: var(--brand-primary);
+    font-weight: 600;
+    padding: var(--space-sm);
+    border-radius: var(--radius);
+    transition: background 0.2s;
+}
+
+#checkoutSection details summary:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+#ckSummary {
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-md);
+}
+
+/* ---------- Profile Page Enhancements ---------- */
+#profileSection .panel {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#profileSection h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    margin-bottom: var(--space-lg);
+    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+#profileSection h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.4rem;
+    color: var(--text-primary);
+    margin: var(--space-lg) 0 var(--space-md) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+#profileSection h2::before {
+    font-size: 1.6rem;
+}
+
+.password-section h2::before {
+    content: '🔒';
+}
+
+#profileSection h2:has(+ .row > div > #pePicFile)::before {
+    content: '📸';
+}
+
+#profileSection .panel:nth-child(2) h1::after {
+    content: ' 📍';
+}
+
+#profileSection .panel:nth-child(2) h2::before {
+    content: '🏠';
+}
+
+#profileSection .hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.3) 50%, transparent 100%);
+    margin: var(--space-xl) 0;
+}
+
+#profileSection input,
+#profileSection select {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#profileSection input:focus,
+#profileSection select:focus {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+#addrList .card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    padding: var(--space-md);
+    border-radius: var(--radius);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#addrList .card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--brand-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+}
+
+.avatar-lg {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--brand-primary);
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+}
+
+/* ---------- Orders Page Enhancements ---------- */
+#ordersSection h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    margin-bottom: var(--space-lg);
+    background: linear-gradient(135deg, var(--brand-primary) 0%, #f4e4b3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}

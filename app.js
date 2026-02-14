@@ -338,6 +338,11 @@ function createEmptyState(icon, title, description, actionText = null, actionHan
   `;
 }
 
+// ---------- UI Helper: Check if book is from Google Books ----------
+function isGoogleBook(book) {
+  return !!(book.google_books_id || book.google_book_id || book.googleBooksId);
+}
+
 // ---------- Wishlist ----------
 let USER_WISHLIST = new Set();
 
@@ -462,7 +467,7 @@ async function renderFeaturedBooks() {
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
         <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
-          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+          ${!isGoogleBook(b) ? `<button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>` : ''}
         </div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
         <h2 class="home-book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
@@ -506,7 +511,7 @@ async function renderHomeCatalog() {
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
         <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
-          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+          ${!isGoogleBook(b) ? `<button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>` : ''}
         </div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
         <h2 class="home-book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
@@ -554,7 +559,7 @@ async function renderCatalog(filter = '') {
     grid.innerHTML = books.map(b => `
       <div class="card book-card">
         <div class="book-cover" style="background-image:url('${b.image_url || b.cover || ''}')">
-          <button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>
+          ${!isGoogleBook(b) ? `<button class="wishlist-btn ${USER_WISHLIST.has(String(b.id)) ? 'wishlisted' : ''}" data-wishlist="${b.id}" title="${USER_WISHLIST.has(String(b.id)) ? 'Remove from wishlist' : 'Add to wishlist'}">${USER_WISHLIST.has(String(b.id)) ? '❤️' : '🤍'}</button>` : ''}
         </div>
         <div class="pillbar"><span class="tag small">${b.author || ''}</span><span class="tag small">Stock: ${b.stock ?? '-'}</span>${getRatingDisplay(b.id)}</div>
         <h2 class="book-title" data-book="${b.id}" style="cursor:pointer">${b.title}</h2>
