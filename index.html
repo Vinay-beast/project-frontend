@@ -12,7 +12,9 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <!-- Your stylesheet -->
   <link rel="stylesheet" href="styles.css" />
@@ -36,7 +38,13 @@
   </script>
 </head>
 
-<body>
+<body class="has-orbs">
+  <!-- Decorative floating background orbs -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
   <header>
     <div class="nav">
       <div class="brand">
@@ -70,23 +78,30 @@
               <h2>BookNook</h2>
             </div>
             <h1 class="auth-hero-title">Welcome back to your literary escape</h1>
-            <p class="auth-hero-subtitle">Access thousands of books, manage your library, and continue your reading journey.</p>
-            
+            <p class="auth-hero-subtitle">Access thousands of books, manage your library, and continue your reading
+              journey.</p>
+
             <!-- SVG Illustration: Books and Reading -->
             <div class="auth-illustration">
               <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-                <!-- Book stack illustration -->
-                <rect x="80" y="180" width="80" height="100" fill="#d4af37" opacity="0.2" rx="4"/>
-                <rect x="90" y="160" width="80" height="100" fill="#8b1538" opacity="0.3" rx="4"/>
-                <rect x="100" y="140" width="80" height="100" fill="#d4af37" opacity="0.4" rx="4"/>
-                <circle cx="280" cy="100" r="60" fill="#d4af37" opacity="0.1"/>
-                <circle cx="280" cy="100" r="45" fill="#d4af37" opacity="0.15"/>
-                <!-- Reading person silhouette -->
-                <circle cx="280" cy="90" r="20" fill="#8b1538" opacity="0.3"/>
-                <rect x="260" y="110" width="40" height="60" fill="#8b1538" opacity="0.3" rx="8"/>
+                <!-- Floating books -->
+                <rect x="80" y="180" width="80" height="100" fill="#6366f1" opacity="0.18" rx="6" />
+                <rect x="90" y="160" width="80" height="100" fill="#22d3ee" opacity="0.22" rx="6" />
+                <rect x="100" y="140" width="80" height="100" fill="#818cf8" opacity="0.35" rx="6" />
+                <!-- Glowing orb -->
+                <circle cx="280" cy="100" r="60" fill="#6366f1" opacity="0.08" />
+                <circle cx="280" cy="100" r="42" fill="#22d3ee" opacity="0.12" />
+                <!-- Person reading silhouette -->
+                <circle cx="280" cy="88" r="20" fill="#818cf8" opacity="0.28" />
+                <rect x="260" y="108" width="40" height="60" fill="#818cf8" opacity="0.22" rx="8" />
+                <!-- Sparkles -->
+                <circle cx="170" cy="70" r="3" fill="#22d3ee" opacity="0.8" />
+                <circle cx="145" cy="120" r="2" fill="#a78bfa" opacity="0.7" />
+                <circle cx="320" cy="160" r="4" fill="#818cf8" opacity="0.6" />
+                <circle cx="200" cy="50" r="2" fill="#22d3ee" opacity="0.9" />
               </svg>
             </div>
-            
+
             <!-- Benefits List -->
             <div class="auth-benefits">
               <div class="auth-benefit">
@@ -113,7 +128,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Right: Login Form -->
         <div class="auth-form-panel">
           <div class="auth-form-content">
@@ -121,7 +136,7 @@
               <h1>Sign in</h1>
               <p class="muted">Welcome back! Please sign in to continue</p>
             </div>
-            
+
             <form id="formLogin" class="auth-form" autocomplete="off">
               <div class="form-group">
                 <label>📧 Email</label>
@@ -133,18 +148,19 @@
               </div>
               <button class="btn primary btn-block" type="submit">Sign In</button>
             </form>
-            
+
             <div class="auth-divider">
               <span>or continue with</span>
             </div>
-            
+
             <button type="button" class="google-signin-btn btn-block">
               <span class="google-icon"></span>
               Sign in with Google
             </button>
-            
+
             <div class="auth-footer">
-              <p>Don't have an account? <button id="switchToRegister" type="button" class="link-btn">Create one</button></p>
+              <p>Don't have an account? <button id="switchToRegister" type="button" class="link-btn">Create one</button>
+              </p>
             </div>
           </div>
         </div>
@@ -163,21 +179,23 @@
             </div>
             <h1 class="auth-hero-title">Start your reading adventure today</h1>
             <p class="auth-hero-subtitle">Join thousands of readers discovering their next favorite book.</p>
-            
+
             <!-- SVG Illustration: Open Book -->
             <div class="auth-illustration">
               <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-                <!-- Open book illustration -->
-                <path d="M100,150 Q200,120 300,150 L300,230 Q200,200 100,230 Z" fill="#d4af37" opacity="0.2"/>
-                <path d="M100,150 Q200,180 300,150 L300,230 Q200,260 100,230 Z" fill="#8b1538" opacity="0.2"/>
-                <line x1="200" y1="120" x2="200" y2="260" stroke="#d4af37" stroke-width="2" opacity="0.3"/>
-                <!-- Stars for decoration -->
-                <circle cx="150" cy="80" r="3" fill="#d4af37" opacity="0.6"/>
-                <circle cx="250" cy="70" r="4" fill="#d4af37" opacity="0.5"/>
-                <circle cx="320" cy="90" r="3" fill="#d4af37" opacity="0.7"/>
+                <!-- Open book -->
+                <path d="M100,150 Q200,120 300,150 L300,230 Q200,200 100,230 Z" fill="#6366f1" opacity="0.18" />
+                <path d="M100,150 Q200,180 300,150 L300,230 Q200,260 100,230 Z" fill="#22d3ee" opacity="0.18" />
+                <line x1="200" y1="120" x2="200" y2="260" stroke="#818cf8" stroke-width="2" opacity="0.4" />
+                <!-- Stars -->
+                <circle cx="150" cy="80" r="3" fill="#818cf8" opacity="0.8" />
+                <circle cx="250" cy="70" r="4" fill="#22d3ee" opacity="0.7" />
+                <circle cx="320" cy="90" r="3" fill="#a78bfa" opacity="0.9" />
+                <circle cx="80" cy="110" r="2" fill="#22d3ee" opacity="0.7" />
+                <circle cx="350" cy="150" r="2" fill="#818cf8" opacity="0.6" />
               </svg>
             </div>
-            
+
             <!-- Benefits List -->
             <div class="auth-benefits">
               <div class="auth-benefit">
@@ -204,7 +222,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Right: Register Form -->
         <div class="auth-form-panel">
           <div class="auth-form-content">
@@ -212,7 +230,7 @@
               <h1>Create account</h1>
               <p class="muted">Join BookNook and start your reading journey</p>
             </div>
-            
+
             <form id="formRegister" class="auth-form" autocomplete="off">
               <div class="form-group">
                 <label>👤 Full Name</label>
@@ -232,16 +250,16 @@
               </div>
               <button class="btn primary btn-block" type="submit">Create Account</button>
             </form>
-            
+
             <div class="auth-divider">
               <span>or continue with</span>
             </div>
-            
+
             <button type="button" class="google-signin-btn btn-block">
               <span class="google-icon"></span>
               Sign up with Google
             </button>
-            
+
             <div class="auth-footer">
               <p>Already have an account? <button id="switchToLogin" type="button" class="link-btn">Sign in</button></p>
             </div>
@@ -341,7 +359,8 @@
         <div class="hero-content">
           <div class="hero-badge">✨ Your Premium Digital Library</div>
           <h1 class="hero-title">Welcome to BookNook</h1>
-          <p class="hero-subtitle">Discover, purchase, rent, or gift thousands of books. Your literary journey starts here.</p>
+          <p class="hero-subtitle">Discover, purchase, rent, or gift thousands of books. Your literary journey starts
+            here.</p>
           <div class="hero-features">
             <div class="hero-feature">
               <span class="hero-feature-icon">📚</span>
@@ -373,25 +392,29 @@
             </div>
           </div>
           <div class="hero-cta">
-            <button class="btn primary large" onclick="document.querySelector('[data-nav=catalog]').click()">Browse Catalog</button>
-            <button class="btn ghost large" onclick="document.querySelector('#shoppingAgentInput').focus()">Ask AI Assistant</button>
+            <button class="btn primary large" onclick="document.querySelector('[data-nav=catalog]').click()">Browse
+              Catalog</button>
+            <button class="btn ghost large" onclick="document.querySelector('#shoppingAgentInput').focus()">Ask AI
+              Assistant</button>
           </div>
         </div>
         <div class="hero-decoration">
           <!-- SVG book illustration -->
           <svg class="hero-svg" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="80" y="100" width="240" height="300" rx="8" fill="url(#bookGradient)" stroke="var(--brand-primary)" stroke-width="2"/>
-            <rect x="90" y="110" width="220" height="280" rx="4" fill="rgba(17, 24, 39, 0.6)"/>
-            <line x1="90" y1="150" x2="280" y2="150" stroke="var(--brand-primary)" stroke-width="1" opacity="0.3"/>
-            <line x1="90" y1="180" x2="250" y2="180" stroke="var(--text-muted)" stroke-width="1" opacity="0.2"/>
-            <line x1="90" y1="210" x2="270" y2="210" stroke="var(--text-muted)" stroke-width="1" opacity="0.2"/>
-            <line x1="90" y1="240" x2="240" y2="240" stroke="var(--text-muted)" stroke-width="1" opacity="0.2"/>
-            <circle cx="200" cy="320" r="30" fill="var(--brand-primary)" opacity="0.2"/>
-            <path d="M190 320 L198 328 L215 308" stroke="var(--brand-primary)" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <rect x="80" y="100" width="240" height="300" rx="8" fill="url(#bookGradient)" stroke="var(--brand-primary)"
+              stroke-width="2" />
+            <rect x="90" y="110" width="220" height="280" rx="4" fill="rgba(17, 24, 39, 0.6)" />
+            <line x1="90" y1="150" x2="280" y2="150" stroke="var(--brand-primary)" stroke-width="1" opacity="0.3" />
+            <line x1="90" y1="180" x2="250" y2="180" stroke="var(--text-muted)" stroke-width="1" opacity="0.2" />
+            <line x1="90" y1="210" x2="270" y2="210" stroke="var(--text-muted)" stroke-width="1" opacity="0.2" />
+            <line x1="90" y1="240" x2="240" y2="240" stroke="var(--text-muted)" stroke-width="1" opacity="0.2" />
+            <circle cx="200" cy="320" r="30" fill="var(--brand-primary)" opacity="0.2" />
+            <path d="M190 320 L198 328 L215 308" stroke="var(--brand-primary)" stroke-width="3" stroke-linecap="round"
+              fill="none" />
             <defs>
               <linearGradient id="bookGradient" x1="80" y1="100" x2="320" y2="400">
-                <stop offset="0%" stop-color="rgba(212, 175, 55, 0.2)"/>
-                <stop offset="100%" stop-color="rgba(139, 21, 56, 0.2)"/>
+                <stop offset="0%" stop-color="rgba(212, 175, 55, 0.2)" />
+                <stop offset="100%" stop-color="rgba(139, 21, 56, 0.2)" />
               </linearGradient>
             </defs>
           </svg>
@@ -399,27 +422,32 @@
       </div>
 
       <!-- 🤖 AI Shopping Agent -->
-      <div class="panel" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3);">
+      <div class="panel"
+        style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3);">
         <div class="pillbar" style="justify-content:space-between;align-items:center">
           <h2 style="margin:0">🤖 AI Shopping Assistant</h2>
           <span class="tag small">Try it!</span>
         </div>
         <p class="muted small" style="margin-top:8px">Tell me what you'd like in natural language!</p>
-        
+
         <div id="shoppingAgentSuggestions" class="pillbar" style="margin-bottom:12px;flex-wrap:wrap;gap:6px">
           <button class="btn ghost small shopping-suggestion" data-query="buy Clean Code book">💰 Buy</button>
           <button class="btn ghost small shopping-suggestion" data-query="buy with express delivery">🚀 Express</button>
-          <button class="btn ghost small shopping-suggestion" data-query="rent Atomic Habits for 30 days">📅 Rent 30d</button>
+          <button class="btn ghost small shopping-suggestion" data-query="rent Atomic Habits for 30 days">📅 Rent
+            30d</button>
           <button class="btn ghost small shopping-suggestion" data-query="rent for 60 days">📅 Rent 60d</button>
-          <button class="btn ghost small shopping-suggestion" data-query="gift Sapiens to friend@example.com">🎁 Gift</button>
+          <button class="btn ghost small shopping-suggestion" data-query="gift Sapiens to friend@example.com">🎁
+            Gift</button>
         </div>
 
         <div class="searchbar" style="margin-bottom:12px">
-          <input id="shoppingAgentInput" placeholder='Try: "buy Clean Code with express delivery" or "rent for 60 days"' />
+          <input id="shoppingAgentInput"
+            placeholder='Try: "buy Clean Code with express delivery" or "rent for 60 days"' />
           <button id="shoppingAgentBtn" class="btn primary">Ask AI</button>
         </div>
 
-        <div id="shoppingAgentResponse" class="hidden" style="padding:12px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.1)">
+        <div id="shoppingAgentResponse" class="hidden"
+          style="padding:12px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.1)">
           <div id="shoppingAgentMessage"></div>
           <div id="shoppingAgentAction" class="hidden" style="margin-top:12px"></div>
         </div>
@@ -449,7 +477,8 @@
             <h2 class="section-title">Featured This Month</h2>
             <p class="section-subtitle">Curated selection of must-read books</p>
           </div>
-          <button class="btn ghost small" onclick="document.querySelector('[data-nav=catalog]').click()">View All →</button>
+          <button class="btn ghost small" onclick="document.querySelector('[data-nav=catalog]').click()">View All
+            →</button>
         </div>
         <div id="featuredBookGrid" class="cards"></div>
       </div>
@@ -461,7 +490,8 @@
             <h2 class="section-title">Browse Catalog</h2>
             <p class="section-subtitle">Explore our complete library</p>
           </div>
-          <button class="btn ghost small" onclick="document.querySelector('[data-nav=catalog]').click()">See More →</button>
+          <button class="btn ghost small" onclick="document.querySelector('[data-nav=catalog]').click()">See More
+            →</button>
         </div>
         <div id="homeBookGrid" class="cards"></div>
       </div>
@@ -564,7 +594,7 @@
             <div class="step-label">Payment</div>
           </div>
         </div>
-        
+
         <div class="checkout-content">
           <div class="checkout-main">
             <div class="panel checkout-section">
@@ -654,7 +684,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="checkout-sidebar">
             <div class="panel summary-card">
               <div class="section-icon-header">
@@ -663,7 +693,7 @@
               </div>
               <div id="ckSummary"></div>
               <button class="btn primary btn-block" id="btnPay">💰 Proceed to Payment</button>
-              
+
               <div class="trust-badges">
                 <div class="trust-badge">
                   <span>🔒</span>
@@ -711,75 +741,80 @@
             </div>
           </div>
           <div id="profileView"></div>
-        <div id="profileEdit" class="hidden">
-          <div class="row">
-            <div><label>Name</label><input id="peName" required minlength="2" maxlength="100" /></div>
-            <div><label>Phone</label><input id="pePhone" type="tel" pattern="[0-9]{10}" placeholder="10-digit number" title="Please enter a 10-digit phone number" /></div>
-          </div>
-
-          <div class="hr"></div>
-          <div class="section-icon-header">
-            <span class="section-icon">📸</span>
-            <h2>Change profile picture</h2>
-          </div>
-          <div class="row">
-            <div>
-              <label>Upload image</label>
-              <input type="file" id="pePicFile" accept="image/*" />
-            </div>
-            <div>
-              <label>Or image URL</label>
-              <input type="url" id="pePicUrl" placeholder="https://..." />
-            </div>
-          </div>
-          <div class="mt-8">
-            <div class="avatar-lg" id="pePicPreview"></div>
-          </div>
-
-          <div class="pillbar mt-8">
-            <button id="peSave" class="btn primary">Save</button>
-            <button id="peCancel" class="btn ghost">Cancel</button>
-          </div>
-        </div>
-        <div class="password-section">
-          <div class="hr"></div>
-          <div class="section-icon-header">
-            <span class="section-icon">🔐</span>
-            <h2>Change password</h2>
-          </div>
-          <div class="grid">
+          <div id="profileEdit" class="hidden">
             <div class="row">
-              <div><label>Current password</label><input type="password" id="cpCurrent" required minlength="6" /></div>
-              <div><label>New password</label><input type="password" id="cpNew" required minlength="6" /></div>
+              <div><label>Name</label><input id="peName" required minlength="2" maxlength="100" /></div>
+              <div><label>Phone</label><input id="pePhone" type="tel" pattern="[0-9]{10}" placeholder="10-digit number"
+                  title="Please enter a 10-digit phone number" /></div>
+            </div>
+
+            <div class="hr"></div>
+            <div class="section-icon-header">
+              <span class="section-icon">📸</span>
+              <h2>Change profile picture</h2>
             </div>
             <div class="row">
-              <div><label>Confirm new password</label><input type="password" id="cpConfirm" required minlength="6" /></div>
-              <div class="right"><button id="cpSave" class="btn">Update password</button></div>
+              <div>
+                <label>Upload image</label>
+                <input type="file" id="pePicFile" accept="image/*" />
+              </div>
+              <div>
+                <label>Or image URL</label>
+                <input type="url" id="pePicUrl" placeholder="https://..." />
+              </div>
+            </div>
+            <div class="mt-8">
+              <div class="avatar-lg" id="pePicPreview"></div>
+            </div>
+
+            <div class="pillbar mt-8">
+              <button id="peSave" class="btn primary">Save</button>
+              <button id="peCancel" class="btn ghost">Cancel</button>
+            </div>
+          </div>
+          <div class="password-section">
+            <div class="hr"></div>
+            <div class="section-icon-header">
+              <span class="section-icon">🔐</span>
+              <h2>Change password</h2>
+            </div>
+            <div class="grid">
+              <div class="row">
+                <div><label>Current password</label><input type="password" id="cpCurrent" required minlength="6" />
+                </div>
+                <div><label>New password</label><input type="password" id="cpNew" required minlength="6" /></div>
+              </div>
+              <div class="row">
+                <div><label>Confirm new password</label><input type="password" id="cpConfirm" required minlength="6" />
+                </div>
+                <div class="right"><button id="cpSave" class="btn">Update password</button></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="panel">
-        <div class="section-icon-header">
-          <span class="section-icon">📍</span>
-          <h1>Shipping Addresses</h1>
+        <div class="panel">
+          <div class="section-icon-header">
+            <span class="section-icon">📍</span>
+            <h1>Shipping Addresses</h1>
+          </div>
+          <h2>Saved Addresses</h2>
+          <div id="addrList" class="grid"></div>
+          <form id="formAddress" class="grid" style="margin-top:8px">
+            <div class="row">
+              <div><label>Label</label><input name="label" placeholder="Home / Office" required minlength="2"
+                  maxlength="50" /></div>
+              <div><label>Recipient</label><input name="recipient" required minlength="2" maxlength="100" /></div>
+            </div>
+            <div><label>Street</label><input name="street" required minlength="5" maxlength="200" /></div>
+            <div class="row3">
+              <div><label>City</label><input name="city" required minlength="2" maxlength="100" /></div>
+              <div><label>State</label><input name="state" required minlength="2" maxlength="100" /></div>
+              <div><label>PIN</label><input name="zip" required pattern="[0-9]{6}" placeholder="6-digit PIN"
+                  title="Please enter a 6-digit PIN code" /></div>
+            </div>
+            <button class="btn primary" type="submit">+ Add address</button>
+          </form>
         </div>
-        <h2>Saved Addresses</h2>
-        <div id="addrList" class="grid"></div>
-        <form id="formAddress" class="grid" style="margin-top:8px">
-          <div class="row">
-            <div><label>Label</label><input name="label" placeholder="Home / Office" required minlength="2" maxlength="50" /></div>
-            <div><label>Recipient</label><input name="recipient" required minlength="2" maxlength="100" /></div>
-          </div>
-          <div><label>Street</label><input name="street" required minlength="5" maxlength="200" /></div>
-          <div class="row3">
-            <div><label>City</label><input name="city" required minlength="2" maxlength="100" /></div>
-            <div><label>State</label><input name="state" required minlength="2" maxlength="100" /></div>
-            <div><label>PIN</label><input name="zip" required pattern="[0-9]{6}" placeholder="6-digit PIN" title="Please enter a 6-digit PIN code" /></div>
-          </div>
-          <button class="btn primary" type="submit">+ Add address</button>
-        </form>
-      </div>
       </div>
     </section>
   </main>
