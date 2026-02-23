@@ -2724,6 +2724,9 @@ on('#btnReset', 'click', () => { CART = []; renderCartIcon(); if (AUTH.token) { 
     // Initialize AI Chat Widget
     initAIChat();
 
+    // Initialize Resolution Agent Widget
+    initResolutionAgent();
+
   } catch (err) { console.error('init error', err); toast('App initialization failed — check console'); }
 })();
 
@@ -2956,6 +2959,249 @@ window.viewBookFromChat = async (bookId) => {
   } catch (err) {
     console.error('Failed to view book:', err);
     toast('Failed to load book details');
+  }
+};
+
+// ============================================
+// RESOLUTION AGENT WIDGET (4-Agent Pipeline)
+// ============================================
+
+function initResolutionAgent() {
+  const toggle = $('#resolutionToggle');
+  const window_ = $('#resolutionWindow');
+  const close = $('#resolutionClose');
+  const input = $('#resolutionInput');
+  const sendBtn = $('#resolutionSend');
+  const demoBtn = $('#resolutionDemoBtn');
+
+  if (!toggle || !window_) return;
+
+  // Toggle widget
+  toggle.onclick = () => {
+    window_.classList.remove('hidden');
+    toggle.classList.add('active');
+    input?.focus();
+  };
+
+  // Close widget
+  close.onclick = () => {
+    window_.classList.add('hidden');
+    toggle.classList.remove('active');
+  };
+
+  // Quick action buttons
+  document.querySelectorAll('.resolution-quick-btn').forEach(btn => {
+    btn.onclick = () => {
+      const query = btn.dataset.query;
+      if (query) {
+        input.value = query;
+        sendResolutionMessage();
+      }
+    };
+  });
+
+  // Demo: Simulate Payment Failure
+  demoBtn.onclick = async () => {
+    if (!AUTH.token) {
+      addResolutionMessage('bot', 'Please <strong>login first</strong> to use the demo feature.');
+      return;
+    }
+
+    demoBtn.disabled = true;
+    demoBtn.textContent = '⏳ Simulating...';
+
+    try {
+      const result = await Api.simulatePaymentFailure(AUTH.token);
+      if (result.success) {
+        addResolutionMessage('bot',
+          `✅ <strong>Demo payment failure created!</strong><br><br>` +
+          `📕 Book: <strong>${result.order.book}</strong><br>` +
+          `💰 Amount: ₹${result.order.amount}<br>` +
+          `🔴 Status: Payment Failed<br><br>` +
+          `Now try asking me: <em>"My payment was deducted but order not placed"</em>`
+        );
+        // Pulse the toggle to indicate there's an issue
+        toggle.classList.add('has-issues');
+      } else {
+        addResolutionMessage('bot', '❌ Could not simulate failure. ' + (result.message || ''));
+      }
+    } catch (err) {
+      console.error('Demo simulate error:', err);
+      addResolutionMessage('bot', '❌ Demo simulation failed. Please try again.');
+    }
+
+    demoBtn.disabled = false;
+    demoBtn.textContent = '⚠️ Simulate Payment Failure (Demo)';
+  };
+
+  // Send message
+  const sendResolutionMessage = async () => {
+    const message = input?.value?.trim();
+    if (!message) return;
+
+    if (!AUTH.token) {
+      addResolutionMessage('bot', 'Please <strong>login first</strong> to get support.');
+      return;
+    }
+
+    // Add user message
+    addResolutionMessage('user', message);
+    input.value = '';
+
+    // Show typing
+    const typingId = showResolutionTyping();
+
+    try {
+      const response = await Api.processResolutionQuery(AUTH.token, message);
+
+      removeResolutionTyping(typingId);
+
+      if (response.success) {
+        // Build the response HTML
+        let html = response.message;
+
+        // Add action button if needed
+        if (response.showActionButton && response.failedOrders?.length > 0) {
+          const orderId = response.failedOrders[0].id;
+          html += `<br><button class="resolution-action-btn" onclick="resolvePaymentFromChat(${orderId})">
+            ${response.actionButtonText || '🔧 Resolve Payment'}
+          </button>`;
+        }
+
+        addResolutionMessage('bot', html, response.agentInsights);
+      } else {
+        addResolutionMessage('bot', 'Sorry, I encountered an issue. Please try again.');
+      }
+    } catch (err) {
+      removeResolutionTyping(typingId);
+      console.error('Resolution Agent error:', err);
+      addResolutionMessage('bot', '❌ Something went wrong. Please try again.');
+    }
+  };
+
+  sendBtn.onclick = sendResolutionMessage;
+  input.onkeypress = (e) => {
+    if (e.key === 'Enter') sendResolutionMessage();
+  };
+}
+
+// Add message to resolution chat
+function addResolutionMessage(type, content, agentInsights = null) {
+  const container = $('#resolutionMessages');
+  if (!container) return;
+
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `resolution-msg ${type}`;
+
+  let html = `<div class="resolution-msg-content">${content}`;
+
+  // Add agent insights panel
+  if (agentInsights) {
+    html += '<div class="resolution-agents-panel">';
+    html += '<div class="resolution-agents-title">🛡️ 4-Agent Analysis Pipeline</div>';
+    html += '<div class="resolution-agents-list">';
+
+    if (agentInsights.intent) {
+      const i = agentInsights.intent;
+      html += `<div class="resolution-agent-item">
+        <span class="resolution-agent-name">${i.agent || '🎯 Intent Classifier'}</span>
+        <span class="resolution-agent-output">Category: ${i.category || 'N/A'} | Urgency: ${i.urgency || 'N/A'}${i.reasoning ? ' — ' + i.reasoning : ''}</span>
+      </div>`;
+    }
+
+    if (agentInsights.dataRetrieval) {
+      const d = agentInsights.dataRetrieval;
+      html += `<div class="resolution-agent-item">
+        <span class="resolution-agent-name">${d.agent || '🔍 Data Retrieval'}</span>
+        <span class="resolution-agent-output">Pulled: ${(d.dataPulled || []).join(', ') || 'N/A'} | Priority: ${d.priorityData || 'N/A'}</span>
+      </div>`;
+    }
+
+    if (agentInsights.resolution) {
+      const r = agentInsights.resolution;
+      html += `<div class="resolution-agent-item">
+        <span class="resolution-agent-name">${r.agent || '⚡ Resolution Engine'}</span>
+        <span class="resolution-agent-output">Action: ${r.action || 'N/A'} | Confidence: ${r.confidence || 'N/A'}${r.details ? ' — ' + r.details : ''}</span>
+      </div>`;
+    }
+
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+  msgDiv.innerHTML = html;
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+// Typing indicator for resolution chat
+function showResolutionTyping() {
+  const container = $('#resolutionMessages');
+  if (!container) return null;
+
+  const id = 'resolution-typing-' + Date.now();
+  const typingDiv = document.createElement('div');
+  typingDiv.id = id;
+  typingDiv.className = 'resolution-msg bot';
+  typingDiv.innerHTML = `
+    <div class="resolution-msg-content">
+      <div class="resolution-typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  `;
+  container.appendChild(typingDiv);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeResolutionTyping(id) {
+  if (id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+}
+
+// Resolve payment from chat action button
+window.resolvePaymentFromChat = async (orderId) => {
+  if (!AUTH.token) return;
+
+  // Find and disable the button
+  const btns = document.querySelectorAll('.resolution-action-btn');
+  btns.forEach(b => { b.disabled = true; b.textContent = '⏳ Resolving...'; });
+
+  try {
+    const result = await Api.resolvePayment(AUTH.token, orderId);
+
+    if (result.success && result.resolved) {
+      addResolutionMessage('bot',
+        `✅ <strong>Payment issue resolved!</strong><br><br>` +
+        `Your order #${result.order.id} is now being processed.<br>` +
+        `💰 Amount: ₹${result.order.total}<br>` +
+        `📦 Status: ${result.order.new_status}<br>` +
+        `🚚 Estimated delivery: ${new Date(result.order.delivery_eta).toLocaleDateString()}<br><br>` +
+        `Your order will appear in your <strong>Orders</strong> section.`
+      );
+
+      // Update button to show resolved
+      btns.forEach(b => {
+        b.textContent = '✅ Resolved!';
+        b.classList.add('resolved');
+      });
+
+      // Remove pulse from toggle
+      $('#resolutionToggle')?.classList.remove('has-issues');
+    } else if (result.already_resolved) {
+      addResolutionMessage('bot', '✅ This order was already resolved!');
+      btns.forEach(b => { b.textContent = '✅ Already Resolved'; b.classList.add('resolved'); });
+    } else {
+      addResolutionMessage('bot', result.message || 'Your issue has been escalated to our support team.');
+      btns.forEach(b => { b.textContent = '📩 Escalated'; b.disabled = false; });
+    }
+  } catch (err) {
+    console.error('Resolve payment error:', err);
+    addResolutionMessage('bot', '❌ Failed to resolve. Please try again.');
+    btns.forEach(b => { b.disabled = false; b.textContent = '🔧 Resolve Payment'; });
   }
 };
 

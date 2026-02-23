@@ -488,6 +488,27 @@
         return await GET('/shopping-agent/suggestions');
     }
 
+    // Resolution Agent Functions
+    async function processResolutionQuery(token, query) {
+        return await POST('/resolution-agent/process', { query }, { token });
+    }
+
+    async function simulatePaymentFailure(token) {
+        return await POST('/resolution-agent/demo/simulate-failure', {}, { token });
+    }
+
+    async function getPaymentIssues(token) {
+        return await GET('/resolution-agent/payment-issues', { token });
+    }
+
+    async function resolvePayment(token, orderId) {
+        return await POST(`/resolution-agent/resolve-payment/${orderId}`, {}, { token });
+    }
+
+    async function getLastOrder(token) {
+        return await GET('/resolution-agent/last-order', { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -508,6 +529,7 @@
         searchGoogleBooks, getGoogleBookDetails, importGoogleBook, bulkImportGoogleBooks,
         chatRecommendation, getPersonalizedRecommendations, getSimilarBooks,
         processShoppingQuery, getShoppingSuggestions,
+        processResolutionQuery, simulatePaymentFailure, getPaymentIssues, resolvePayment, getLastOrder,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();

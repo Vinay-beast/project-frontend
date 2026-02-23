@@ -945,6 +945,52 @@
     </div>
   </div>
 
+  <!-- Resolution Agent Widget (Bottom-Left) -->
+  <div id="resolutionWidget" class="resolution-widget">
+    <button id="resolutionToggle" class="resolution-toggle" title="Support & Resolution Agent">
+      🛡️
+    </button>
+    <div id="resolutionWindow" class="resolution-window hidden">
+      <div class="resolution-header">
+        <div class="resolution-title">
+          <span class="resolution-avatar">🛡️</span>
+          <div>
+            <strong>Resolution Agent</strong>
+            <span class="resolution-status">● 4 Agents Ready</span>
+          </div>
+        </div>
+        <button id="resolutionClose" class="resolution-close">×</button>
+      </div>
+      <div id="resolutionMessages" class="resolution-messages">
+        <div class="resolution-msg bot">
+          <div class="resolution-msg-content">
+            Hi! I'm your <strong>AI Resolution Agent</strong>. I can help with:
+            <br><br>
+            🔴 <strong>Payment issues</strong> — money deducted but order not placed<br>
+            📦 <strong>Order status</strong> — track delivery & ETA<br>
+            🕐 <strong>Last order</strong> — view your most recent order
+            <br><br>
+            <em>Try: "My payment was deducted but order failed"</em>
+          </div>
+        </div>
+      </div>
+      <div class="resolution-quick-actions">
+        <button class="resolution-quick-btn" data-query="My payment was deducted but my order was not placed">💳 Payment Issue</button>
+        <button class="resolution-quick-btn" data-query="What is the status of my last order?">📦 Order Status</button>
+        <button class="resolution-quick-btn" data-query="Show me my last order details">🕐 Last Order</button>
+      </div>
+      <div class="resolution-demo-bar">
+        <button id="resolutionDemoBtn" class="resolution-demo-btn" title="Creates a fake failed payment order for demo">
+          ⚠️ Simulate Payment Failure (Demo)
+        </button>
+      </div>
+      <div class="resolution-input">
+        <input type="text" id="resolutionInput" placeholder="Describe your issue..." />
+        <button id="resolutionSend" class="btn primary">Send</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts: API first, then your app logic -->
   <script src="api.js"></script>
   <script src="pdf-reader.js"></script>
