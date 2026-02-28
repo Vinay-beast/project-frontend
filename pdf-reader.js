@@ -121,12 +121,27 @@ class SecurePDFReader {
                         <button id="prevPage" disabled>← Previous</button>
                         <span id="pageInfo">Page 1 of ${this.totalPages}</span>
                         <button id="nextPage" ${this.totalPages <= 1 ? 'disabled' : ''}>Next →</button>
+                        <button id="generateSummary" class="summary-btn" title="AI Summary">📝 Summary</button>
                     </div>
                 </div>
                 <div class="pdf-canvas-container">
                     <canvas id="pdfCanvas"></canvas>
                     <div class="reading-overlay">
                         <div class="watermark">BookNook - Licensed Copy</div>
+                    </div>
+                </div>
+                <div id="summaryPanel" class="summary-panel hidden">
+                    <div class="summary-header">
+                        <h4>📚 AI Book Summary</h4>
+                        <button id="closeSummary" class="close-btn">×</button>
+                    </div>
+                    <div id="summaryContent" class="summary-content">
+                        <p class="summary-placeholder">Click "Generate" to create an AI summary</p>
+                    </div>
+                    <div class="summary-controls">
+                        <label>Pages: <input type="number" id="summaryStartPage" min="1" value="1" style="width:60px"> to 
+                        <input type="number" id="summaryEndPage" min="1" value="${this.totalPages}" style="width:60px"></label>
+                        <button id="generateSummaryBtn" class="btn-primary">🤖 Generate Summary</button>
                     </div>
                 </div>
                 <div class="reader-footer">
@@ -138,6 +153,9 @@ class SecurePDFReader {
         // Add event listeners
         document.getElementById('prevPage').addEventListener('click', () => this.previousPage());
         document.getElementById('nextPage').addEventListener('click', () => this.nextPage());
+        document.getElementById('generateSummary').addEventListener('click', () => this.toggleSummaryPanel());
+        document.getElementById('closeSummary').addEventListener('click', () => this.toggleSummaryPanel());
+        document.getElementById('generateSummaryBtn').addEventListener('click', () => this.generateSummary());
     }
 
     async renderPage(pageNum) {
@@ -201,6 +219,91 @@ class SecurePDFReader {
         } catch (e) {
             console.warn('Could not save reading progress:', e);
         }
+    }
+
+    toggleSummaryPanel() {
+        const panel = document.getElementById('summaryPanel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+        }
+    }
+
+    async generateSummary() {
+        if (!this.authToken || !this.bookId) {
+            alert('Please log in to generate summaries');
+            return;
+        }
+
+        const startPage = parseInt(document.getElementById('summaryStartPage').value) || 1;
+        const endPage = parseInt(document.getElementById('summaryEndPage').value) || this.totalPages;
+        const contentDiv = document.getElementById('summaryContent');
+        const generateBtn = document.getElementById('generateSummaryBtn');
+
+        // Validate page range
+        if (startPage < 1 || endPage > this.totalPages || startPage > endPage) {
+            alert(`Please enter a valid page range (1 to ${this.totalPages})`);
+            return;
+        }
+
+        // Show loading state
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generating...';
+        contentDiv.innerHTML = `
+            <div class="summary-loading">
+                <p>🤖 AI is reading pages ${startPage} to ${endPage}...</p>
+                <p class="small muted">This may take 10-30 seconds</p>
+                <div class="loading-spinner"></div>
+            </div>
+        `;
+
+        try {
+            const result = await Api.generateBookSummary(this.authToken, this.bookId, startPage, endPage);
+
+            if (result && result.summary) {
+                // Convert markdown-style formatting to HTML
+                const formattedSummary = this.formatSummary(result.summary);
+                contentDiv.innerHTML = `
+                    <div class="summary-result">
+                        <div class="summary-meta">
+                            <strong>${result.bookTitle}</strong> - ${result.pageRange}
+                        </div>
+                        <div class="summary-text">${formattedSummary}</div>
+                    </div>
+                `;
+            } else {
+                throw new Error(result?.message || 'Failed to generate summary');
+            }
+        } catch (error) {
+            console.error('Summary generation error:', error);
+            contentDiv.innerHTML = `
+                <div class="summary-error">
+                    <p>❌ Failed to generate summary</p>
+                    <p class="small muted">${error.message || 'Unknown error'}</p>
+                </div>
+            `;
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🤖 Generate Summary';
+        }
+    }
+
+    formatSummary(text) {
+        // Convert markdown-style formatting to HTML
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^### (.*$)/gm, '<h4>$1</h4>')
+            .replace(/^## (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^# (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^\- (.*$)/gm, '<li>$1</li>')
+            .replace(/^\* (.*$)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            .replace(/^(.*)$/gm, (match) => {
+                if (match.startsWith('<')) return match;
+                return match;
+            });
     }
 
     setupProgressSaveOnExit() {

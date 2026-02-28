@@ -530,6 +530,19 @@
         return await DEL(`/reading-progress/${bookId}`, { token });
     }
 
+    // ---------- Book Summaries (AI) ----------
+    async function generateBookSummary(token, bookId, startPage = null, endPage = null) {
+        return await POST('/summaries/generate', {
+            bookId,
+            startPage,
+            endPage
+        }, { token });
+    }
+
+    async function getBookInfoForSummary(token, bookId) {
+        return await GET(`/summaries/book-info/${bookId}`, { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -552,6 +565,7 @@
         processShoppingQuery, getShoppingSuggestions,
         processResolutionQuery, simulatePaymentFailure, getPaymentIssues, resolvePayment, getLastOrder,
         getReadingProgress, getBookProgress, saveReadingProgress, resetReadingProgress,
+        generateBookSummary, getBookInfoForSummary,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();
