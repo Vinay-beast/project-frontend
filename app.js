@@ -102,9 +102,7 @@ async function showSection(id) {
 
     if (id === 'loginSection' || id === 'registerSection') {
       setHeaderMode('login');
-      document.body.classList.add('no-scroll');
     } else {
-      document.body.classList.remove('no-scroll');
       if (AUTH.user?.is_admin) setHeaderMode('hidden'); else setHeaderMode('full');
     }
 
@@ -178,13 +176,6 @@ on('#formRegister', 'submit', async (e) => {
     playClick();
 
     if (typeof gsap !== 'undefined') {
-      // Animate the whole section background (both panels warm up together)
-      gsap.to([loginSec, loginSec.querySelector('.auth-form-panel')], {
-        backgroundColor: isOn ? '#1a1208' : '#0d1015',
-        duration: 0.7,
-        ease: 'power2.inOut'
-      });
-
       // Animate the glass card: fade in + scale up when ON
       if (glassCard) {
         if (isOn) {
