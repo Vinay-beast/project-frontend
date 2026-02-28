@@ -4094,7 +4094,9 @@ section>.panel:first-child h2 {
 /* Split-screen layout with hero illustration and form panel */
 .auth-section {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     align-items: stretch;
 }
 
@@ -4102,7 +4104,8 @@ section>.panel:first-child h2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     width: 100%;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* Left side: Hero with illustration */
@@ -4454,16 +4457,18 @@ section>.panel:first-child h2 {
     color: rgba(255, 220, 120, 0.7);
 }
 
-/* Right form panel — dims when lamp is OFF (scoped to login only) */
+/* Right form panel — fully hidden when lamp is OFF */
 #loginSection .auth-form-panel {
-    transition: opacity 0.6s ease, filter 0.6s ease;
-    opacity: 0.55;
-    filter: blur(0.5px);
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 #loginSection[data-lamp-on="true"] .auth-form-panel {
     opacity: 1;
-    filter: none;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 /* ===== END LAMP TOGGLE ===== */
@@ -4920,7 +4925,8 @@ section>.panel:first-child h2 {
     /* Lamp is hidden on mobile — always show form at full opacity */
     #loginSection .auth-form-panel {
         opacity: 1 !important;
-        filter: none !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
     }
 
     .profile-container {
