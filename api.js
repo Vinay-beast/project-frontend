@@ -13,7 +13,7 @@
 
     // ---------- Config ----------
     const API_BASE_URL = "https://project-backend-zt54.onrender.com/api";
-    const DEFAULT_TIMEOUT_MS = 12000;
+    const DEFAULT_TIMEOUT_MS = 30000; // Increased to 30 seconds for long-running summary generation
     const DEFAULT_RETRIES = 1;
     const isDev = typeof window !== "undefined" && (location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
