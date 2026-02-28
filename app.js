@@ -139,6 +139,44 @@ on('#formRegister', 'submit', async (e) => {
   } catch (err) { console.error(err); toast(err?.message || 'Register failed'); }
 });
 
+// ===== Lamp Toggle — Login Page =====
+(function initLampToggle() {
+  const lampEl = document.getElementById('lampToggle');
+  const loginSec = document.getElementById('loginSection');
+  const hintEl = document.getElementById('lampHint');
+  if (!lampEl || !loginSec) return;
+
+  let isOn = false;
+
+  // Tiny click sound via Web Audio API (no external file needed)
+  function playClick() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(900, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (_) { }
+  }
+
+  lampEl.addEventListener('click', () => {
+    isOn = !isOn;
+    loginSec.setAttribute('data-lamp-on', String(isOn));
+    if (hintEl) hintEl.textContent = isOn
+      ? 'Light is on — welcome back!'
+      : 'Click the lamp to turn on the light';
+    playClick();
+  });
+})();
+// ===== End Lamp Toggle =====
+
 on('#formLogin', 'submit', async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());

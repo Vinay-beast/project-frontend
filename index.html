@@ -59,58 +59,40 @@
   </header>
 
   <main>
-    <!-- Login Page with Split-Screen Design -->
-    <section id="loginSection" class="hidden auth-section">
+    <!-- Login Page with Lamp Toggle Design -->
+    <section id="loginSection" class="hidden auth-section" data-lamp-on="false">
       <div class="auth-container">
-        <!-- Left: Hero Illustration & Benefits -->
-        <div class="auth-hero">
-          <div class="auth-hero-content">
-            <div class="auth-brand">
+        <!-- Left: Lamp Illustration -->
+        <div class="auth-hero lamp-hero">
+          <div class="lamp-scene">
+            <!-- Brand -->
+            <div class="auth-brand lamp-brand">
               <div class="logo"></div>
               <h2>BookNook</h2>
             </div>
-            <h1 class="auth-hero-title">Welcome back to your literary escape</h1>
-            <p class="auth-hero-subtitle">Access thousands of books, manage your library, and continue your reading journey.</p>
-            
-            <!-- SVG Illustration: Books and Reading -->
-            <div class="auth-illustration">
-              <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-                <!-- Book stack illustration -->
-                <rect x="80" y="180" width="80" height="100" fill="#d4af37" opacity="0.2" rx="4"/>
-                <rect x="90" y="160" width="80" height="100" fill="#8b1538" opacity="0.3" rx="4"/>
-                <rect x="100" y="140" width="80" height="100" fill="#d4af37" opacity="0.4" rx="4"/>
-                <circle cx="280" cy="100" r="60" fill="#d4af37" opacity="0.1"/>
-                <circle cx="280" cy="100" r="45" fill="#d4af37" opacity="0.15"/>
-                <!-- Reading person silhouette -->
-                <circle cx="280" cy="90" r="20" fill="#8b1538" opacity="0.3"/>
-                <rect x="260" y="110" width="40" height="60" fill="#8b1538" opacity="0.3" rx="8"/>
-              </svg>
+
+            <!-- Lamp illustration (click to toggle) -->
+            <div class="lamp-wrap" id="lampToggle" title="Click to toggle light">
+              <!-- Ambient glow behind lamp -->
+              <div class="lamp-glow"></div>
+              <!-- Lamp head: dome shade + bulb -->
+              <div class="lamp-head">
+                <div class="lamp-shade"></div>
+                <div class="lamp-bulb"></div>
+                <!-- Pull cord hangs from side of shade -->
+                <div class="lamp-cord-wrap">
+                  <div class="lamp-cord-line"></div>
+                  <div class="lamp-cord-ball"></div>
+                </div>
+              </div>
+              <!-- Stem -->
+              <div class="lamp-stem"></div>
+              <!-- Base -->
+              <div class="lamp-base"></div>
             </div>
-            
-            <!-- Benefits List -->
-            <div class="auth-benefits">
-              <div class="auth-benefit">
-                <span class="benefit-icon">📚</span>
-                <div>
-                  <h4>Vast Collection</h4>
-                  <p>Thousands of books across genres</p>
-                </div>
-              </div>
-              <div class="auth-benefit">
-                <span class="benefit-icon">🎁</span>
-                <div>
-                  <h4>Gift Books</h4>
-                  <p>Share the joy of reading with friends</p>
-                </div>
-              </div>
-              <div class="auth-benefit">
-                <span class="benefit-icon">📱</span>
-                <div>
-                  <h4>Read Anywhere</h4>
-                  <p>Access your library on any device</p>
-                </div>
-              </div>
-            </div>
+
+            <!-- Hint text -->
+            <p class="lamp-hint" id="lampHint">Click the lamp to turn on the light</p>
           </div>
         </div>
         

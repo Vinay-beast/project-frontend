@@ -4227,6 +4227,247 @@ section>.panel:first-child h2 {
     color: var(--text-muted);
 }
 
+/* ===== LAMP TOGGLE — Login Page ===== */
+
+/* Left hero panel becomes the lamp stage */
+.lamp-hero {
+    background: #0d1117 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.6s ease;
+}
+
+#loginSection[data-lamp-on="true"] .lamp-hero {
+    background: #1a120a !important;
+}
+
+.lamp-scene {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.lamp-brand {
+    opacity: 0.45;
+    transition: opacity 0.6s ease;
+}
+
+#loginSection[data-lamp-on="true"] .lamp-brand {
+    opacity: 1;
+}
+
+/* The clickable lamp container */
+.lamp-wrap {
+    position: relative;
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.lamp-wrap:hover .lamp-shade {
+    filter: brightness(1.15);
+}
+
+/* Radial glow behind the lamp — only visible when ON */
+.lamp-glow {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 200, 80, 0.55) 0%, rgba(255, 150, 30, 0.18) 45%, transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.7s ease;
+    z-index: 0;
+}
+
+#loginSection[data-lamp-on="true"] .lamp-glow {
+    opacity: 1;
+    animation: lampPulse 3s ease-in-out infinite;
+}
+
+@keyframes lampPulse {
+
+    0%,
+    100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translateX(-50%) scale(1.08);
+        opacity: 0.85;
+    }
+}
+
+/* Lamp head (dome + bulb) */
+.lamp-head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Dome shade */
+.lamp-shade {
+    width: 130px;
+    height: 70px;
+    background: linear-gradient(160deg, #d0cfc8 0%, #a8a49c 60%, #8a8680 100%);
+    border-radius: 65px 65px 8px 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 -4px 10px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.6s ease, background 0.6s ease;
+    position: relative;
+}
+
+#loginSection[data-lamp-on="true"] .lamp-shade {
+    background: linear-gradient(160deg, #f5f0e0 0%, #e0d8c0 60%, #c8c0a0 100%);
+    box-shadow: 0 4px 24px rgba(255, 200, 80, 0.5), 0 0 40px rgba(255, 180, 40, 0.3), inset 0 -4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Downward cone glow when ON — simulates light spill below shade */
+.lamp-shade::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 60px;
+    background: radial-gradient(ellipse, rgba(255, 210, 80, 0.35) 0%, transparent 70%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+    border-radius: 50%;
+}
+
+#loginSection[data-lamp-on="true"] .lamp-shade::after {
+    opacity: 1;
+}
+
+/* Bulb — small oval between shade and stem */
+.lamp-bulb {
+    width: 14px;
+    height: 18px;
+    background: #ccc;
+    border-radius: 50% 50% 40% 40%;
+    margin-top: -2px;
+    transition: background 0.5s ease, box-shadow 0.5s ease;
+    position: relative;
+    z-index: 2;
+}
+
+#loginSection[data-lamp-on="true"] .lamp-bulb {
+    background: #ffe880;
+    box-shadow: 0 0 10px 4px rgba(255, 220, 60, 0.8), 0 0 28px 10px rgba(255, 180, 30, 0.4);
+}
+
+/* Pull cord */
+.lamp-cord-wrap {
+    position: absolute;
+    right: -18px;
+    top: 42px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.lamp-cord-line {
+    width: 2px;
+    height: 36px;
+    background: rgba(180, 170, 150, 0.6);
+    border-radius: 1px;
+}
+
+.lamp-cord-ball {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #c87941;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    transition: transform 0.25s cubic-bezier(.36, .07, .19, .97);
+}
+
+.lamp-wrap:active .lamp-cord-ball {
+    transform: translateY(6px);
+}
+
+/* Stem */
+.lamp-stem {
+    width: 8px;
+    height: 90px;
+    background: linear-gradient(90deg, #888 0%, #bbb 40%, #999 100%);
+    border-radius: 4px;
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
+    box-shadow: 1px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Base */
+.lamp-base {
+    width: 80px;
+    height: 14px;
+    background: linear-gradient(180deg, #aaa 0%, #888 50%, #777 100%);
+    border-radius: 40px 40px 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 1;
+}
+
+/* Floor shadow under base */
+.lamp-base::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 8px;
+    background: radial-gradient(ellipse, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+/* Hint text */
+.lamp-hint {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+    font-style: italic;
+    margin: 0;
+    transition: color 0.6s ease;
+    letter-spacing: 0.03em;
+}
+
+#loginSection[data-lamp-on="true"] .lamp-hint {
+    color: rgba(255, 220, 120, 0.7);
+}
+
+/* Right form panel — dims when lamp is OFF (scoped to login only) */
+#loginSection .auth-form-panel {
+    transition: opacity 0.6s ease, filter 0.6s ease;
+    opacity: 0.55;
+    filter: blur(0.5px);
+}
+
+#loginSection[data-lamp-on="true"] .auth-form-panel {
+    opacity: 1;
+    filter: none;
+}
+
+/* ===== END LAMP TOGGLE ===== */
+
 /* Right side: Form panel */
 .auth-form-panel {
     background: var(--bg-secondary);
@@ -4674,6 +4915,12 @@ section>.panel:first-child h2 {
 
     .auth-hero {
         display: none;
+    }
+
+    /* Lamp is hidden on mobile — always show form at full opacity */
+    #loginSection .auth-form-panel {
+        opacity: 1 !important;
+        filter: none !important;
     }
 
     .profile-container {
