@@ -53,6 +53,12 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Lock scroll when login/register page is active */
+body.no-scroll {
+    overflow: hidden;
+    height: 100vh;
+}
+
 /* Luxury atmospheric background */
 html::before {
     content: "";

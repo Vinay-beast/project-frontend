@@ -102,7 +102,9 @@ async function showSection(id) {
 
     if (id === 'loginSection' || id === 'registerSection') {
       setHeaderMode('login');
+      document.body.classList.add('no-scroll');
     } else {
+      document.body.classList.remove('no-scroll');
       if (AUTH.user?.is_admin) setHeaderMode('hidden'); else setHeaderMode('full');
     }
 
