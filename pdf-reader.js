@@ -60,6 +60,9 @@ class SecurePDFReader {
                 }
             }
 
+            // Set currentPage to match startPage before rendering
+            this.currentPage = startPage;
+
             // Render saved page (or first page)
             await this.renderPage(startPage);
 
