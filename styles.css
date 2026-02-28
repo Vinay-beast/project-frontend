@@ -4463,23 +4463,107 @@ section>.panel:first-child h2 {
     color: rgba(255, 220, 120, 0.7);
 }
 
-/* Right form panel — fully hidden when lamp is OFF */
+/* ===== END LAMP TOGGLE ===== */
+
+/* =============================================================
+   GLASSMORPHISM CARD — right panel
+   GSAP handles opacity + scale, CSS only sets dark panel bg
+   ============================================================= */
+
+/* Right panel: same dark bg as lamp side so it feels unified */
 #loginSection .auth-form-panel {
-    transition: opacity 0.5s ease, visibility 0.5s ease;
+    background: #0d1015;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Glass card — starts invisible; GSAP fades + scales it in */
+.lamp-glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    padding: 2.6rem 2.4rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    /* GSAP controls these — start invisible */
     opacity: 0;
-    visibility: hidden;
+    transform: scale(0.93);
     pointer-events: none;
 }
 
-#loginSection[data-lamp-on="true"] .auth-form-panel {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+/* Welcome title */
+.lamp-welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.3rem 0;
+    letter-spacing: -0.02em;
 }
 
-/* ===== END LAMP TOGGLE ===== */
+/* Clean labels */
+.lamp-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
 
-/* Right side: Form panel */
+/* Gold gradient Sign In button */
+.lamp-signin-btn {
+    background: linear-gradient(135deg, #d4af37 0%, #b8960c 50%, #d4af37 100%) !important;
+    background-size: 200% auto !important;
+    color: #0d0d0d !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.04em !important;
+    border: none !important;
+    border-radius: 50px !important;
+    padding: 0.9rem 1.5rem !important;
+    transition: background-position 0.4s ease, box-shadow 0.3s ease, transform 0.2s ease !important;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3) !important;
+}
+
+.lamp-signin-btn:hover {
+    background-position: right center !important;
+    box-shadow: 0 6px 28px rgba(212, 175, 55, 0.55) !important;
+    transform: translateY(-1px) !important;
+}
+
+.lamp-signin-btn:active {
+    transform: translateY(0) !important;
+}
+
+/* Inputs inside the glass card — slightly more visible bg */
+.lamp-glass-card .form-group input {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 12px !important;
+    color: #f0f0f0 !important;
+    padding: 0.85rem 1rem !important;
+    font-size: 0.97rem !important;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.lamp-glass-card .form-group input:focus {
+    border-color: rgba(212, 175, 55, 0.6) !important;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12) !important;
+    outline: none !important;
+}
+
+.lamp-glass-card .auth-form-content {
+    width: 100%;
+}
+
+/* Right side: Form panel (register + other pages) */
 .auth-form-panel {
     background: var(--bg-secondary);
     padding: var(--space-2xl);
@@ -4928,10 +5012,17 @@ section>.panel:first-child h2 {
         display: none;
     }
 
-    /* Lamp is hidden on mobile — always show form at full opacity */
+    /* Lamp is hidden on mobile — always show glass card at full opacity */
     #loginSection .auth-form-panel {
         opacity: 1 !important;
         visibility: visible !important;
+        pointer-events: auto !important;
+        background: var(--bg-secondary) !important;
+    }
+
+    #loginSection .lamp-glass-card {
+        opacity: 1 !important;
+        transform: scale(1) !important;
         pointer-events: auto !important;
     }
 

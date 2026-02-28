@@ -141,16 +141,17 @@ on('#formRegister', 'submit', async (e) => {
   } catch (err) { console.error(err); toast(err?.message || 'Register failed'); }
 });
 
-// ===== Lamp Toggle — Login Page =====
+// ===== Lamp Toggle — Login Page (GSAP powered) =====
 (function initLampToggle() {
   const lampEl = document.getElementById('lampToggle');
   const loginSec = document.getElementById('loginSection');
   const hintEl = document.getElementById('lampHint');
+  const glassCard = document.getElementById('lampGlassCard');
   if (!lampEl || !loginSec) return;
 
   let isOn = false;
 
-  // Tiny click sound via Web Audio API (no external file needed)
+  // Mechanical click sound via Web Audio API — no file needed
   function playClick() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -162,9 +163,9 @@ on('#formRegister', 'submit', async (e) => {
       osc.frequency.setValueAtTime(900, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.08);
       gain.gain.setValueAtTime(0.25, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.1);
+      osc.stop(ctx.currentTime + 0.11);
     } catch (_) { }
   }
 
@@ -175,6 +176,36 @@ on('#formRegister', 'submit', async (e) => {
       ? 'Light is on — welcome back!'
       : 'Click the lamp to turn on the light';
     playClick();
+
+    if (typeof gsap !== 'undefined') {
+      // Animate the whole section background (both panels warm up together)
+      gsap.to([loginSec, loginSec.querySelector('.auth-form-panel')], {
+        backgroundColor: isOn ? '#1a1208' : '#0d1015',
+        duration: 0.7,
+        ease: 'power2.inOut'
+      });
+
+      // Animate the glass card: fade in + scale up when ON
+      if (glassCard) {
+        if (isOn) {
+          gsap.to(glassCard, {
+            opacity: 1,
+            scale: 1,
+            duration: 0.6,
+            ease: 'power3.out',
+            onStart: () => { glassCard.style.pointerEvents = 'auto'; }
+          });
+        } else {
+          gsap.to(glassCard, {
+            opacity: 0,
+            scale: 0.93,
+            duration: 0.45,
+            ease: 'power2.in',
+            onComplete: () => { glassCard.style.pointerEvents = 'none'; }
+          });
+        }
+      }
+    }
   });
 })();
 // ===== End Lamp Toggle =====
