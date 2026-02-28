@@ -666,6 +666,24 @@ main {
     font-size: 1.125rem;
 }
 
+/* Reading Progress Bar */
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(212, 175, 55, 0.15);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand-primary), #e5c047);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
 /* Admin extras */
 .admin-book-card {
     border-left: 4px solid rgba(212, 175, 55, 0.3);

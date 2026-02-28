@@ -1088,6 +1088,14 @@ async function renderOrders() {
 async function renderLibrary() {
   try {
     if (!AUTH.token) { setActiveNav('login'); showSection('loginSection'); return; }
+
+    // Fetch reading progress for all books
+    let readingProgress = {};
+    try {
+      const progressData = await Api.getReadingProgress(AUTH.token);
+      progressData.forEach(p => { readingProgress[p.book_id] = p; });
+    } catch { }
+
     let lib = null;
     try { lib = await Api.getLibrary(AUTH.token); } catch { }
     if (!lib) {
@@ -1107,23 +1115,46 @@ async function renderLibrary() {
     try { gifts = await Api.getMyGifts(AUTH.token); } catch { }
 
     const ownedCards = await Promise.all((lib.owned || []).map(async ob => {
-      const b = await fetchBookById(ob.book.id); return `
+      const b = await fetchBookById(ob.book.id);
+      const progress = readingProgress[b.id];
+      const progressPercent = progress ? Math.round(progress.progress_percent) : 0;
+      const progressBar = progressPercent > 0 ? `
+        <div class="progress-bar-container" style="margin: 8px 0;">
+          <div class="progress-bar" style="width: ${progressPercent}%"></div>
+        </div>
+        <p class="small muted">${progressPercent}% complete • Page ${progress.current_page}/${progress.total_pages}</p>
+      ` : '';
+      const btnText = progressPercent > 0 && progressPercent < 100 ? 'Continue Reading' : 'Read';
+      return `
       <div class="card">
         <div class="pillbar"><span class="tag small">Owned</span><span class="tag small">${b.author || ''}</span></div>
         <h3>${b.title}</h3>
+        ${progressBar}
         <div class="row">
-          <button class="btn" data-read="${b.id}" data-title="${b.title}">Read</button>
+          <button class="btn" data-read="${b.id}" data-title="${b.title}">${btnText}</button>
         </div>
       </div>`;
     }));
     const todayISO = new Date().toISOString();
     const rentedCards = await Promise.all((lib.rented || []).map(async rb => {
-      const b = await fetchBookById(rb.book.id); const active = rb.rental_end && todayISO < new Date(rb.rental_end).toISOString(); return `
+      const b = await fetchBookById(rb.book.id);
+      const active = rb.rental_end && todayISO < new Date(rb.rental_end).toISOString();
+      const progress = readingProgress[b.id];
+      const progressPercent = progress ? Math.round(progress.progress_percent) : 0;
+      const progressBar = active && progressPercent > 0 ? `
+        <div class="progress-bar-container" style="margin: 8px 0;">
+          <div class="progress-bar" style="width: ${progressPercent}%"></div>
+        </div>
+        <p class="small muted">${progressPercent}% complete</p>
+      ` : '';
+      const btnText = progressPercent > 0 && progressPercent < 100 ? 'Continue' : 'Read';
+      return `
       <div class="card">
         <div class="pillbar"><span class="tag small">${active ? 'Rental (Active)' : 'Rental (Expired)'}</span><span class="tag small">${b.author || ''}</span></div>
         <h3>${b.title}</h3>
+        ${progressBar}
         <p class="small muted">Due: ${rb.rental_end ? new Date(rb.rental_end).toLocaleDateString() : '-'}</p>
-        <button class="btn ${active ? '' : 'ghost'}" data-read="${active ? b.id : ''}" data-title="${b.title}" ${active ? '' : 'disabled'}>Read</button>
+        <button class="btn ${active ? '' : 'ghost'}" data-read="${active ? b.id : ''}" data-title="${b.title}" ${active ? '' : 'disabled'}>${btnText}</button>
       </div>`;
     }));
 

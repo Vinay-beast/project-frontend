@@ -5,9 +5,15 @@ class SecurePDFReader {
         this.currentPage = 1;
         this.totalPages = 0;
         this.pdfDoc = null;
+        this.bookId = null;
+        this.authToken = null;
+        this.progressSaveTimeout = null;
     }
 
     async loadPDF(url, bookTitle, authToken, bookId) {
+        this.bookId = bookId;
+        this.authToken = authToken;
+
         try {
             // Load PDF.js library if not already loaded
             if (!window.pdfjsLib) {
@@ -40,11 +46,28 @@ class SecurePDFReader {
             // Create reader interface
             this.createReaderInterface(bookTitle);
 
-            // Render first page
-            await this.renderPage(1);
+            // Load saved progress and resume from last page
+            let startPage = 1;
+            if (this.authToken && this.bookId && window.Api?.getBookProgress) {
+                try {
+                    const progress = await Api.getBookProgress(this.authToken, this.bookId);
+                    if (progress && progress.current_page > 1) {
+                        startPage = Math.min(progress.current_page, this.totalPages);
+                        console.log(`Resuming from page ${startPage}`);
+                    }
+                } catch (e) {
+                    console.warn('Could not load reading progress:', e);
+                }
+            }
+
+            // Render saved page (or first page)
+            await this.renderPage(startPage);
 
             // Add protection measures
             this.addProtectionMeasures();
+
+            // Save progress when user leaves page
+            this.setupProgressSaveOnExit();
 
         } catch (error) {
             console.error('Error loading PDF:', error);
@@ -147,12 +170,52 @@ class SecurePDFReader {
         if (this.currentPage <= 1) return;
         this.currentPage--;
         await this.renderPage(this.currentPage);
+        this.saveProgressDebounced();
     }
 
     async nextPage() {
         if (this.currentPage >= this.totalPages) return;
         this.currentPage++;
         await this.renderPage(this.currentPage);
+        this.saveProgressDebounced();
+    }
+
+    // Debounced save to avoid too many API calls
+    saveProgressDebounced() {
+        if (this.progressSaveTimeout) {
+            clearTimeout(this.progressSaveTimeout);
+        }
+        this.progressSaveTimeout = setTimeout(() => {
+            this.saveProgress();
+        }, 2000); // Save after 2 seconds of no page changes
+    }
+
+    async saveProgress() {
+        if (!this.authToken || !this.bookId || !window.Api?.saveReadingProgress) return;
+        try {
+            await Api.saveReadingProgress(this.authToken, this.bookId, this.currentPage, this.totalPages);
+            console.log(`Progress saved: page ${this.currentPage}/${this.totalPages}`);
+        } catch (e) {
+            console.warn('Could not save reading progress:', e);
+        }
+    }
+
+    setupProgressSaveOnExit() {
+        // Save progress when user closes tab or navigates away
+        window.addEventListener('beforeunload', () => {
+            if (this.authToken && this.bookId && this.currentPage > 0) {
+                // Use sendBeacon for reliable save on exit
+                const data = JSON.stringify({
+                    book_id: this.bookId,
+                    current_page: this.currentPage,
+                    total_pages: this.totalPages
+                });
+                navigator.sendBeacon?.(
+                    `https://project-backend-zt54.onrender.com/api/reading-progress`,
+                    new Blob([data], { type: 'application/json' })
+                );
+            }
+        });
     }
 
     addProtectionMeasures() {

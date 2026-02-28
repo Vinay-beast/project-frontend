@@ -509,6 +509,27 @@
         return await GET('/resolution-agent/last-order', { token });
     }
 
+    // Reading Progress Functions
+    async function getReadingProgress(token) {
+        return await GET('/reading-progress', { token });
+    }
+
+    async function getBookProgress(token, bookId) {
+        return await GET(`/reading-progress/${bookId}`, { token });
+    }
+
+    async function saveReadingProgress(token, bookId, currentPage, totalPages) {
+        return await POST('/reading-progress', {
+            book_id: bookId,
+            current_page: currentPage,
+            total_pages: totalPages
+        }, { token });
+    }
+
+    async function resetReadingProgress(token, bookId) {
+        return await DEL(`/reading-progress/${bookId}`, { token });
+    }
+
     // ---------- Expose ----------
     window.Api = {
         API_BASE_URL,
@@ -530,6 +551,7 @@
         chatRecommendation, getPersonalizedRecommendations, getSimilarBooks,
         processShoppingQuery, getShoppingSuggestions,
         processResolutionQuery, simulatePaymentFailure, getPaymentIssues, resolvePayment, getLastOrder,
+        getReadingProgress, getBookProgress, saveReadingProgress, resetReadingProgress,
         apiRequest, GET, POST, PUT, DEL, iterateBooks
     };
 })();
